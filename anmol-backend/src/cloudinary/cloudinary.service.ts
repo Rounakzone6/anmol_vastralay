@@ -1,0 +1,42 @@
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { v2 as cloudinary } from 'cloudinary';
+
+@Injectable()
+export class CloudinaryService {
+  private readonly configured: boolean;
+
+  constructor(private readonly config: ConfigService) {
+    const cloudName = this.config.get<string>('CLOUDINARY_CLOUD_NAME');
+    const apiKey = this.config.get<string>('CLOUDINARY_API_KEY');
+    const apiSecret = this.config.get<string>('CLOUDINARY_API_SECRET');
+
+    this.configured = Boolean(cloudName && apiKey && apiSecret);
+
+    if (this.configured) {
+      cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
+    }
+  }
+
+  assertConfigured(): void {
+    if (!this.configured) {
+      throw new ServiceUnavailableException(
+        'Cloudinary is not configured. Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET to .env',
+      );
+    }
+  }
+
+  async uploadImage(
+    dataUri: string,
+    folder = 'anmol/products',
+  ): Promise<{ url: string; publicId: string }> {
+    this.assertConfigured();
+    const result = await cloudinary.uploader.upload(dataUri, { folder });
+    return { url: result.secure_url, publicId: result.public_id };
+  }
+
+  async deleteImage(publicId: string): Promise<void> {
+    this.assertConfigured();
+    await cloudinary.uploader.destroy(publicId);
+  }
+}

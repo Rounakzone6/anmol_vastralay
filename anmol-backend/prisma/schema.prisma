@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+}
+
+enum ProductKind {
+  SAREE
+  STANDARD
+}
+
+enum GarmentSize {
+  M
+  L
+  XL
+  XXL
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      UserRole @default(STAFF)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  imageUrl    String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+model Product {
+  id              String           @id @default(cuid())
+  name            String
+  slug            String           @unique
+  description     String?
+  categoryId      String
+  category        Category         @relation(fields: [categoryId], references: [id])
+  kind            ProductKind      @default(STANDARD)
+  netPrice        Decimal          @db.Decimal(10, 2)
+  discountPercent Decimal          @default(0) @db.Decimal(5, 2)
+  allowsExtraSaya Boolean          @default(false)
+  extraSayaPrice  Decimal?         @db.Decimal(10, 2)
+  isActive        Boolean          @default(true)
+  images          ProductImage[]
+  variants        ProductVariant[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  publicId  String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model ProductVariant {
+  id        String       @id @default(cuid())
+  productId String
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  color     String
+  size      GarmentSize?
+  /// Empty for saree; M/L/XL/XXL for standard — used in unique constraint
+  sizeKey   String       @default("")
+  stockQty  Int          @default(0)
+  sku       String?      @unique
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([productId, color, sizeKey])
+}
