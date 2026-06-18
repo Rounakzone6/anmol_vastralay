@@ -1,9 +1,9 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from '../src/app.module';
-import { AuthService } from '../src/auth/auth.service';
-import { PrismaService } from '../src/prisma/prisma.service';
-import { CloudinaryService } from '../src/cloudinary/cloudinary.service';
-import { createAppRouter } from '../src/trpc/trpc.router';
+import { AppModule } from '../src/modules/app.module';
+import { AuthService } from '../src/services/auth.service';
+import { PrismaService } from '../src/services/prisma.service';
+import { CloudinaryService } from '../src/services/cloudinary.service';
+import { createAppRouter } from '../src/routers';
 
 async function runTests() {
   console.log('Bootstrapping NestJS Application Context...');

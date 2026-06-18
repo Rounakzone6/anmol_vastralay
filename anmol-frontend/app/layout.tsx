@@ -1,5 +1,32 @@
 import './globals.css';
+import type { Metadata } from 'next';
 import { Providers } from './providers';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+
+export const metadata: Metadata = {
+  title: {
+    template: '%s | Anmol Vastralay',
+    default: 'Anmol Vastralay - Premium Ethnic & Western Fashion',
+  },
+  description: 'Your one-stop destination for premium ethnic wear, western fashion, and authentic traditional clothing in India.',
+  keywords: ['Anmol Vastralay', 'ethnic wear', 'sarees', 'kurtis', 'jeans', 'mens shirts', 'fashion', 'Gopalganj clothing store'],
+  openGraph: {
+    title: 'Anmol Vastralay',
+    description: 'Premium ethnic wear and modern fashion for everyone.',
+    url: 'https://anmolvastralay.com',
+    siteName: 'Anmol Vastralay',
+    images: [
+      {
+        url: '/category-icons/cat_saree_1781796874870.png',
+        width: 800,
+        height: 600,
+      },
+    ],
+    locale: 'en_IN',
+    type: 'website',
+  },
+};
 
 export default function RootLayout({
   children,
@@ -9,7 +36,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <Navbar />
+          <main className="min-h-screen">
+            {children}
+          </main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

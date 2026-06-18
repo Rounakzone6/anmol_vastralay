@@ -13,6 +13,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
         httpBatchLink({
           url:
             process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/trpc',
+          headers() {
+            if (typeof window !== 'undefined') {
+              const token = localStorage.getItem('anmol_token');
+              if (token) {
+                return {
+                  authorization: `Bearer ${token}`,
+                };
+              }
+            }
+            return {};
+          },
         }),
       ],
     }),

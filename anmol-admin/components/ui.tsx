@@ -8,10 +8,10 @@ export function Button({
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
 }) {
   const variants = {
-    primary: 'bg-violet-700 text-white hover:bg-violet-800',
-    secondary: 'border border-zinc-300 bg-white hover:bg-zinc-50',
-    danger: 'bg-red-600 text-white hover:bg-red-700',
-    ghost: 'text-zinc-600 hover:bg-zinc-100',
+    primary: 'bg-black text-white hover:bg-neutral-800 shadow-sm',
+    secondary: 'border border-neutral-200 bg-white text-neutral-900 hover:bg-neutral-50 shadow-sm',
+    danger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm',
+    ghost: 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900',
   };
 
   return (
@@ -28,14 +28,14 @@ export function Input({
 }: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className={`w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100 ${className}`}
+      className={`w-full rounded-lg border border-neutral-200 bg-transparent px-3 py-2 text-sm text-neutral-900 outline-none transition-all placeholder:text-neutral-400 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 ${className}`}
       {...props}
     />
   );
 }
 
 export function Label({ children }: { children: ReactNode }) {
-  return <label className="mb-1 block text-sm font-medium text-zinc-700">{children}</label>;
+  return <label className="mb-1.5 block text-sm font-medium text-neutral-800">{children}</label>;
 }
 
 export function Select({
@@ -45,7 +45,7 @@ export function Select({
 }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
-      className={`w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100 ${className}`}
+      className={`w-full rounded-lg border border-neutral-200 bg-transparent px-3 py-2 text-sm text-neutral-900 outline-none transition-all focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 ${className}`}
       {...props}
     >
       {children}
@@ -59,7 +59,7 @@ export function Textarea({
 }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
-      className={`w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100 ${className}`}
+      className={`w-full rounded-lg border border-neutral-200 bg-transparent px-3 py-2 text-sm text-neutral-900 outline-none transition-all placeholder:text-neutral-400 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 ${className}`}
       {...props}
     />
   );
@@ -67,7 +67,7 @@ export function Textarea({
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`rounded-xl border border-zinc-200 bg-white p-6 shadow-sm ${className}`}>
+    <div className={`rounded-xl border border-neutral-200 bg-white p-6 shadow-sm ${className}`}>
       {children}
     </div>
   );

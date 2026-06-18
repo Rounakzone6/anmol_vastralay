@@ -1,17 +1,33 @@
 'use client';
 
-import { trpc } from '../lib/trpc';
+import CategoryNav from '../components/CategoryNav';
+import HeroSlider from '../components/HeroSlider';
+import LatestArrivals from '../components/LatestArrivals';
+import CategorySection from '../components/CategorySection';
+import Newsletter from '../components/Newsletter';
 
 export default function Home() {
-  const { data: users, isLoading } = trpc.user.getUsers.useQuery();
-
-  if (isLoading) return <p>Loading...</p>;
-
   return (
-    <div>
-      {users?.map((user) => (
-        <div key={user.id}>{user.email}</div>
-      ))}
+    <div className="bg-gray-50 min-h-screen pb-12">
+      {/* Top Categories Navigation */}
+      <CategoryNav />
+
+      {/* Dynamic Hero Slider */}
+      <HeroSlider />
+
+      {/* Latest Products Grid */}
+      <LatestArrivals />
+
+      {/* Featured Categories */}
+      <CategorySection title="Premium Sarees" slug="saree" />
+      <CategorySection title="Stylish Kurtis" slug="kurti" />
+      <CategorySection title="Denim Jeans" slug="jeans" />
+      <CategorySection title="Men's Shirts" slug="shirt" />
+      <CategorySection title="Kidswear" slug="kids" />
+      <CategorySection title="Innerwear Essentials" slug="innerwear" />
+
+      {/* Newsletter Subscription */}
+      <Newsletter />
     </div>
   );
 }

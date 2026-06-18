@@ -3,11 +3,11 @@ import { ValidationPipe } from '@nestjs/common';
 import type { Request } from 'express';
 import helmet from 'helmet';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
-import { AppModule } from './app.module';
-import { AuthService } from './auth/auth.service';
-import { CloudinaryService } from './cloudinary/cloudinary.service';
-import { PrismaService } from './prisma/prisma.service';
-import { createAppRouter } from './trpc/trpc.router';
+import { AppModule } from './modules/app.module';
+import { AuthService } from './services/auth.service';
+import { CloudinaryService } from './services/cloudinary.service';
+import { PrismaService } from './services/prisma.service';
+import { createAppRouter } from './routers';
 
 function getBearerToken(req: Request): string | undefined {
   const header = req.headers.authorization;

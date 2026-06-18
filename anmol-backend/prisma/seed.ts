@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { DEFAULT_CATEGORIES } from '../src/common/default-categories';
+import { DEFAULT_CATEGORIES } from '../src/utils/default-categories';
 
 const prisma = new PrismaClient();
 

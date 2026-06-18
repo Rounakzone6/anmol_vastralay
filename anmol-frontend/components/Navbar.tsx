@@ -1,22 +1,36 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, Search, ShoppingCart, User, Heart } from "lucide-react";
+import { Menu, X, Search, ShoppingCart, User, Heart, LogOut } from "lucide-react";
+import { useAuth } from "../lib/useAuth";
+import { trpc } from "../lib/trpc";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const { isAuthenticated, logout } = useAuth();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const { data: cartData } = trpc.cart.getCart.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
+  const cartItemCount = cartData?.items?.reduce((total, item) => total + item.quantity, 0) || 0;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Searching for:", searchQuery);
-    // Yahan aap search page par redirect karne ka logic daal sakte hain
+    // Add redirect logic to search page
   };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white shadow-sm">
-      {/* Top Banner (Optional: Offers ya Announcement ke liye) */}
+      {/* Top Banner */}
       <div className="bg-[#0f172a] py-1.5 text-center text-xs font-medium text-white">
         ✨ अनमोल वस्त्रालय में आपका स्वागत है! Free Delivery on orders above ₹999 ✨
       </div>
@@ -36,7 +50,14 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Desktop Search Bar (Middle Section) */}
+          {/* Desktop Nav Links */}
+          <div className="hidden lg:flex items-center space-x-6 mx-4 font-medium text-sm text-gray-700">
+            <Link href="/" className="hover:text-[#85142b] transition-colors">Home</Link>
+            <Link href="/collections" className="hover:text-[#85142b] transition-colors">Collections</Link>
+            <Link href="/about" className="hover:text-[#85142b] transition-colors">About</Link>
+          </div>
+
+          {/* Desktop Search Bar */}
           <form 
             onSubmit={handleSearch} 
             className="hidden max-w-md flex-1 items-center md:flex"
@@ -60,10 +81,24 @@ const Navbar = () => {
 
           {/* Right Navigation Icons (Desktop) */}
           <div className="hidden items-center gap-6 md:flex">
-            <Link href="/account" className="text-gray-600 hover:text-[#85142b] transition-colors flex flex-col items-center">
-              <User size={22} />
-              <span className="text-xs mt-0.5 font-medium">Profile</span>
-            </Link>
+            {isClient && isAuthenticated ? (
+              <>
+                <Link href="/profile" className="text-gray-600 hover:text-[#85142b] transition-colors flex flex-col items-center">
+                  <User size={22} />
+                  <span className="text-xs mt-0.5 font-medium">Profile</span>
+                </Link>
+                <button onClick={logout} className="text-gray-600 hover:text-[#85142b] transition-colors flex flex-col items-center">
+                  <LogOut size={22} />
+                  <span className="text-xs mt-0.5 font-medium">Logout</span>
+                </button>
+              </>
+            ) : (
+              <Link href="/login" className="text-gray-600 hover:text-[#85142b] transition-colors flex flex-col items-center">
+                <User size={22} />
+                <span className="text-xs mt-0.5 font-medium">Login</span>
+              </Link>
+            )}
+
             <Link href="/wishlist" className="text-gray-600 hover:text-[#85142b] transition-colors flex flex-col items-center relative">
               <Heart size={22} />
               <span className="text-xs mt-0.5 font-medium">Wishlist</span>
@@ -71,23 +106,25 @@ const Navbar = () => {
             <Link href="/cart" className="text-gray-600 hover:text-[#85142b] transition-colors flex flex-col items-center relative">
               <div className="relative">
                 <ShoppingCart size={22} />
-                {/* Cart Badge - Dummy value 2 set ki hai abhi */}
-                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#85142b] text-[10px] font-bold text-white">
-                  2
-                </span>
+                {isClient && cartItemCount > 0 && (
+                  <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#85142b] text-[10px] font-bold text-white">
+                    {cartItemCount}
+                  </span>
+                )}
               </div>
               <span className="text-xs mt-0.5 font-medium">Cart</span>
             </Link>
           </div>
 
-          {/* Mobile Menu & Cart Button (Right Side on Mobile) */}
+          {/* Mobile Menu & Cart Button */}
           <div className="flex items-center gap-4 md:hidden">
-            {/* Mobile Search Icon Toggle button agar chahein, ya direct icons */}
             <Link href="/cart" className="relative text-gray-600">
               <ShoppingCart size={24} />
-              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#85142b] text-[10px] font-bold text-white">
-                2
-              </span>
+              {isClient && cartItemCount > 0 && (
+                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#85142b] text-[10px] font-bold text-white">
+                  {cartItemCount}
+                </span>
+              )}
             </Link>
             
             <button
@@ -101,7 +138,7 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Search Bar (Only visible on small screens below Navbar) */}
+      {/* Mobile Search Bar */}
       <div className="px-4 pb-3 md:hidden">
         <form onSubmit={handleSearch} className="relative w-full">
           <input
@@ -127,7 +164,15 @@ const Navbar = () => {
             <Link href="/categories/kids" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Kids Wear</Link>
             <Link href="/categories/suiting-shirting" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Suiting-Shirting</Link>
             <hr className="border-gray-200" />
-            <Link href="/account" className="block rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-gray-50">My Account</Link>
+            {isClient && isAuthenticated ? (
+              <>
+                <Link href="/profile" className="block rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-gray-50">My Profile</Link>
+                <Link href="/orders" className="block rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-gray-50">My Orders</Link>
+                <button onClick={logout} className="block w-full text-left rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-gray-50">Logout</button>
+              </>
+            ) : (
+              <Link href="/login" className="block rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-gray-50">Login / Register</Link>
+            )}
           </div>
         </div>
       )}

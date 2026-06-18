@@ -1,0 +1,124 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+const BANNERS = [
+  {
+    id: 1,
+    image: '/banners/saree.png',
+    title: 'Exquisite Ethnic Wear',
+    subtitle: 'Discover premium sarees for every occasion',
+    buttonText: 'Shop Sarees',
+  },
+  {
+    id: 2,
+    image: '/banners/mens.png',
+    title: "Men's Premium Collection",
+    subtitle: 'Elevate your style with our latest arrivals',
+    buttonText: 'Shop Men',
+  },
+  {
+    id: 3,
+    image: '/banners/ladies.png',
+    title: 'Modern Western Wear',
+    subtitle: 'Chic, comfortable styles for the modern woman',
+    buttonText: 'Shop Western',
+  },
+  {
+    id: 4,
+    image: '/banners/kids.png',
+    title: "Kids' Fashion",
+    subtitle: 'Vibrant and comfortable outfits for your little ones',
+    buttonText: 'Shop Kids',
+  },
+  {
+    id: 5,
+    image: '/banners/accessories.png',
+    title: 'Festive Specials',
+    subtitle: 'Complete your look with our exclusive accessories',
+    buttonText: 'Shop Accessories',
+  },
+];
+
+export default function HeroSlider() {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev === BANNERS.length - 1 ? 0 : prev + 1));
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev === BANNERS.length - 1 ? 0 : prev + 1));
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev === 0 ? BANNERS.length - 1 : prev - 1));
+  };
+
+  return (
+    <div className="relative overflow-hidden bg-gray-50 h-[300px] sm:h-[400px] lg:h-[500px]">
+      {/* Slides */}
+      <div 
+        className="flex h-full transition-transform duration-500 ease-in-out"
+        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+      >
+        {BANNERS.map((banner) => (
+          <div key={banner.id} className="min-w-full relative h-full">
+            <img
+              src={banner.image}
+              alt={banner.title}
+              className="absolute inset-0 h-full w-full object-cover object-center"
+            />
+            <div className="relative z-20 h-full flex items-center px-8 sm:px-16 lg:px-24">
+              <div className="max-w-xl bg-black/30 backdrop-blur-sm p-6 sm:p-8 rounded-2xl border border-white/20 shadow-xl">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight drop-shadow-md">
+                  {banner.title}
+                </h2>
+                <p className="text-lg sm:text-xl text-gray-100 mb-8 drop-shadow-md">
+                  {banner.subtitle}
+                </p>
+                <button className="bg-[#85142b] hover:bg-[#6c1023] text-white px-8 py-3 rounded-md font-medium transition-colors shadow-sm">
+                  {banner.buttonText}
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Navigation Arrows */}
+      <button 
+        onClick={prevSlide}
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-sm transition-all"
+        aria-label="Previous slide"
+      >
+        <ChevronLeft className="h-6 w-6" />
+      </button>
+      <button 
+        onClick={nextSlide}
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-sm transition-all"
+        aria-label="Next slide"
+      >
+        <ChevronRight className="h-6 w-6" />
+      </button>
+
+      {/* Dots */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex space-x-2">
+        {BANNERS.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentSlide(index)}
+            className={`w-2.5 h-2.5 rounded-full transition-all ${
+              currentSlide === index ? 'bg-[#85142b] w-6' : 'bg-gray-300 hover:bg-gray-400'
+            }`}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
