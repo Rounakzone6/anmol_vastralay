@@ -15,7 +15,7 @@ const t = initTRPC.context<TRPCContext>().create();
 export const router = t.router;
 export const publicProcedure = t.procedure;
 
-export const staffProcedure = publicProcedure.use(({ ctx, next }) => {
+export const protectedProcedure = publicProcedure.use(({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Please sign in' });
   }
@@ -25,6 +25,13 @@ export const staffProcedure = publicProcedure.use(({ ctx, next }) => {
       user: ctx.user,
     },
   });
+});
+
+export const staffProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.user.role !== 'STAFF' && ctx.user.role !== 'ADMIN') {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Staff access required' });
+  }
+  return next({ ctx });
 });
 
 export const adminProcedure = staffProcedure.use(({ ctx, next }) => {
