@@ -79,11 +79,12 @@ export const productRouter = router({
           includeInactive: z.boolean().optional(),
           page: z.number().int().min(1).default(1),
           pageSize: z.number().int().min(1).max(100).default(20),
+          cursor: z.number().nullish(),
         })
         .optional(),
     )
     .query(async ({ ctx, input }) => {
-      const page = input?.page ?? 1;
+      const page = input?.cursor || input?.page || 1;
       const pageSize = input?.pageSize ?? 20;
       const where = {
         ...(input?.includeInactive ? {} : { isActive: true }),

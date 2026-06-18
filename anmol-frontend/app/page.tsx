@@ -4,6 +4,7 @@ import CategoryNav from '../components/CategoryNav';
 import HeroSlider from '../components/HeroSlider';
 import LatestArrivals from '../components/LatestArrivals';
 import CategorySection from '../components/CategorySection';
+import CategoryBanner from '../components/CategoryBanner';
 import Newsletter from '../components/Newsletter';
 
 export default function Home() {
@@ -19,12 +20,23 @@ export default function Home() {
       <LatestArrivals />
 
       {/* Featured Categories */}
-      <CategorySection title="Premium Sarees" slug="saree" />
-      <CategorySection title="Stylish Kurtis" slug="kurti" />
-      <CategorySection title="Denim Jeans" slug="jeans" />
-      <CategorySection title="Men's Shirts" slug="shirt" />
-      <CategorySection title="Kidswear" slug="kids" />
-      <CategorySection title="Innerwear Essentials" slug="innerwear" />
+      <CategoryBanner title="Premium Sarees" slug="saree" />
+      <CategorySection title="Top Picks for Sarees" slug="saree" />
+
+      <CategoryBanner title="Stylish Kurtis" slug="kurti" />
+      <CategorySection title="Latest in Kurtis" slug="kurti" />
+
+      <CategoryBanner title="Denim Jeans" slug="jeans" />
+      <CategorySection title="Trending Jeans" slug="jeans" />
+
+      <CategoryBanner title="Men's Shirts" slug="shirt" />
+      <CategorySection title="Bestselling Shirts" slug="shirt" />
+
+      <CategoryBanner title="Kidswear" slug="kids" />
+      <CategorySection title="Adorable Kids Fashion" slug="kids" />
+
+      <CategoryBanner title="Innerwear Essentials" slug="innerwear" />
+      <CategorySection title="Comfortable Innerwear" slug="innerwear" />
 
       {/* Newsletter Subscription */}
       <Newsletter />

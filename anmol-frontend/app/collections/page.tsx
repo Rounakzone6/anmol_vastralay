@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { trpc } from '../../lib/trpc';
-import { ShoppingBag, Search, FilterX } from 'lucide-react';
+import { ShoppingBag, Search, FilterX, Loader2 } from 'lucide-react';
 
 export default function CollectionsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,17 +20,41 @@ export default function CollectionsPage() {
 
   // Fetch active categories for the filter tabs
   const { data: categoriesData } = trpc.category.list.useQuery({ includeInactive: false });
-  const categories = categoriesData?.items || [];
+  const categories = categoriesData || [];
 
   // Fetch products with filters
-  const { data: productsData, isLoading, error } = trpc.product.list.useQuery({
-    pageSize: 50,
+  const { 
+    data, 
+    isLoading, 
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = trpc.product.list.useInfiniteQuery({
+    pageSize: 30, // Show 30 per page as requested
     includeInactive: false,
     search: debouncedSearch || undefined,
     categorySlug: selectedCategorySlug || undefined,
+  }, {
+    getNextPageParam: (lastPage) => lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
   });
 
-  const products = productsData?.items || [];
+  const products = data?.pages.flatMap(page => page.items) || [];
+
+  // Infinite Scroll Observer
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useCallback((node: HTMLDivElement | null) => {
+    if (isLoading || isFetchingNextPage) return;
+    if (observerRef.current) observerRef.current.disconnect();
+
+    observerRef.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasNextPage) {
+        fetchNextPage();
+      }
+    }, { rootMargin: '300px' }); // trigger before hitting bottom
+
+    if (node) observerRef.current.observe(node);
+  }, [isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]);
 
   return (
     <div className="bg-gray-50 min-h-screen py-12">
@@ -75,7 +99,7 @@ export default function CollectionsPage() {
               >
                 All
               </button>
-              {categories.map((cat) => (
+              {categories.map((cat: any) => (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategorySlug(cat.slug || cat.id)}
@@ -169,6 +193,13 @@ export default function CollectionsPage() {
                 </div>
               </Link>
             ))}
+            
+            {/* Loading Trigger for Infinite Scroll */}
+            {hasNextPage && (
+              <div ref={loadMoreRef} className="col-span-full py-12 flex justify-center items-center">
+                <Loader2 className="w-8 h-8 text-[#85142b] animate-spin" />
+              </div>
+            )}
           </div>
         )}
       </div>

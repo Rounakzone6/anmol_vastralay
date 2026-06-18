@@ -3,8 +3,10 @@ import type { Metadata } from 'next';
 import { Providers } from './providers';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import ChatbotWidget from '../components/ChatbotWidget';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   title: {
     template: '%s | Anmol Vastralay',
     default: 'Anmol Vastralay - Premium Ethnic & Western Fashion',
@@ -42,6 +44,7 @@ export default function RootLayout({
             {children}
           </main>
           <Footer />
+          <ChatbotWidget />
         </Providers>
       </body>
     </html>
