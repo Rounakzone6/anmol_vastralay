@@ -17,45 +17,37 @@ export default function CategoryBanner({ title, slug }: CategoryBannerProps) {
           subtitle: 'Elegance woven into every thread.',
           floatingImage: null
         };
-      case 'kurti':
+      case 'women':
         return {
-          bgImage: null,
-          gradient: 'bg-gradient-to-r from-pink-600 to-rose-400',
+          bgImage: '/banners/banner_women.png',
+          gradient: 'bg-black/30',
           titleColor: 'text-white',
           subtitle: 'Vibrant, chic, and ready for any occasion.',
-          floatingImage: '/category-icons/cat_kurti_1781796902125.png'
+          floatingImage: null
         };
-      case 'jeans':
+      case 'men':
         return {
-          bgImage: null,
-          gradient: 'bg-gradient-to-r from-blue-700 to-indigo-500',
-          titleColor: 'text-white',
-          subtitle: 'Premium denim for the perfect fit.',
-          floatingImage: '/category-icons/cat_jeans_1781796913798.png'
-        };
-      case 'shirt':
-        return {
-          bgImage: null,
-          gradient: 'bg-gradient-to-r from-slate-800 to-gray-600',
+          bgImage: '/banners/banner_men.png',
+          gradient: 'bg-black/30',
           titleColor: 'text-white',
           subtitle: 'Crisp, professional, and stylish.',
-          floatingImage: '/category-icons/cat_shirt_1781796925235.png'
+          floatingImage: null
         };
       case 'kids':
         return {
-          bgImage: null,
-          gradient: 'bg-gradient-to-r from-amber-500 to-orange-400',
+          bgImage: '/banners/banner_kids.png',
+          gradient: 'bg-black/30',
           titleColor: 'text-white',
           subtitle: 'Playful, colorful, and energetic.',
-          floatingImage: '/category-icons/cat_kids_1781796936205.png'
+          floatingImage: null
         };
       case 'innerwear':
         return {
-          bgImage: null,
-          gradient: 'bg-gradient-to-r from-teal-600 to-emerald-400',
+          bgImage: '/banners/banner_innerwear.png',
+          gradient: 'bg-black/30',
           titleColor: 'text-white',
           subtitle: 'Everyday comfort, elevated.',
-          floatingImage: '/category-icons/cat_innerwear_1781796989469.png'
+          floatingImage: null
         };
       default:
         return {

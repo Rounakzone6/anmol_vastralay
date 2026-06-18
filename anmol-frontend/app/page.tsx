@@ -23,14 +23,11 @@ export default function Home() {
       <CategoryBanner title="Premium Sarees" slug="saree" />
       <CategorySection title="Top Picks for Sarees" slug="saree" />
 
-      <CategoryBanner title="Stylish Kurtis" slug="kurti" />
-      <CategorySection title="Latest in Kurtis" slug="kurti" />
+      <CategoryBanner title="Women's Collection" slug="women" />
+      <CategorySection title="Latest in Women's Fashion" slug="women" />
 
-      <CategoryBanner title="Denim Jeans" slug="jeans" />
-      <CategorySection title="Trending Jeans" slug="jeans" />
-
-      <CategoryBanner title="Men's Shirts" slug="shirt" />
-      <CategorySection title="Bestselling Shirts" slug="shirt" />
+      <CategoryBanner title="Men's Collection" slug="men" />
+      <CategorySection title="Trending in Men's Wear" slug="men" />
 
       <CategoryBanner title="Kidswear" slug="kids" />
       <CategorySection title="Adorable Kids Fashion" slug="kids" />
