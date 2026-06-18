@@ -24,7 +24,12 @@ async function bootstrap() {
 
   app.use(helmet());
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3002'],
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3002',
+      process.env.FRONTEND_URL,
+      process.env.ADMIN_URL,
+    ].filter((url): url is string => Boolean(url)),
     credentials: true,
   });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
