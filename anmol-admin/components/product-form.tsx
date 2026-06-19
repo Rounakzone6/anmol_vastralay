@@ -11,10 +11,10 @@ import { formatCurrency } from '@/lib/format';
 import { trpc } from '@/lib/trpc';
 import { Plus, Trash2, Save, X, Info, Package, Image as ImageIcon, LayoutGrid, Tag, Scissors, Check, Loader2, AlertCircle } from 'lucide-react';
 
-type VariantGroupRow = {
+type VariantRow = {
   color: string;
-  sizes: string;
-  stockQtys: string;
+  size?: string;
+  stockQty: number;
 };
 
 type ProductFormProps = {
@@ -42,8 +42,8 @@ export function ProductForm({ productId }: ProductFormProps) {
   const [discountPercent, setDiscountPercent] = useState('0');
   const [allowsExtraSaya, setAllowsExtraSaya] = useState(false);
   const [extraSayaPrice, setExtraSayaPrice] = useState('');
-  const [variants, setVariants] = useState<VariantGroupRow[]>([
-    { color: '', sizes: '', stockQtys: '' },
+  const [variants, setVariants] = useState<VariantRow[]>([
+    { color: '', size: '', stockQty: 0 },
   ]);
   const [images, setImages] = useState<(ProductImageSlot | null)[]>([
     null,
@@ -75,30 +75,13 @@ export function ProductForm({ productId }: ProductFormProps) {
     setDiscountPercent(String(product.discountPercent));
     setAllowsExtraSaya(product.allowsExtraSaya);
     setExtraSayaPrice(product.extraSayaPrice != null ? String(product.extraSayaPrice) : '');
-    if (product.kind === 'SAREE') {
-      const mapped = product.variants.map((v) => ({
+    setVariants(
+      product.variants.map((v) => ({
         color: v.color,
-        sizes: '',
-        stockQtys: String(v.stockQty),
-      }));
-      setVariants(mapped.length > 0 ? mapped : [{ color: '', sizes: '', stockQtys: '' }]);
-    } else {
-      const grouped = new Map<string, { sizes: string[]; stockQtys: number[] }>();
-      product.variants.forEach((v) => {
-        if (!grouped.has(v.color)) {
-          grouped.set(v.color, { sizes: [], stockQtys: [] });
-        }
-        const g = grouped.get(v.color)!;
-        if (v.size) g.sizes.push(v.size);
-        g.stockQtys.push(v.stockQty);
-      });
-      const mapped = Array.from(grouped.entries()).map(([color, data]) => ({
-        color,
-        sizes: data.sizes.join(', '),
-        stockQtys: data.stockQtys.join(', '),
-      }));
-      setVariants(mapped.length > 0 ? mapped : [{ color: '', sizes: '', stockQtys: '' }]);
-    }
+        size: v.size ?? undefined,
+        stockQty: v.stockQty,
+      })),
+    );
     const slots: (ProductImageSlot | null)[] = [null, null, null, null];
     product.images.forEach((img, i) => {
       if (i < 4) {
@@ -186,7 +169,7 @@ export function ProductForm({ productId }: ProductFormProps) {
   function addVariantRow() {
     setVariants((rows) => [
       ...rows,
-      { color: '', sizes: '', stockQtys: '' },
+      { color: '', size: kind === 'STANDARD' ? '' : undefined, stockQty: 0 },
     ]);
   }
 
@@ -225,25 +208,11 @@ export function ProductForm({ productId }: ProductFormProps) {
           : undefined,
       variants: variants
         .filter((v) => v.color.trim())
-        .flatMap((v) => {
-          const color = v.color.trim();
-          if (kind === 'SAREE') {
-            return [{ color, stockQty: Number(v.stockQtys.trim()) || 0 }];
-          } else {
-            const sizesArr = v.sizes.split(',').map((s) => s.trim()).filter(Boolean);
-            const stocksArr = v.stockQtys.split(',').map((s) => s.trim()).filter(Boolean);
-            
-            if (sizesArr.length === 0) {
-              return [{ color, stockQty: Number(stocksArr[0]) || 0 }];
-            }
-            
-            return sizesArr.map((size, idx) => ({
-              color,
-              size,
-              stockQty: Number(stocksArr[idx]) || 0
-            }));
-          }
-        }),
+        .map((v) => ({
+          color: v.color.trim(),
+          size: kind === 'STANDARD' ? v.size : undefined,
+          stockQty: v.stockQty,
+        })),
       imageUrls,
     };
 
@@ -311,10 +280,10 @@ export function ProductForm({ productId }: ProductFormProps) {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        
+
         {/* Main Content Column (Left - 2/3) */}
         <div className="xl:col-span-2 space-y-8">
-          
+
           <Card className="p-8 rounded-3xl border-slate-200/60 shadow-sm overflow-hidden relative">
             <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
               <Info size={120} />
@@ -328,10 +297,10 @@ export function ProductForm({ productId }: ProductFormProps) {
             <div className="space-y-7 relative z-10">
               <div className="group">
                 <Label className="text-sm font-semibold text-slate-700 mb-2 block">Product Name</Label>
-                <Input 
-                  value={name} 
-                  onChange={(e) => setName(e.target.value)} 
-                  required 
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
                   placeholder="e.g., Summer Floral Saree"
                   className="text-lg py-6 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white transition-colors shadow-inner"
                 />
@@ -363,7 +332,7 @@ export function ProductForm({ productId }: ProductFormProps) {
           </Card>
 
           <Card className="p-8 rounded-3xl border-slate-200/60 shadow-sm overflow-hidden relative">
-             <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+            <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
               <LayoutGrid size={120} />
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 relative z-10 gap-4">
@@ -381,10 +350,10 @@ export function ProductForm({ productId }: ProductFormProps) {
                 Add Variant
               </Button>
             </div>
-            
+
             <div className="space-y-4 relative z-10">
               {variants.map((row, i) => (
-                <div key={i} className="group flex flex-col sm:flex-row items-start sm:items-end gap-4 p-5 rounded-2xl border border-slate-200 bg-white hover:border-violet-200 hover:shadow-md transition-all">
+                <div key={i} className="group flex flex-col sm:flex-row items-end gap-4 p-5 rounded-2xl border border-slate-200 bg-white hover:border-violet-200 hover:shadow-md transition-all">
                   <div className="w-full sm:flex-1">
                     <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Color</Label>
                     <Input
@@ -395,42 +364,45 @@ export function ProductForm({ productId }: ProductFormProps) {
                         setVariants(next);
                       }}
                       required
-                      placeholder="e.g., Brown"
+                      placeholder="e.g., Crimson Red"
                       className="rounded-xl bg-slate-50/50 focus:bg-white"
                     />
                   </div>
-                  
+
                   {kind === 'STANDARD' ? (
-                    <div className="w-full sm:flex-1">
-                      <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Sizes (comma-separated)</Label>
+                    <div className="w-full sm:w-32 shrink-0">
+                      <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Size</Label>
                       <Input
-                        value={row.sizes}
+                        value={row.size ?? ''}
                         onChange={(e) => {
                           const next = [...variants];
-                          next[i] = { ...next[i], sizes: e.target.value };
+                          next[i] = {
+                            ...next[i],
+                            size: e.target.value,
+                          };
                           setVariants(next);
                         }}
-                        placeholder="e.g., 80, 85, 90"
+                        placeholder="M, 85, 90"
                         className="rounded-xl bg-slate-50/50 focus:bg-white"
                       />
                     </div>
                   ) : null}
-                  
-                  <div className="w-full sm:flex-1">
-                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Stock Qty {kind === 'STANDARD' && '(comma-separated)'}</Label>
+
+                  <div className="w-full sm:w-32 shrink-0">
+                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Stock Qty</Label>
                     <Input
-                      type="text"
-                      value={row.stockQtys}
+                      type="number"
+                      min={0}
+                      value={row.stockQty}
                       onChange={(e) => {
                         const next = [...variants];
-                        next[i] = { ...next[i], stockQtys: e.target.value };
+                        next[i] = { ...next[i], stockQty: Number(e.target.value) };
                         setVariants(next);
                       }}
-                      placeholder={kind === 'STANDARD' ? "e.g., 4, 3, 2" : "e.g., 5"}
                       className="rounded-xl bg-slate-50/50 focus:bg-white font-mono"
                     />
                   </div>
-                  
+
                   <div className="w-full sm:w-auto flex justify-end shrink-0 pb-1">
                     <Button
                       type="button"
@@ -450,7 +422,7 @@ export function ProductForm({ productId }: ProductFormProps) {
 
         {/* Sidebar Column (Right - 1/3) */}
         <div className="space-y-8">
-          
+
           <Card className="p-8 rounded-3xl border-slate-200/60 shadow-sm overflow-hidden relative">
             <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
               <Tag size={120} />
@@ -471,9 +443,9 @@ export function ProductForm({ productId }: ProductFormProps) {
                     const k = e.target.value as 'SAREE' | 'STANDARD';
                     setKind(k);
                     if (k === 'SAREE') {
-                      setVariants([{ color: '', sizes: '', stockQtys: '' }]);
+                      setVariants([{ color: '', stockQty: 0 }]);
                     } else {
-                      setVariants([{ color: '', sizes: '', stockQtys: '' }]);
+                      setVariants([{ color: '', size: '', stockQty: 0 }]);
                     }
                   }}
                   className="rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white shadow-inner font-medium"
@@ -487,15 +459,15 @@ export function ProductForm({ productId }: ProductFormProps) {
               {/* ── Category ── */}
               <div className="group">
                 <Label className="text-sm font-semibold text-slate-700 mb-2 block">Category</Label>
-                <Select 
-                  value={categoryId} 
+                <Select
+                  value={categoryId}
                   onChange={(e) => {
                     setCategoryId(e.target.value);
                     setSubcategoryId('');
                     setItemTypeId('');
                     setShowNewSubcategory(false);
                     setShowNewItemType(false);
-                  }} 
+                  }}
                   required
                   className="rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white shadow-inner font-medium"
                 >
@@ -519,8 +491,8 @@ export function ProductForm({ productId }: ProductFormProps) {
                   </Label>
 
                   {/* Current Selection Dropdown */}
-                  <Select 
-                    value={subcategoryId} 
+                  <Select
+                    value={subcategoryId}
                     onChange={(e) => {
                       setSubcategoryId(e.target.value);
                       setItemTypeId('');
@@ -548,11 +520,10 @@ export function ProductForm({ productId }: ProductFormProps) {
                         {subcategories.map((s: any) => (
                           <div
                             key={s.id}
-                            className={`flex items-center justify-between px-3 py-2 text-sm border-b border-slate-50 last:border-b-0 transition-colors ${
-                              subcategoryId === s.id
+                            className={`flex items-center justify-between px-3 py-2 text-sm border-b border-slate-50 last:border-b-0 transition-colors ${subcategoryId === s.id
                                 ? 'bg-violet-50 text-violet-700'
                                 : 'hover:bg-slate-100 text-slate-600'
-                            }`}
+                              }`}
                           >
                             <button
                               type="button"
@@ -643,8 +614,8 @@ export function ProductForm({ productId }: ProductFormProps) {
                     Item Type
                   </Label>
 
-                  <Select 
-                    value={itemTypeId} 
+                  <Select
+                    value={itemTypeId}
                     onChange={(e) => setItemTypeId(e.target.value)}
                     className="rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white shadow-inner font-medium"
                   >
@@ -668,11 +639,10 @@ export function ProductForm({ productId }: ProductFormProps) {
                         {itemTypes.map((it: any) => (
                           <div
                             key={it.id}
-                            className={`flex items-center justify-between px-3 py-2 text-sm border-b border-slate-50 last:border-b-0 transition-colors ${
-                              itemTypeId === it.id
+                            className={`flex items-center justify-between px-3 py-2 text-sm border-b border-slate-50 last:border-b-0 transition-colors ${itemTypeId === it.id
                                 ? 'bg-emerald-50 text-emerald-700'
                                 : 'hover:bg-slate-100 text-slate-600'
-                            }`}
+                              }`}
                           >
                             <button
                               type="button"
@@ -762,7 +732,7 @@ export function ProductForm({ productId }: ProductFormProps) {
               </div>
               <h3 className="text-xl font-bold text-slate-900 tracking-tight">Pricing</h3>
             </div>
-            
+
             <div className="space-y-6 relative z-10">
               <div>
                 <Label className="text-sm font-semibold text-slate-700 mb-2 block">Net Price (₹)</Label>
@@ -782,7 +752,7 @@ export function ProductForm({ productId }: ProductFormProps) {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <Label className="text-sm font-semibold text-slate-700 mb-2 block">Discount (%)</Label>
                 <div className="relative">
@@ -800,7 +770,7 @@ export function ProductForm({ productId }: ProductFormProps) {
                   </div>
                 </div>
               </div>
-              
+
               <div className="pt-6 mt-6 border-t border-slate-200/80">
                 <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Final Selling Price</Label>
                 <div className="flex items-baseline gap-1">
@@ -824,7 +794,7 @@ export function ProductForm({ productId }: ProductFormProps) {
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 tracking-tight">Extra Options</h3>
               </div>
-              
+
               <div className="relative z-10">
                 <label className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border-2 transition-all cursor-pointer ${allowsExtraSaya ? 'border-indigo-500 bg-indigo-50/50 shadow-sm' : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'}`}>
                   <div className="flex items-start gap-4">
@@ -842,7 +812,7 @@ export function ProductForm({ productId }: ProductFormProps) {
                     </div>
                   </div>
                 </label>
-                
+
                 {allowsExtraSaya ? (
                   <div className="mt-4 p-5 bg-white rounded-2xl border border-indigo-100 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
                     <Label className="text-sm font-semibold text-slate-700 mb-2 block">Saya Price (₹)</Label>
