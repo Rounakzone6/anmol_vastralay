@@ -9,6 +9,7 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
+    "noImplicitAny": false,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -29,7 +30,7 @@
       "@backend/*": [
         "../anmol-backend/src/*"
       ],
-      "@prisma/client": ["./node_modules/@prisma/client"],
+      "@prisma/client": ["../anmol-backend/node_modules/@prisma/client"],
       "@trpc/server": ["./node_modules/@trpc/server"]
     },
     "forceConsistentCasingInFileNames": true
