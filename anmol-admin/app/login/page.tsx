@@ -27,7 +27,7 @@ export default function LoginPage() {
     const email = String(form.get('email'));
     const password = String(form.get('password'));
 
-    login.mutate({ email, password });
+    login.mutate({ identifier: email, password });
   }
 
   const pending = login.isPending;

@@ -152,7 +152,7 @@ export default function StaffPage() {
                       <span className="font-semibold text-slate-900">{u.name || 'Unnamed'}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-slate-600">{u.email}</td>
+                  <td className="px-6 py-4 text-slate-600">{u.email || '-'}</td>
                   <td className="px-6 py-4">
                     {u.role === 'ADMIN' ? (
                       <Badge variant="default" className="bg-indigo-50 text-indigo-700 border-indigo-200 border">Administrator</Badge>

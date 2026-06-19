@@ -58,7 +58,7 @@ export default function OrdersPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="font-semibold text-slate-900">{o.user.name || '—'}</div>
-                    <div className="text-xs text-slate-500 mt-0.5">{o.user.email}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">{o.user.phone || '-'}</div>
                   </td>
                   <td className="px-6 py-4 text-slate-700 font-medium">
                     {o.items.length} item{o.items.length !== 1 ? 's' : ''}

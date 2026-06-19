@@ -36,9 +36,9 @@ async function runTests() {
 
   const appRouter = createAppRouter(auth);
 
-  const testEmail = 'test_customer@anmol.com';
+  const testPhone = '9876543210';
   console.log('\n--- Cleaning up previous test data ---');
-  await prisma.user.deleteMany({ where: { email: testEmail } });
+  await prisma.user.deleteMany({ where: { phone: testPhone } });
   
   console.log('\n1. Testing Registration...');
   
@@ -54,7 +54,7 @@ async function runTests() {
   const publicCaller = appRouter.createCaller(publicContext);
   
   const regResult = await publicCaller.auth.register({
-    email: testEmail,
+    phone: testPhone,
     name: 'Test Customer',
     password: 'password123',
   });
@@ -133,7 +133,7 @@ async function runTests() {
   
   // Cleanup
   console.log('Cleaning up test data...');
-  await prisma.user.delete({ where: { email: testEmail } });
+  await prisma.user.deleteMany({ where: { phone: testPhone } });
   
   await app.close();
 }

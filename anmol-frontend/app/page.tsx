@@ -5,7 +5,7 @@ import HeroSlider from '../components/HeroSlider';
 import LatestArrivals from '../components/LatestArrivals';
 import CategorySection from '../components/CategorySection';
 import CategoryBanner from '../components/CategoryBanner';
-import Newsletter from '../components/Newsletter';
+
 
 export default function Home() {
   return (
@@ -35,8 +35,7 @@ export default function Home() {
       <CategoryBanner title="Innerwear Essentials" slug="innerwear" />
       <CategorySection title="Comfortable Innerwear" slug="innerwear" />
 
-      {/* Newsletter Subscription */}
-      <Newsletter />
+
     </div>
   );
 }

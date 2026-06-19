@@ -42,7 +42,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </Link>
           <div className="mt-6 flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700 font-bold">
-              {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
+              {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || user?.phone?.[0]}
             </div>
             <div className="flex flex-col min-w-0">
               <p className="truncate text-sm font-semibold text-slate-900">{user?.name || 'Admin'}</p>

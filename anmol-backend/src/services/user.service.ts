@@ -20,6 +20,7 @@ export class UserService {
       select: {
         id: true,
         email: true,
+        phone: true,
         name: true,
         role: true,
         createdAt: true,
@@ -34,6 +35,7 @@ export class UserService {
       select: {
         id: true,
         email: true,
+        phone: true,
         name: true,
         createdAt: true,
         _count: {
@@ -56,6 +58,7 @@ export class UserService {
       select: {
         id: true,
         email: true,
+        phone: true,
         name: true,
         role: true,
         createdAt: true,
@@ -69,6 +72,7 @@ export class UserService {
       select: {
         id: true,
         email: true,
+        phone: true,
         name: true,
         role: true,
         createdAt: true,

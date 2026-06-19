@@ -144,7 +144,7 @@ export class OrderService {
     return this.prisma.order.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
-        user: { select: { name: true, email: true } },
+        user: { select: { name: true, email: true, phone: true } },
         items: true,
       },
     });

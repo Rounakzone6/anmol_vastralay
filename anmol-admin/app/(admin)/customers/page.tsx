@@ -49,7 +49,7 @@ export default function CustomersPage() {
                       <span className="font-semibold text-slate-900">{c.name || 'Unnamed'}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-slate-600">{c.email}</td>
+                  <td className="px-6 py-4 text-slate-600">{c.phone || '-'}</td>
                   <td className="px-6 py-4 text-center">
                     {c._count.orders > 0 ? (
                       <Badge variant="default" className="bg-slate-100 text-slate-700 font-medium">

@@ -1,7 +1,7 @@
 import { TRPCError } from '@trpc/server';
 import type { AuthService } from '../services/auth.service';
 import { publicProcedure, router, protectedProcedure } from '../config/trpc.config';
-import { LoginSchema, RegisterSchema } from '../models/auth.model';
+import { LoginSchema, RegisterSchema, GoogleAuthSchema } from '../models/auth.model';
 
 export const createAuthRouter = (auth: AuthService) =>
   router({
@@ -9,11 +9,11 @@ export const createAuthRouter = (auth: AuthService) =>
       .input(LoginSchema)
       .mutation(async ({ input }) => {
         try {
-          return await auth.login(input.email, input.password);
-        } catch {
+          return await auth.login(input.identifier, input.password);
+        } catch (error: any) {
           throw new TRPCError({
             code: 'UNAUTHORIZED',
-            message: 'Invalid email or password',
+            message: error.message || 'Invalid credentials',
           });
         }
       }),
@@ -34,6 +34,20 @@ export const createAuthRouter = (auth: AuthService) =>
           throw new TRPCError({
             code: 'BAD_REQUEST',
             message: message.replace('BAD_REQUEST:', ''),
+          });
+        }
+      }),
+
+    googleAuth: publicProcedure
+      .input(GoogleAuthSchema)
+      .mutation(async ({ input }) => {
+        try {
+          return await auth.googleAuth(input.credential);
+        } catch (error: any) {
+          const message = error.message || 'Google authentication failed';
+          throw new TRPCError({
+            code: 'UNAUTHORIZED',
+            message,
           });
         }
       }),
