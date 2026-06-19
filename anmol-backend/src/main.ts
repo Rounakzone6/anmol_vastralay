@@ -68,12 +68,21 @@ async function bootstrap() {
   app.use(requestLogger);
   
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3002',
-      process.env.FRONTEND_URL,
-      process.env.ADMIN_URL,
-    ].filter((url): url is string => Boolean(url)),
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'http://localhost:3002',
+        process.env.FRONTEND_URL,
+        process.env.ADMIN_URL,
+      ].filter(Boolean);
+
+      // Allow if it matches explicit URLs, or if it's a Vercel preview URL for this project
+      if (!origin || allowedOrigins.includes(origin) || (origin.startsWith('https://anmol-vastralay') && origin.endsWith('.vercel.app'))) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
