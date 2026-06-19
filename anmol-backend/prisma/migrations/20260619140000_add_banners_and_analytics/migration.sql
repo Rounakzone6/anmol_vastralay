@@ -1,4 +1,4 @@
-﻿-- CreateEnum
+-- CreateEnum
 CREATE TYPE "BannerPlacement" AS ENUM ('HERO', 'PROMO', 'CATEGORY');
 
 -- CreateEnum
