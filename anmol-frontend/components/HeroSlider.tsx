@@ -32,8 +32,23 @@ export default function HeroSlider() {
 
   if (isLoading || !banners || banners.length === 0) {
     return (
-      <div className="relative overflow-hidden bg-gray-50 h-[300px] sm:h-[400px] lg:h-[500px] flex items-center justify-center">
-        <p className="text-gray-400">Loading...</p>
+      <div className="relative overflow-hidden bg-gray-200 h-[300px] sm:h-[400px] lg:h-[500px]">
+        {/* Shimmer Effect Skeleton */}
+        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+        <div className="absolute inset-0 flex items-center px-8 sm:px-16 lg:px-24">
+          <div className="max-w-xl w-full animate-pulse">
+            {/* Title Skeleton */}
+            <div className="h-10 sm:h-12 lg:h-14 bg-gray-300/80 rounded-md w-3/4 mb-4"></div>
+            <div className="h-10 sm:h-12 lg:h-14 bg-gray-300/80 rounded-md w-1/2 mb-8"></div>
+            
+            {/* Subtitle Skeleton */}
+            <div className="h-6 sm:h-7 bg-gray-300/80 rounded-md w-full mb-3"></div>
+            <div className="h-6 sm:h-7 bg-gray-300/80 rounded-md w-4/5 mb-8"></div>
+            
+            {/* Button Skeleton */}
+            <div className="h-12 bg-gray-300/80 rounded-md w-36"></div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -45,7 +60,7 @@ export default function HeroSlider() {
         className="flex h-full transition-transform duration-500 ease-in-out"
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
       >
-        {banners.map((banner, index) => (
+        {banners.map((banner: any, index: number) => (
           <div key={banner.id} className="min-w-full relative h-full">
             <Image
               src={banner.imageUrl}
@@ -89,7 +104,7 @@ export default function HeroSlider() {
 
       {/* Dots */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex space-x-2">
-        {banners.map((_, index) => (
+        {banners.map((_: any, index: number) => (
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}

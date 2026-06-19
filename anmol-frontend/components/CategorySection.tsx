@@ -70,7 +70,7 @@ export default function CategorySection({ title, slug, viewAllLink }: CategorySe
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 xl:gap-6">
-          {products.map((product) => (
+          {products.map((product: any) => (
             <Link 
               key={product.id} 
               href={`/product/${product.slug || product.id}`}
