@@ -38,6 +38,7 @@ model User {
   cart      Cart?
   orders    Order[]
   payments  Payment[]
+  interactions ProductInteraction[]
 }
 
 model Category {
@@ -71,6 +72,7 @@ model Product {
   updatedAt       DateTime         @updatedAt
   cartItems       CartItem[]
   orderItems      OrderItem[]
+  interactions    ProductInteraction[]
 }
 
 model ProductImage {
@@ -211,4 +213,28 @@ model Banner {
   isActive    Boolean         @default(true)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+}
+
+model SiteVisit {
+  id        String   @id @default(cuid())
+  sessionId String   @unique
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+enum InteractionType {
+  VIEW
+  ADD_TO_CART
+  PURCHASE
+}
+
+model ProductInteraction {
+  id        String          @id @default(cuid())
+  productId String
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String?
+  action    InteractionType
+  createdAt DateTime        @default(now())
 }

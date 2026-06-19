@@ -84,15 +84,7 @@ export default function CategoriesPage() {
         description="Manage your product categories like Silk, Suti, and Saree."
         action={
           <div className="flex flex-wrap gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={seedDefaults.isPending}
-              onClick={() => seedDefaults.mutate()}
-            >
-              <Download size={16} className="mr-2" />
-              Load Defaults
-            </Button>
+
             <Button type="button" onClick={() => setShowForm((v) => !v)}>
               {showForm ? 'Cancel' : (
                 <>
@@ -262,38 +254,26 @@ export default function CategoriesPage() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           type="button"
-                          variant="ghost"
-                          className="h-8 w-8 p-0 hover:bg-slate-200 text-slate-600"
+                          variant="outline"
+                          className="px-2 py-1 text-xs"
                           onClick={() => startEdit(c.id, c.name, c.description, c.imageUrl)}
-                          title="Edit Category"
                         >
-                          <Edit2 size={16} />
+                          <Edit2 size={14} className="mr-1" />
+                          Edit
                         </Button>
                         <Button
                           type="button"
-                          variant="ghost"
-                          className="h-8 w-8 p-0 hover:bg-slate-200 text-slate-600"
-                          onClick={() => handleHide(c)}
-                          title={c.isActive ? 'Hide Category' : 'Show Category'}
-                        >
-                          {c.isActive ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="h-8 w-8 p-0 hover:bg-rose-100 text-rose-600"
+                          variant="danger"
+                          className="px-2 py-1 text-xs"
                           disabled={c._count.products > 0}
-                          title={
-                            c._count.products > 0
-                              ? 'Remove or reassign products before deleting'
-                              : 'Permanently delete this category'
-                          }
+                          title={c._count.products > 0 ? 'Remove or reassign products before deleting' : ''}
                           onClick={() => handleDelete(c)}
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={14} className="mr-1" />
+                          Delete
                         </Button>
                       </div>
                     </td>

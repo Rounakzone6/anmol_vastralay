@@ -11,6 +11,7 @@ import { PaymentService } from '../services/payment.service';
 import { UserService } from '../services/user.service';
 import { CustomerService } from '../services/customer.service';
 import { BannerService } from '../services/banner.service';
+import { TrackingService } from '../services/tracking.service';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { BannerService } from '../services/banner.service';
     UserService,
     CustomerService,
     BannerService,
+    TrackingService,
   ],
 })
 export class AppModule {}

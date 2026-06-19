@@ -53,6 +53,7 @@ export const ListProductSchema = z.object({
 
 export const ProductIdSchema = z.object({ id: z.string() });
 export const ProductSlugSchema = z.object({ slug: z.string() });
+export const GetRecommendedSchema = z.object({ sessionId: z.string().optional() });
 
 export const UpdateProductSchema = productBaseSchema
   .partial()

@@ -10,6 +10,7 @@ import type { PaymentService } from '../services/payment.service';
 import type { UserService } from '../services/user.service';
 import type { CustomerService } from '../services/customer.service';
 import type { BannerService } from '../services/banner.service';
+import type { TrackingService } from '../services/tracking.service';
 
 export interface TRPCContext {
   prisma: PrismaClient;
@@ -25,6 +26,7 @@ export interface TRPCContext {
     user: UserService;
     customer: CustomerService;
     banner: BannerService;
+    tracking: TrackingService;
   };
 }
 

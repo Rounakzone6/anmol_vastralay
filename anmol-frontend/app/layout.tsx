@@ -4,6 +4,7 @@ import { Providers } from './providers';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ChatbotWidget from '../components/ChatbotWidget';
+import { ActivityTracker } from '../components/ActivityTracker';
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
@@ -45,6 +46,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <ChatbotWidget />
+          <ActivityTracker />
         </Providers>
       </body>
     </html>

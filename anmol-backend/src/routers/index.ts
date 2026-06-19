@@ -9,6 +9,7 @@ import { cartRouter } from './cart.router';
 import { orderRouter } from './order.router';
 import { paymentRouter } from './payment.router';
 import { bannerRouter } from './banner.router';
+import { trackingRouter } from './tracking.router';
 
 export function createAppRouter(auth: AuthService) {
   return router({
@@ -21,6 +22,7 @@ export function createAppRouter(auth: AuthService) {
     order: orderRouter,
     payment: paymentRouter,
     banner: bannerRouter,
+    tracking: trackingRouter,
   });
 }
 
