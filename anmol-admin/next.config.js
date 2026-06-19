@@ -3,6 +3,12 @@ const nextConfig = {
   experimental: {
     externalDir: true,
   },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       {

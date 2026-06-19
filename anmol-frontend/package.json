@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "postinstall": "cd ../anmol-backend && npm install && npx prisma generate",
+    "prebuild": "cd ../anmol-backend && npm install && npx prisma generate",
     "dev": "next dev",
     "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider next build",
     "start": "next start",
