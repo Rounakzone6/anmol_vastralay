@@ -85,6 +85,7 @@ export default function BannersVisualEditor() {
 
   const seed = trpc.banner.adminSeedBanners.useMutation({
     onSuccess: () => utils.banner.adminGetBanners.invalidate(),
+    onError: (err) => alert('Failed to seed banners: ' + err.message),
   });
 
   const update = trpc.banner.adminUpdateBanner.useMutation({
