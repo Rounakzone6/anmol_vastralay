@@ -68,6 +68,8 @@ export class ProductService {
     const where = {
       ...(input?.includeInactive ? {} : { isActive: true }),
       ...(input?.categoryId ? { categoryId: input.categoryId } : {}),
+      ...(input?.subcategoryId ? { subcategoryId: input.subcategoryId } : {}),
+      ...(input?.itemTypeId ? { itemTypeId: input.itemTypeId } : {}),
       ...(input?.categorySlug ? { category: { slug: input.categorySlug } } : {}),
       ...(input?.kind ? { kind: input.kind } : {}),
       ...(input?.search
@@ -145,13 +147,16 @@ export class ProductService {
       data: {
         name: input.name,
         slug,
-        description: input.description,
+        brand: input.brand,
         categoryId: input.categoryId,
+        subcategoryId: input.subcategoryId || null,
+        itemTypeId: input.itemTypeId || null,
         kind: input.kind,
         netPrice: input.netPrice,
         discountPercent: input.discountPercent,
         allowsExtraSaya,
         extraSayaPrice: allowsExtraSaya && input.extraSayaPrice != null ? input.extraSayaPrice : null,
+        // Prisma variant creation (size is now a string)
         variants: input.variants?.length
           ? {
               create: input.variants.map((v) => ({
@@ -234,8 +239,10 @@ export class ProductService {
         data: {
           name: input.name,
           slug,
-          description: input.description,
+          brand: input.brand,
           categoryId: input.categoryId,
+          subcategoryId: input.subcategoryId !== undefined ? input.subcategoryId : undefined,
+          itemTypeId: input.itemTypeId !== undefined ? input.itemTypeId : undefined,
           kind: input.kind,
           netPrice: input.netPrice,
           discountPercent: input.discountPercent,

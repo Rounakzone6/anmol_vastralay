@@ -6,7 +6,12 @@ import {
   CreateCategorySchema,
   UpdateCategorySchema,
   DeleteCategorySchema,
+  CreateSubcategorySchema,
+  UpdateSubcategorySchema,
+  CreateItemTypeSchema,
+  UpdateItemTypeSchema,
 } from '../models/category.model';
+import { z } from 'zod';
 
 export const categoryRouter = router({
   list: publicProcedure
@@ -48,4 +53,28 @@ export const categoryRouter = router({
   seedDefaults: staffProcedure.mutation(async ({ ctx }) => {
     return ctx.services.category.seedDefaults();
   }),
+
+  createSubcategory: staffProcedure
+    .input(CreateSubcategorySchema)
+    .mutation(async ({ ctx, input }) => ctx.services.category.createSubcategory(input)),
+
+  updateSubcategory: staffProcedure
+    .input(UpdateSubcategorySchema)
+    .mutation(async ({ ctx, input }) => ctx.services.category.updateSubcategory(input)),
+
+  deleteSubcategory: staffProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => ctx.services.category.deleteSubcategory(input.id)),
+
+  createItemType: staffProcedure
+    .input(CreateItemTypeSchema)
+    .mutation(async ({ ctx, input }) => ctx.services.category.createItemType(input)),
+
+  updateItemType: staffProcedure
+    .input(UpdateItemTypeSchema)
+    .mutation(async ({ ctx, input }) => ctx.services.category.updateItemType(input)),
+
+  deleteItemType: staffProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => ctx.services.category.deleteItemType(input.id)),
 });

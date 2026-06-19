@@ -19,7 +19,14 @@ export class CategoryService {
     return this.prisma.category.findMany({
       where,
       orderBy: { name: 'asc' },
-      include: { _count: { select: { products: true } } },
+      include: { 
+        _count: { select: { products: true } },
+        subcategories: {
+          include: {
+            itemTypes: true
+          }
+        }
+      },
     });
   }
 
@@ -133,4 +140,69 @@ export class CategoryService {
     }
     return { count: DEFAULT_CATEGORIES.length };
   }
+
+  // --- SUBCATEGORY ---
+  async createSubcategory(input: z.infer<typeof import('../models/category.model').CreateSubcategorySchema>) {
+    const slug = await uniqueSlug(input.name, async (s) => {
+      const row = await this.prisma.subcategory.findUnique({ where: { slug: s } });
+      return Boolean(row);
+    });
+    return this.prisma.subcategory.create({
+      data: {
+        name: input.name,
+        slug,
+        categoryId: input.categoryId,
+        description: input.description,
+      }
+    });
+  }
+
+  async updateSubcategory(input: z.infer<typeof import('../models/category.model').UpdateSubcategorySchema>) {
+    return this.prisma.subcategory.update({
+      where: { id: input.id },
+      data: {
+        name: input.name,
+        description: input.description,
+        isActive: input.isActive,
+      }
+    });
+  }
+
+  async deleteSubcategory(id: string) {
+    await this.prisma.subcategory.delete({ where: { id } });
+    return { success: true };
+  }
+
+  // --- ITEMTYPE ---
+  async createItemType(input: z.infer<typeof import('../models/category.model').CreateItemTypeSchema>) {
+    const slug = await uniqueSlug(input.name, async (s) => {
+      const row = await this.prisma.itemType.findUnique({ where: { slug: s } });
+      return Boolean(row);
+    });
+    return this.prisma.itemType.create({
+      data: {
+        name: input.name,
+        slug,
+        subcategoryId: input.subcategoryId,
+        description: input.description,
+      }
+    });
+  }
+
+  async updateItemType(input: z.infer<typeof import('../models/category.model').UpdateItemTypeSchema>) {
+    return this.prisma.itemType.update({
+      where: { id: input.id },
+      data: {
+        name: input.name,
+        description: input.description,
+        isActive: input.isActive,
+      }
+    });
+  }
+
+  async deleteItemType(id: string) {
+    await this.prisma.itemType.delete({ where: { id } });
+    return { success: true };
+  }
 }
+

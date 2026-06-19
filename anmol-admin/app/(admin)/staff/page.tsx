@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/page-header';
 import { Button, Card, Input, Label, Select, Badge } from '@/components/ui';
 import { formatDate } from '@/lib/format';
 import { trpc } from '@/lib/trpc';
-import { Plus, ShieldAlert, Shield } from 'lucide-react';
+import { Plus, ShieldAlert, Shield, Loader2 } from 'lucide-react';
 
 export default function StaffPage() {
   const utils = trpc.useUtils();
@@ -115,7 +115,10 @@ export default function StaffPage() {
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5 mt-6">
         {isLoading ? (
-          <p className="p-8 text-center text-sm font-medium text-slate-500">Loading staff directory…</p>
+          <div className="p-12 flex flex-col items-center justify-center text-slate-400">
+            <Loader2 className="h-8 w-8 animate-spin mb-4" />
+            <p className="text-sm font-medium">Loading staff directory...</p>
+          </div>
         ) : error ? (
           <div className="p-8 text-center flex flex-col items-center justify-center text-rose-600 bg-rose-50/50">
             <ShieldAlert size={24} className="mb-2" />

@@ -28,3 +28,29 @@ export const DeleteCategorySchema = z.object({
   id: z.string(),
   hard: z.boolean().optional(),
 });
+
+export const CreateSubcategorySchema = z.object({
+  name: z.string().min(2),
+  categoryId: z.string(),
+  description: z.string().optional(),
+});
+
+export const UpdateSubcategorySchema = z.object({
+  id: z.string(),
+  name: z.string().min(2).optional(),
+  description: z.string().nullable().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const CreateItemTypeSchema = z.object({
+  name: z.string().min(2),
+  subcategoryId: z.string(),
+  description: z.string().optional(),
+});
+
+export const UpdateItemTypeSchema = z.object({
+  id: z.string(),
+  name: z.string().min(2).optional(),
+  description: z.string().nullable().optional(),
+  isActive: z.boolean().optional(),
+});

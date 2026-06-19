@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/page-header';
 import { Button, Card, Input, Select, Badge } from '@/components/ui';
 import { formatCurrency } from '@/lib/format';
 import { trpc } from '@/lib/trpc';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, Filter, Loader2 } from 'lucide-react';
 
 export default function ProductsPage() {
   const [search, setSearch] = useState('');
@@ -68,7 +68,10 @@ export default function ProductsPage() {
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5">
         {isLoading ? (
-          <p className="p-8 text-center text-sm font-medium text-slate-500">Loading products…</p>
+          <div className="p-12 flex flex-col items-center justify-center text-slate-400">
+            <Loader2 className="h-8 w-8 animate-spin mb-4" />
+            <p className="text-sm font-medium">Loading products...</p>
+          </div>
         ) : !data?.items.length ? (
           <div className="p-12 text-center flex flex-col items-center justify-center">
             <p className="text-lg font-medium text-slate-900 mb-2">No products found</p>

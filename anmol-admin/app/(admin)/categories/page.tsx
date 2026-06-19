@@ -6,7 +6,8 @@ import { PageHeader } from '@/components/page-header';
 import { Button, Card, Input, Label, Textarea, Badge } from '@/components/ui';
 import { ImageUpload } from '@/components/image-upload';
 import { trpc } from '@/lib/trpc';
-import { Plus, Download, Edit2, Eye, EyeOff, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Plus, Download, Edit2, Eye, EyeOff, Trash2, Image as ImageIcon, Settings2, Loader2 } from 'lucide-react';
+import Link from 'next/link';
 
 export default function CategoriesPage() {
   const utils = trpc.useUtils();
@@ -147,7 +148,10 @@ export default function CategoriesPage() {
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5">
         {isLoading ? (
-          <p className="p-8 text-center text-sm font-medium text-slate-500">Loading categories…</p>
+          <div className="p-12 flex flex-col items-center justify-center text-slate-400">
+            <Loader2 className="h-8 w-8 animate-spin mb-4" />
+            <p className="text-sm font-medium">Loading categories...</p>
+          </div>
         ) : !categories?.length ? (
           <div className="p-12 text-center flex flex-col items-center justify-center">
             <p className="text-lg font-medium text-slate-900 mb-2">No categories found</p>
@@ -264,6 +268,16 @@ export default function CategoriesPage() {
                           <Edit2 size={14} className="mr-1" />
                           Edit
                         </Button>
+                        <Link href={`/categories/${c.id}`}>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="px-2 py-1 text-xs"
+                          >
+                            <Settings2 size={14} className="mr-1" />
+                            Manage
+                          </Button>
+                        </Link>
                         <Button
                           type="button"
                           variant="danger"

@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/page-header';
 import { Button, Card, Input, Label } from '@/components/ui';
 import { trpc } from '@/lib/trpc';
 import { fileToDataUri } from '@/lib/images';
-import { UploadCloud, Edit3, Check, X } from 'lucide-react';
+import { UploadCloud, Edit3, Check, X, Loader2 } from 'lucide-react';
 
 // Reusable component for inline text editing
 function InlineEdit({ 
@@ -108,7 +108,12 @@ export default function BannersVisualEditor() {
   };
 
   if (isLoading) {
-    return <div className="p-8">Loading banners...</div>;
+    return (
+      <div className="p-20 flex flex-col items-center justify-center text-slate-400">
+        <Loader2 className="h-8 w-8 animate-spin mb-4" />
+        <p className="text-sm font-medium">Loading banners...</p>
+      </div>
+    );
   }
 
   if (!banners || banners.length === 0) {
@@ -128,8 +133,8 @@ export default function BannersVisualEditor() {
     );
   }
 
-  const heroBanners = banners.filter(b => b.placement === 'HERO');
-  const categoryBanners = banners.filter(b => b.placement === 'CATEGORY');
+  const heroBanners = banners.filter((b: any) => b.placement === 'HERO');
+  const categoryBanners = banners.filter((b: any) => b.placement === 'CATEGORY');
 
   const renderBannerCard = (banner: any, type: 'hero' | 'category') => {
     const isHero = type === 'hero';
@@ -216,7 +221,7 @@ export default function BannersVisualEditor() {
           <p className="text-sm text-zinc-500">These appear in the main rotating carousel on the homepage.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {heroBanners.map(b => renderBannerCard(b, 'hero'))}
+          {heroBanners.map((b: any) => renderBannerCard(b, 'hero'))}
         </div>
       </section>
 
@@ -226,7 +231,7 @@ export default function BannersVisualEditor() {
           <p className="text-sm text-zinc-500">These appear above specific category sections on the homepage.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categoryBanners.map(b => renderBannerCard(b, 'category'))}
+          {categoryBanners.map((b: any) => renderBannerCard(b, 'category'))}
         </div>
       </section>
     </div>

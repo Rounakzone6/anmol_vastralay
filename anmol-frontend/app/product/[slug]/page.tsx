@@ -232,9 +232,38 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
             )}
 
             <div className="mt-8 border-t border-gray-100 pt-8">
-              <h3 className="text-sm font-medium text-gray-900 mb-4">Product Details</h3>
-              <div className="space-y-4 text-sm text-gray-600 leading-relaxed">
-                <p>{displayProduct.description || "No description provided."}</p>
+              <h3 className="text-sm font-medium text-gray-900 mb-4">Product Specifications</h3>
+              <div className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
+                <dl className="divide-y divide-gray-100 text-sm">
+                  {displayProduct.brand && (
+                    <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-100/50 transition-colors">
+                      <dt className="font-semibold text-gray-900">Brand</dt>
+                      <dd className="mt-1 text-gray-700 sm:col-span-2 sm:mt-0 font-medium">{displayProduct.brand}</dd>
+                    </div>
+                  )}
+                  <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-100/50 transition-colors bg-white">
+                    <dt className="font-semibold text-gray-900">Product Name</dt>
+                    <dd className="mt-1 text-gray-700 sm:col-span-2 sm:mt-0">{displayProduct.name}</dd>
+                  </div>
+                  {displayProduct.category?.name && (
+                    <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-100/50 transition-colors">
+                      <dt className="font-semibold text-gray-900">Category</dt>
+                      <dd className="mt-1 text-gray-700 sm:col-span-2 sm:mt-0">{displayProduct.category.name}</dd>
+                    </div>
+                  )}
+                  {displayProduct.subcategory?.name && (
+                    <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-100/50 transition-colors bg-white">
+                      <dt className="font-semibold text-gray-900">Subcategory</dt>
+                      <dd className="mt-1 text-gray-700 sm:col-span-2 sm:mt-0">{displayProduct.subcategory.name}</dd>
+                    </div>
+                  )}
+                  {displayProduct.itemType?.name && (
+                    <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-100/50 transition-colors">
+                      <dt className="font-semibold text-gray-900">Type</dt>
+                      <dd className="mt-1 text-gray-700 sm:col-span-2 sm:mt-0">{displayProduct.itemType.name}</dd>
+                    </div>
+                  )}
+                </dl>
               </div>
             </div>
 

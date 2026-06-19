@@ -18,8 +18,10 @@ export const variantInputSchema = z.object({
 export const productBaseSchema = z.object({
   name: z.string().min(2),
   slug: z.string().optional(),
-  description: z.string().optional(),
+  brand: z.string().optional(),
   categoryId: z.string(),
+  subcategoryId: z.string().optional().nullable(),
+  itemTypeId: z.string().optional().nullable(),
   kind: z.nativeEnum(ProductKind),
   netPrice: z.number().positive(),
   discountPercent: z.number().min(0).max(100).default(0),
@@ -40,6 +42,8 @@ export const productBaseSchema = z.object({
 export const ListProductSchema = z.object({
   categoryId: z.string().optional(),
   categorySlug: z.string().optional(),
+  subcategoryId: z.string().optional(),
+  itemTypeId: z.string().optional(),
   kind: z.nativeEnum(ProductKind).optional(),
   search: z.string().optional(),
   includeInactive: z.boolean().optional(),
@@ -96,6 +100,8 @@ type ProductWithRelations = Product & {
   images: ProductImage[];
   variants: ProductVariant[];
   category?: { id: string; name: string; slug: string };
+  subcategory?: { id: string; name: string; slug: string } | null;
+  itemType?: { id: string; name: string; slug: string } | null;
 };
 
 export function mapVariant(variant: ProductVariant) {
@@ -117,6 +123,8 @@ export function mapProduct(product: ProductWithRelations) {
     images: product.images.sort((a, b) => a.sortOrder - b.sortOrder),
     variants: product.variants.map(mapVariant),
     category: product.category,
+    subcategory: product.subcategory,
+    itemType: product.itemType,
   };
 }
 
@@ -132,4 +140,6 @@ export const productInclude = {
   images: true,
   variants: true,
   category: { select: { id: true, name: true, slug: true } },
+  subcategory: { select: { id: true, name: true, slug: true } },
+  itemType: { select: { id: true, name: true, slug: true } },
 } satisfies Prisma.ProductInclude;

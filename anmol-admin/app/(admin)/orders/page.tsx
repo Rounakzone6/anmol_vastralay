@@ -3,6 +3,7 @@
 import { PageHeader } from '@/components/page-header';
 import { Card, Select, Badge } from '@/components/ui';
 import { trpc } from '@/lib/trpc';
+import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 const STATUS_STYLES = {
@@ -28,7 +29,10 @@ export default function OrdersPage() {
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5 mt-6">
         {isLoading ? (
-          <p className="p-8 text-center text-sm font-medium text-slate-500">Loading orders…</p>
+          <div className="p-12 flex flex-col items-center justify-center text-slate-400">
+            <Loader2 className="h-8 w-8 animate-spin mb-4" />
+            <p className="text-sm font-medium">Loading orders...</p>
+          </div>
         ) : !orders?.length ? (
           <div className="p-12 text-center flex flex-col items-center justify-center">
             <p className="text-lg font-medium text-slate-900 mb-2">No orders found</p>

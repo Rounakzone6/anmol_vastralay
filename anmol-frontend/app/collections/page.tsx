@@ -10,6 +10,8 @@ export default function CollectionsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | undefined>(undefined);
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | undefined>(undefined);
+  const [selectedItemTypeId, setSelectedItemTypeId] = useState<string | undefined>(undefined);
 
   // Debounce search input
   useEffect(() => {
@@ -21,7 +23,7 @@ export default function CollectionsPage() {
 
   // Fetch active categories for the filter tabs
   const { data: categoriesData } = trpc.category.list.useQuery({ includeInactive: false });
-  const categories = categoriesData || [];
+  const categories: any[] = categoriesData || [];
 
   // Fetch products with filters
   const { 
@@ -36,6 +38,8 @@ export default function CollectionsPage() {
     includeInactive: false,
     search: debouncedSearch || undefined,
     categorySlug: selectedCategorySlug || undefined,
+    subcategoryId: selectedSubcategoryId || undefined,
+    itemTypeId: selectedItemTypeId || undefined,
   }, {
     getNextPageParam: (lastPage) => lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
   });
@@ -57,6 +61,11 @@ export default function CollectionsPage() {
     if (node) observerRef.current.observe(node);
   }, [isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]);
 
+  const activeCategory = categories.find((c: any) => c.slug === selectedCategorySlug || c.id === selectedCategorySlug);
+  const activeSubcategories = activeCategory?.subcategories || [];
+  const activeSubcategory = activeSubcategories.find((s: any) => s.id === selectedSubcategoryId);
+  const activeItemTypes = activeSubcategory?.itemTypes || [];
+
   return (
     <div className="bg-gray-50 min-h-screen py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -73,9 +82,9 @@ export default function CollectionsPage() {
 
         {/* --- Filters & Search Bar --- */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-8 sticky top-20 z-20">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="flex flex-col gap-4 items-stretch justify-between">
             {/* Search Input */}
-            <div className="relative w-full md:w-96 shrink-0">
+            <div className="relative w-full md:w-96 shrink-0 self-end md:self-auto">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
@@ -88,31 +97,105 @@ export default function CollectionsPage() {
               />
             </div>
 
-            {/* Category Pills */}
-            <div className="flex flex-nowrap md:flex-wrap items-center gap-2 overflow-x-auto w-full pb-2 md:pb-0 hide-scrollbar" style={{ scrollbarWidth: 'none' }}>
-              <button
-                onClick={() => setSelectedCategorySlug(undefined)}
-                className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  !selectedCategorySlug 
-                    ? 'bg-[#85142b] text-white shadow-md' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                All
-              </button>
-              {categories.map((cat: any) => (
+            <div className="flex flex-col w-full">
+              {/* Category Pills */}
+              <div className="flex flex-nowrap md:flex-wrap items-center gap-2 overflow-x-auto w-full pb-2 md:pb-0 hide-scrollbar" style={{ scrollbarWidth: 'none' }}>
                 <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategorySlug(cat.slug || cat.id)}
+                  onClick={() => {
+                    setSelectedCategorySlug(undefined);
+                    setSelectedSubcategoryId(undefined);
+                    setSelectedItemTypeId(undefined);
+                  }}
                   className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    selectedCategorySlug === (cat.slug || cat.id)
-                      ? 'bg-[#85142b] text-white shadow-md'
+                    !selectedCategorySlug 
+                      ? 'bg-[#85142b] text-white shadow-md' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  {cat.name}
+                  All
                 </button>
-              ))}
+                {categories.map((cat: any) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setSelectedCategorySlug(cat.slug || cat.id);
+                      setSelectedSubcategoryId(undefined);
+                      setSelectedItemTypeId(undefined);
+                    }}
+                    className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      selectedCategorySlug === (cat.slug || cat.id)
+                        ? 'bg-[#85142b] text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+
+              {/* Subcategory Pills */}
+              {activeSubcategories.length > 0 && (
+                <div className="flex flex-nowrap md:flex-wrap items-center gap-2 overflow-x-auto w-full pb-2 md:pb-0 hide-scrollbar mt-3 pt-3 border-t border-gray-100" style={{ scrollbarWidth: 'none' }}>
+                  <button
+                    onClick={() => {
+                      setSelectedSubcategoryId(undefined);
+                      setSelectedItemTypeId(undefined);
+                    }}
+                    className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                      !selectedSubcategoryId
+                        ? 'bg-gray-800 text-white shadow-sm'
+                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    All {activeCategory?.name}
+                  </button>
+                  {activeSubcategories.map((sub: any) => (
+                    <button
+                      key={sub.id}
+                      onClick={() => {
+                        setSelectedSubcategoryId(sub.id);
+                        setSelectedItemTypeId(undefined);
+                      }}
+                      className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        selectedSubcategoryId === sub.id
+                          ? 'bg-gray-800 text-white shadow-sm'
+                          : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      {sub.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Item Type Pills */}
+              {activeItemTypes.length > 0 && (
+                <div className="flex flex-nowrap md:flex-wrap items-center gap-2 overflow-x-auto w-full pb-2 md:pb-0 hide-scrollbar mt-3 pt-3 border-t border-gray-100" style={{ scrollbarWidth: 'none' }}>
+                  <button
+                    onClick={() => setSelectedItemTypeId(undefined)}
+                    className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                      !selectedItemTypeId
+                        ? 'bg-violet-600 text-white shadow-sm'
+                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    All {activeSubcategory?.name}
+                  </button>
+                  {activeItemTypes.map((item: any) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setSelectedItemTypeId(item.id)}
+                      className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        selectedItemTypeId === item.id
+                          ? 'bg-violet-600 text-white shadow-sm'
+                          : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      {item.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -138,7 +221,12 @@ export default function CollectionsPage() {
             </p>
             {(searchTerm || selectedCategorySlug) && (
               <button 
-                onClick={() => { setSearchTerm(''); setSelectedCategorySlug(undefined); }}
+                onClick={() => { 
+                  setSearchTerm(''); 
+                  setSelectedCategorySlug(undefined); 
+                  setSelectedSubcategoryId(undefined);
+                  setSelectedItemTypeId(undefined);
+                }}
                 className="mt-6 px-6 py-2 bg-[#85142b] text-white rounded-full font-medium hover:bg-[#6c1023] transition-colors"
               >
                 Clear all filters
