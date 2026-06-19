@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react';
+import { forwardRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react';
 
 export function Button({
   className = '',
@@ -23,17 +23,18 @@ export function Button({
   );
 }
 
-export function Input({
-  className = '',
-  ...props
-}: InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      className={`w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 hover:border-slate-300 shadow-sm ${className}`}
-      {...props}
-    />
-  );
-}
+export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement> & { className?: string }>(
+  ({ className = '', ...props }, ref) => {
+    return (
+      <input
+        ref={ref}
+        className={`w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 hover:border-slate-300 shadow-sm ${className}`}
+        {...props}
+      />
+    );
+  }
+);
+Input.displayName = 'Input';
 
 export function Label({ children, className = '' }: { children: ReactNode; className?: string }) {
   return <label className={`mb-1.5 block text-sm font-semibold text-slate-700 ${className}`}>{children}</label>;

@@ -1,104 +1,88 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { trpc } from '../lib/trpc';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, ChevronRight } from 'lucide-react';
+import ProductCard from './ProductCard';
 
 export default function LatestArrivals() {
-  const { data: productsData, isLoading, error } = trpc.product.list.useQuery({
-    pageSize: 8, // Just get the top 8 for the homepage latest arrivals
-    includeInactive: false
+  const {
+    data: productsData,
+    isLoading,
+    error,
+  } = trpc.product.list.useQuery({
+    pageSize: 8,
+    includeInactive: false,
   });
 
   const products = productsData?.items || [];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-16 mb-16">
-      <div className="mb-8 flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900 tracking-tight relative inline-block">
-          Latest Arrivals
-          <span className="absolute -bottom-2 left-0 w-1/2 h-1 bg-[#85142b] rounded-full"></span>
-        </h2>
-        <Link href="/collections" className="text-sm font-medium text-[#85142b] hover:text-[#6c1023] hover:underline">
-          View All Products &rarr;
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-16 mb-16">
+      {/* Section header */}
+      <div className="mb-8 flex items-end justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-widest text-[#85142b] mb-1.5">
+            Fresh In
+          </p>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight relative inline-block">
+            Latest Arrivals
+            <span className="absolute -bottom-2 left-0 w-10 h-1 bg-[#85142b] rounded-full" />
+          </h2>
+        </div>
+        <Link
+          href="/collections"
+          className="hidden sm:flex items-center gap-1 text-sm font-semibold text-[#85142b] hover:text-[#6c1023] hover:underline transition-colors"
+        >
+          View All <ChevronRight size={15} />
         </Link>
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:gap-6">
+        /* Skeleton grid */
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 sm:gap-5">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="bg-gray-50 border border-gray-100 rounded-lg aspect-4/5 flex items-center justify-center overflow-hidden">
-              <div className="animate-pulse flex flex-col items-center justify-center opacity-70">
-                <div className="animate-bounce">
-                  <ShoppingBag className="w-10 h-10 sm:w-16 sm:h-16 text-[#85142b]/20" />
-                </div>
-                <div className="h-2 w-16 bg-gray-200 rounded mt-4"></div>
-                <div className="h-2 w-10 bg-gray-200 rounded mt-2"></div>
+            <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+              <div
+                className="skeleton-shimmer w-full"
+                style={{ paddingBottom: '130%' }}
+              />
+              <div className="p-3 sm:p-4 space-y-2">
+                <div className="h-3 skeleton-shimmer rounded-full w-1/3" />
+                <div className="h-4 skeleton-shimmer rounded-full w-4/5" />
+                <div className="h-5 skeleton-shimmer rounded-full w-1/2" />
               </div>
             </div>
           ))}
         </div>
       ) : error ? (
-        <div className="flex min-h-[40vh] items-center justify-center">
-          <div className="text-lg text-red-500">Error loading products. Please try again.</div>
+        <div className="flex min-h-[30vh] items-center justify-center">
+          <p className="text-red-500">Error loading products. Please try again.</p>
         </div>
       ) : products.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-lg border border-gray-200">
-          <p className="text-gray-500 text-lg">No products available at the moment. Check back soon!</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl border border-gray-100">
+          <ShoppingBag size={52} strokeWidth={1} className="text-gray-200 mb-4" />
+          <p className="text-gray-500 font-medium">New products coming soon — stay tuned!</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:gap-6">
-          {products.map((product) => (
-            <Link 
-              key={product.id} 
-              href={`/product/${product.slug || product.id}`}
-              className="group flex flex-col bg-white rounded-lg border border-gray-200 overflow-hidden hover:border-gray-300 transition-colors shadow-sm hover:shadow-md"
+        <>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 sm:gap-5">
+            {products.map((product, idx) => (
+              <ProductCard key={product.id} product={product as any} index={idx} />
+            ))}
+          </div>
+
+          {/* Mobile view-all link */}
+          <div className="mt-8 text-center sm:hidden">
+            <Link
+              href="/collections"
+              className="inline-flex items-center gap-1.5 px-8 py-3 rounded-full border-2 border-[#85142b] text-[#85142b] font-bold text-sm hover:bg-[#85142b] hover:text-white transition-all"
             >
-              <div className="aspect-h-5 aspect-w-4 bg-gray-100 relative">
-                {product.images.length > 0 ? (
-                  <Image
-                    src={product.images[0].url}
-                    alt={product.name}
-                    fill
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                    className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-300">
-                    <ShoppingBag size={40} strokeWidth={1} />
-                  </div>
-                )}
-                {Number(product.discountPercent) > 0 && (
-                  <div className="absolute top-2 left-2 bg-red-50 text-red-600 text-xs font-bold px-2 py-1 rounded">
-                    {product.discountPercent}% OFF
-                  </div>
-                )}
-              </div>
-              <div className="p-3 sm:p-4 flex flex-col grow">
-                <h3 className="text-sm sm:text-base font-medium text-gray-800 line-clamp-1 mb-1">
-                  {product.name}
-                </h3>
-                <div className="mt-auto flex items-center gap-2">
-                  <span className="text-lg font-bold text-gray-900">
-                    ₹{Number(product.netPrice).toFixed(2)}
-                  </span>
-                  {Number(product.discountPercent) > 0 && (
-                    <span className="text-xs text-gray-500 line-through">
-                      ₹{(Number(product.netPrice) * (1 + Number(product.discountPercent)/100)).toFixed(2)}
-                    </span>
-                  )}
-                </div>
-                <div className="mt-2 inline-flex">
-                  <span className="bg-green-50 text-green-700 text-[10px] font-semibold px-2 py-0.5 rounded-full">
-                    Free Delivery
-                  </span>
-                </div>
-              </div>
+              View All Products <ChevronRight size={15} />
             </Link>
-          ))}
-        </div>
+          </div>
+        </>
       )}
-    </div>
+    </section>
   );
 }
