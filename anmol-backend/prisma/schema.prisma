@@ -13,6 +13,12 @@ enum UserRole {
   CUSTOMER
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
 enum ProductKind {
   SAREE
   STANDARD
@@ -26,21 +32,45 @@ enum GarmentSize {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String?  @unique
-  phone     String?  @unique
-  googleId  String?  @unique
-  name      String?
-  password  String?
-  role      UserRole @default(STAFF)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String    @id @default(cuid())
+  email           String?   @unique
+  phone           String?   @unique
+  googleId        String?   @unique
+  name            String?
+  password        String?
+  profileImage    String?
+  profileImageId  String?
+  gender          Gender?
+  dateOfBirth     DateTime?
+  emailVerified   Boolean   @default(false)
+  phoneVerified   Boolean   @default(false)
+  role            UserRole  @default(STAFF)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  addresses Address[]
-  cart      Cart?
-  orders    Order[]
-  payments  Payment[]
+  addresses    Address[]
+  cart         Cart?
+  orders       Order[]
+  payments     Payment[]
   interactions ProductInteraction[]
+  otpCodes     OtpCode[]
+}
+
+enum OtpType {
+  EMAIL
+  PHONE
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      OtpType
+  code      String
+  target    String
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 model Category {
@@ -109,6 +139,9 @@ model Address {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label     String   @default("Home")
+  fullName  String?
+  phone     String?
   street    String
   city      String
   state     String

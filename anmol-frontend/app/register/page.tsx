@@ -23,7 +23,7 @@ export default function RegisterPage() {
 
   const registerMutation = trpc.auth.register.useMutation({
     onSuccess: (data) => {
-      setAuth(data.token);
+      setAuth(data.token, data.user);
       router.push('/');
     },
     onError: (err) => {
@@ -33,7 +33,7 @@ export default function RegisterPage() {
 
   const googleAuthMutation = trpc.auth.googleAuth.useMutation({
     onSuccess: (data) => {
-      setAuth(data.token);
+      setAuth(data.token, data.user);
       router.push('/');
     },
     onError: (err) => {

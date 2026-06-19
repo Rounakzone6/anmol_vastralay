@@ -11,6 +11,7 @@ import { PaymentService } from '../services/payment.service';
 import { UserService } from '../services/user.service';
 import { CustomerService } from '../services/customer.service';
 import { BannerService } from '../services/banner.service';
+import { OtpService } from '../services/otp.service';
 
 
 @Module({
@@ -29,6 +30,7 @@ import { BannerService } from '../services/banner.service';
     UserService,
     CustomerService,
     BannerService,
+    OtpService,
 
   ],
 })

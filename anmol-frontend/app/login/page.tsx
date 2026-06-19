@@ -21,7 +21,7 @@ export default function LoginPage() {
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: (data) => {
-      setAuth(data.token);
+      setAuth(data.token, data.user);
       router.push('/');
     },
     onError: (err) => {
@@ -31,7 +31,7 @@ export default function LoginPage() {
 
   const googleAuthMutation = trpc.auth.googleAuth.useMutation({
     onSuccess: (data) => {
-      setAuth(data.token);
+      setAuth(data.token, data.user);
       router.push('/');
     },
     onError: (err) => {

@@ -10,6 +10,10 @@ export type AuthUser = {
   email: string | null;
   phone: string | null;
   name: string | null;
+  profileImage: string | null;
+  gender: string | null;
+  emailVerified: boolean;
+  phoneVerified: boolean;
   role: UserRole;
 };
 
@@ -50,6 +54,10 @@ export class AuthService {
         email: adminEmail,
         phone: null,
         name: 'Admin',
+        profileImage: null,
+        gender: null,
+        emailVerified: true,
+        phoneVerified: false,
         role: UserRole.ADMIN,
       };
       const token = await this.jwt.signAsync({
@@ -151,6 +159,7 @@ export class AuthService {
     const googleId = payload.sub;
     const email = payload.email || null;
     const name = payload.name || null;
+    const picture = payload.picture || null; // Google profile image URL
 
     // Try to find existing user by googleId or email
     let record = await this.prisma.user.findFirst({
@@ -163,20 +172,27 @@ export class AuthService {
     });
 
     if (record) {
-      // Link Google ID if not already linked
-      if (!record.googleId) {
+      // Link Google ID and update profile image if not already linked
+      const updateData: Record<string, unknown> = {};
+      if (!record.googleId) updateData.googleId = googleId;
+      if (picture && !record.profileImage) updateData.profileImage = picture;
+      if (email && !record.emailVerified) updateData.emailVerified = true;
+
+      if (Object.keys(updateData).length > 0) {
         record = await this.prisma.user.update({
           where: { id: record.id },
-          data: { googleId },
+          data: updateData,
         });
       }
     } else {
-      // Create new user
+      // Create new user with Google profile picture stored directly
       record = await this.prisma.user.create({
         data: {
           googleId,
           email,
           name,
+          profileImage: picture, // Store Google image URL as-is
+          emailVerified: !!email, // Google already verified the email
           role: 'CUSTOMER',
           cart: { create: {} },
         },
@@ -204,6 +220,10 @@ export class AuthService {
           email: process.env.ADMIN_EMAIL || '',
           phone: null,
           name: 'Admin',
+          profileImage: null,
+          gender: null,
+          emailVerified: true,
+          phoneVerified: false,
           role: UserRole.ADMIN,
         };
       }
@@ -223,6 +243,10 @@ export class AuthService {
     email: string | null;
     phone: string | null;
     name: string | null;
+    profileImage?: string | null;
+    gender?: string | null;
+    emailVerified?: boolean;
+    phoneVerified?: boolean;
     role: UserRole;
   }): AuthUser {
     return {
@@ -230,6 +254,10 @@ export class AuthService {
       email: user.email,
       phone: user.phone,
       name: user.name,
+      profileImage: user.profileImage ?? null,
+      gender: user.gender ?? null,
+      emailVerified: user.emailVerified ?? false,
+      phoneVerified: user.phoneVerified ?? false,
       role: user.role,
     };
   }
