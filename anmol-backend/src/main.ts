@@ -76,8 +76,13 @@ async function bootstrap() {
         process.env.ADMIN_URL,
       ].filter(Boolean);
 
-      // Allow if it matches explicit URLs, or if it's a Vercel preview URL for this project
-      if (!origin || allowedOrigins.includes(origin) || (origin.startsWith('https://anmol-vastralay') && origin.endsWith('.vercel.app'))) {
+      // Allow if it matches explicit URLs, or if it's a Vercel preview URL for frontend or admin
+      if (
+        !origin || 
+        allowedOrigins.includes(origin) || 
+        (origin.startsWith('https://anmol-vastralay') && origin.endsWith('.vercel.app')) ||
+        (origin.startsWith('https://anmol-admin') && origin.endsWith('.vercel.app'))
+      ) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
