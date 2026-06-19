@@ -6,7 +6,15 @@ import { trpc } from '../lib/trpc';
 import { ShoppingBag } from 'lucide-react';
 
 export default function CategoryNav() {
-  const { data: categories, isLoading } = trpc.category.list.useQuery();
+  const { data: categories, isLoading, error } = trpc.category.list.useQuery(undefined);
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border-b border-red-200 py-4 text-center text-sm text-red-600">
+        Error loading categories: {error.message}
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -25,7 +33,13 @@ export default function CategoryNav() {
     );
   }
 
-  if (!categories || categories.length === 0) return null;
+  if (!categories || categories.length === 0) {
+    return (
+      <div className="bg-white border-b border-gray-200 py-4 text-center text-sm text-gray-500">
+        No categories available. Please add categories in the admin panel.
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white border-b border-gray-200">
