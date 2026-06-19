@@ -88,6 +88,16 @@ export class OrderService {
             paymentMethod: 'COD',
           },
         });
+
+        // Deduct inventory for COD orders immediately
+        for (const item of cart.items) {
+          if (item.variantId) {
+            await tx.productVariant.update({
+              where: { id: item.variantId },
+              data: { stockQty: { decrement: item.quantity } },
+            });
+          }
+        }
       }
 
       // 5. Clear cart

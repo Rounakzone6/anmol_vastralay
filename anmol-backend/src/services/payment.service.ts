@@ -47,10 +47,21 @@ export class PaymentService {
         data: { status: 'COMPLETED' },
       });
 
-      await tx.order.update({
+      const order = await tx.order.update({
         where: { id: payment.orderId },
         data: { status: 'PROCESSING' },
+        include: { items: true },
       });
+
+      // Deduct inventory for online payments after successful verification
+      for (const item of order.items) {
+        if (item.variantId) {
+          await tx.productVariant.update({
+            where: { id: item.variantId },
+            data: { stockQty: { decrement: item.quantity } },
+          });
+        }
+      }
 
       return updatedPayment;
     });
