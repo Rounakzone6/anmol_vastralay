@@ -28,7 +28,9 @@
       ],
       "@backend/*": [
         "../anmol-backend/src/*"
-      ]
+      ],
+      "@prisma/client": ["./node_modules/@prisma/client"],
+      "@trpc/server": ["./node_modules/@trpc/server"]
     },
     "forceConsistentCasingInFileNames": true
   },
