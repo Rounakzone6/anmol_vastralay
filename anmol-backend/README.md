@@ -1,98 +1,305 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Anmol Vastralay - Backend API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A high-performance NestJS backend for the Anmol Vastralay e-commerce platform. Provides REST/tRPC endpoints for product management, authentication, payments, and order processing.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- **tRPC & Express**: Type-safe RPC framework with Express integration
+- **PostgreSQL + Prisma**: Robust relational database with migrations
+- **JWT Authentication**: Secure token-based auth with role-based access (admin, staff, customer)
+- **Product Management**: Support for sarees (color variants) and standard garments (color + size)
+- **Image Hosting**: Cloudinary integration for product images with auto-optimization
+- **Payments**: Razorpay integration for secure payment processing
+- **Google OAuth**: Customer sign-in via Google
+- **CORS & Helmet**: Security headers and CORS configuration
+- **Rate Limiting**: Throttle requests to prevent abuse
+- **Comprehensive Validation**: tRPC + Zod schema validation
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Prerequisites
 
-## Project setup
+- **Node.js** v18+ (check with `node --version`)
+- **npm** v9+ (check with `npm --version`)
+- **PostgreSQL** v12+ (local or remote instance)
+- Environment variables properly set (see `.env.example`)
 
-```bash
-$ npm install
-```
+## Quick Start (Development)
 
-## Compile and run the project
+### 1. Install Dependencies
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
+### 2. Configure Environment
+
+Copy `.env.example` to `.env` and update values:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+cp .env.example .env
 ```
+
+Edit `.env` with your:
+- Database connection string
+- JWT secret (generate with `openssl rand -hex 32`)
+- Cloudinary, Razorpay, and Google OAuth credentials
+
+### 3. Database Setup
+
+Initialize and migrate the database:
+
+```bash
+npm run prisma:generate   # Generate Prisma Client
+npm run prisma:migrate    # Run migrations
+npm run prisma:seed       # (Optional) Seed demo data
+```
+
+### 4. Start Development Server
+
+```bash
+npm run start:dev
+```
+
+Server runs at `http://localhost:3001`
+
+tRPC playground available at `http://localhost:3001/trpc`
+
+## Project Structure
+
+```
+src/
+├── main.ts                    # Entry point
+├── config/
+│   └── trpc.config.ts         # tRPC router & middleware setup
+├── models/
+│   ├── product.model.ts       # Product schemas & types
+│   ├── auth.model.ts          # Auth schemas
+│   └── ...
+├── services/
+│   ├── product.service.ts     # Product business logic
+│   ├── auth.service.ts        # Authentication & JWT
+│   ├── prisma.service.ts      # Database client wrapper
+│   ├── cloudinary.service.ts  # Image upload/deletion
+│   ├── payment.service.ts     # Razorpay integration
+│   └── ...
+├── routers/
+│   ├── product.router.ts      # Product tRPC routes
+│   ├── auth.router.ts         # Auth tRPC routes
+│   └── ...
+├── modules/
+│   └── app.module.ts          # NestJS module configuration
+└── utils/
+    ├── slug.ts                # URL-friendly slugs
+    ├── pricing.ts             # Price calculations
+    └── ...
+
+prisma/
+├── schema.prisma              # Database schema
+├── seed.ts                    # Demo data seeder
+└── migrations/                # Database migrations
+```
+
+## Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run build` | Build for production (`dist/` folder) |
+| `npm run start:dev` | Watch mode (development) |
+| `npm run start:prod` | Run production build |
+| `npm run prisma:generate` | Generate Prisma Client |
+| `npm run prisma:migrate` | Run database migrations |
+| `npm run prisma:studio` | Open Prisma Studio GUI |
+| `npm run prisma:seed` | Seed demo data |
+
+## API Endpoints
+
+### Base URL
+- Development: `http://localhost:3001`
+- Health: `GET /` → Returns API info
+
+### tRPC Routes
+All routes are under `/trpc` with the following namespaces:
+
+#### **Auth**
+- `auth.register` (POST) - Customer registration
+- `auth.login` (POST) - Login with email/phone
+- `auth.googleSignIn` (POST) - Google OAuth sign-in
+- `auth.logout` (POST) - Invalidate token
+
+#### **Products**
+- `product.list` (GET) - List products with filters
+  - Supports: `page`, `pageSize`, `categoryId`, `categorySlug`, `search`, `kind`, `includeInactive`
+- `product.getById` (GET) - Get single product by ID
+- `product.getBySlug` (GET) - Get single product by URL slug
+- `product.create` (POST) - Create product (staff only)
+- `product.update` (PATCH) - Update product (staff only)
+- `product.delete` (DELETE) - Delete product (staff only)
+- `product.uploadImage` (POST) - Upload image to Cloudinary
+
+#### **Categories**
+- `category.list` (GET) - List all categories
+- `category.create` (POST) - Create category (admin only)
+
+#### **Cart**
+- `cart.getCart` (GET) - Get customer cart
+- `cart.addItem` (POST) - Add item to cart
+- `cart.removeItem` (DELETE) - Remove item from cart
+- `cart.clear` (POST) - Clear all items
+
+#### **Orders**
+- `order.list` (GET) - List customer orders
+- `order.create` (POST) - Create order from cart
+- `order.getDetails` (GET) - Get order details
+
+#### **Payments**
+- `payment.createRazorpayOrder` (POST) - Create Razorpay order
+- `payment.verifyPayment` (POST) - Verify payment signature
+
+See [PRODUCT_API.md](docs/PRODUCT_API.md) for detailed endpoint documentation.
+
+## Database Schema
+
+### Key Models
+- **User**: Admin/Staff/Customer accounts with JWT tokens
+- **Product**: Items with variants (color/size), images, pricing
+- **Category**: Product categorization (Saree, Kurti, etc.)
+- **Cart**: Shopping cart with items and quantities
+- **Order**: Completed purchases with shipping & payment status
+- **Payment**: Razorpay payment records with signature verification
+
+Run `npm run prisma:studio` to visualize the schema.
+
+## Authentication
+
+### JWT Tokens
+- Issued on login/registration
+- Contains: `userId`, `role`, `email`
+- Expires: 7 days (configurable via `JWT_EXPIRES_IN`)
+- Sent via: `Authorization: Bearer <token>` header
+
+### Roles
+- **ADMIN**: Full system access (users, categories, payments)
+- **STAFF**: Product management (create, update, delete)
+- **CUSTOMER**: Purchase products, view orders, manage cart
 
 ## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Production Build
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Build
+npm run build
+
+# Run
+npm run start:prod
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Output is in `dist/` folder.
 
-## Resources
+### Docker Deployment
 
-Check out a few resources that may come in handy when working with NestJS:
+```dockerfile
+FROM node:20-alpine
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY dist ./dist
+
+EXPOSE 3001
+CMD ["node", "dist/main"]
+```
+
+Build and run:
+```bash
+docker build -t anmol-backend .
+docker run -p 3001:3001 --env-file .env anmol-backend
+```
+
+### Environment Variables (Production)
+
+Required for production deployment:
+
+```bash
+NODE_ENV=production
+DATABASE_URL=postgresql://user:pass@prod-db:5432/anmol_prod
+JWT_SECRET=<generate-with-openssl-rand-hex-32>
+FRONTEND_URL=https://anmolvastralay.com
+ADMIN_URL=https://admin.anmolvastralay.com
+CLOUDINARY_CLOUD_NAME=<your-cloud-name>
+CLOUDINARY_API_KEY=<your-api-key>
+CLOUDINARY_API_SECRET=<your-api-secret>
+RAZORPAY_KEY_ID=<your-production-key>
+RAZORPAY_KEY_SECRET=<your-production-secret>
+PORT=3001
+```
+
+### Database Backup
+
+```bash
+# Dump database
+pg_dump -h localhost -U postgres anmol_db > backup.sql
+
+# Restore database
+psql -h localhost -U postgres anmol_db < backup.sql
+```
+
+## Performance Optimization
+
+- **Database Indexing**: Indexed on `slug`, `email`, `phone` for faster lookups
+- **Pagination**: Implements cursor-based pagination for list endpoints
+- **Caching**: Consider adding Redis for session/cart caching (TODO)
+- **Query Optimization**: Prisma includes relations selectively to reduce payload
+
+## Security
+
+- **Helmet**: Security headers (CSP, X-Frame-Options, etc.)
+- **CORS**: Whitelisted origins (frontend, admin)
+- **Rate Limiting**: 100 requests per 60 seconds per IP
+- **Input Validation**: Zod schemas validate all inputs
+- **Password Hashing**: bcryptjs with salt rounds = 10
+- **JWT**: Signed with HS256, verified on all protected routes
+
+## Monitoring & Logging
+
+Logs are output to console. For production, integrate:
+- **Winston** or **Pino** for structured logging
+- **Sentry** for error tracking
+- **New Relic** or **DataDog** for APM
+
+## Troubleshooting
+
+### Database Connection Error
+- Verify PostgreSQL is running: `psql -U postgres`
+- Check `DATABASE_URL` in `.env`
+- Run migrations: `npm run prisma:migrate`
+
+### JWT/Auth Issues
+- Ensure `JWT_SECRET` is set
+- Check token expiry: `JWT_EXPIRES_IN`
+- Verify token in `Authorization` header
+
+### Cloudinary Errors
+- Verify credentials in `.env`
+- Check upload folder exists in Cloudinary console
+
+### Payment Integration Issues
+- Test with Razorpay test keys first
+- Verify webhook signature verification
+
+## Contributing
+
+1. Create a feature branch: `git checkout -b feature/my-feature`
+2. Commit changes: `git commit -m "Add my feature"`
+3. Push: `git push origin feature/my-feature`
+4. Open a Pull Request
 
 ## Support
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+For issues or questions:
+- Check [PRODUCT_API.md](docs/PRODUCT_API.md) for API details
+- Review Prisma docs: https://www.prisma.io/docs
+- NestJS docs: https://docs.nestjs.com
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+UNLICENSED (Internal Use Only)

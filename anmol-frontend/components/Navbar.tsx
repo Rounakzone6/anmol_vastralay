@@ -39,7 +39,7 @@ const Navbar = () => {
         <div className="flex h-20 items-center justify-between gap-4">
           
           {/* Logo Section */}
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <Link href="/" className="flex flex-col">
               <span className="text-xl font-extrabold tracking-wide text-[#85142b] sm:text-2xl">
                 अनमोल वस्त्रालय

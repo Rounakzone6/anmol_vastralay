@@ -28,7 +28,7 @@ export default function LatestArrivals() {
       {isLoading ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:gap-6">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="bg-gray-50 border border-gray-100 rounded-lg aspect-[4/5] flex items-center justify-center overflow-hidden">
+            <div key={i} className="bg-gray-50 border border-gray-100 rounded-lg aspect-4/5 flex items-center justify-center overflow-hidden">
               <div className="animate-pulse flex flex-col items-center justify-center opacity-70">
                 <div className="animate-bounce">
                   <ShoppingBag className="w-10 h-10 sm:w-16 sm:h-16 text-[#85142b]/20" />
@@ -75,7 +75,7 @@ export default function LatestArrivals() {
                   </div>
                 )}
               </div>
-              <div className="p-3 sm:p-4 flex flex-col flex-grow">
+              <div className="p-3 sm:p-4 flex flex-col grow">
                 <h3 className="text-sm sm:text-base font-medium text-gray-800 line-clamp-1 mb-1">
                   {product.name}
                 </h3>

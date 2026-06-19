@@ -26,7 +26,7 @@ const links = [
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? '/';
   const logout = useLogout();
   const { data: user } = trpc.auth.me.useQuery();
 

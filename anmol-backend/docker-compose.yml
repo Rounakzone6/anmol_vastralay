@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: anmol-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: anmol_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin - Database GUI (Optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: anmol-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+
+# Usage:
+#   docker-compose up          # Start all services
+#   docker-compose down        # Stop all services
+#   docker-compose logs -f     # View logs
+#
+# Access:
+#   PostgreSQL: localhost:5432 (postgres / postgres)
+#   pgAdmin:    http://localhost:5050 (admin@example.com / admin)
+#
+# Connect in .env:
+#   DATABASE_URL=postgresql://postgres:postgres@postgres:5432/anmol_db

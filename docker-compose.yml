@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: anmol-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: anmol_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./anmol-backend
+      dockerfile: Dockerfile
+    container_name: anmol-backend
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/anmol_db
+      JWT_SECRET: dev-secret-key-change-in-production
+      FRONTEND_URL: http://localhost:3000
+      ADMIN_URL: http://localhost:3002
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET}
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Admin Panel
+  admin:
+    build:
+      context: ./anmol-admin
+      dockerfile: Dockerfile
+    container_name: anmol-admin
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001/trpc
+      NEXT_PUBLIC_SITE_URL: http://localhost:3002
+    ports:
+      - "3002:3002"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Frontend (Optional)
+  # frontend:
+  #   build:
+  #     context: ./anmol-frontend
+  #     dockerfile: Dockerfile
+  #   container_name: anmol-frontend
+  #   environment:
+  #     NEXT_PUBLIC_API_URL: http://localhost:3001/trpc
+  #     NEXT_PUBLIC_SITE_URL: http://localhost:3000
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - backend
+
+volumes:
+  postgres_data:
+
+# Usage:
+#   docker-compose up          # Start all services
+#   docker-compose down        # Stop all services
+#   docker-compose logs -f     # View all logs
+#   docker-compose logs -f backend  # View backend logs
+#
+# Services:
+#   Backend API: http://localhost:3001/health
+#   Admin Panel: http://localhost:3002
+#   PostgreSQL: localhost:5432 (postgres / postgres)
+#
+# Environment:
+#   Copy .env to root directory for Cloudinary & Razorpay keys

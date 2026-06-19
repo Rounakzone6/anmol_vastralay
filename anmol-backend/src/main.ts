@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
-import type { Request } from 'express';
+import { ValidationPipe, Logger } from '@nestjs/common';
+import type { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import { AppModule } from './modules/app.module';
@@ -18,10 +18,30 @@ import { BannerService } from './services/banner.service';
 
 import { createAppRouter } from './routers';
 
+const logger = new Logger('Bootstrap');
+
 function getBearerToken(req: Request): string | undefined {
   const header = req.headers.authorization;
   if (!header?.startsWith('Bearer ')) return undefined;
   return header.slice(7);
+}
+
+// Request logging middleware
+function requestLogger(req: Request, res: Response, next: NextFunction) {
+  const start = Date.now();
+  const method = req.method;
+  const path = req.path;
+
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const statusCode = res.statusCode;
+    const statusColor = statusCode >= 400 ? '❌' : '✓';
+    if (process.env.NODE_ENV !== 'production' || statusCode >= 400) {
+      logger.log(`${statusColor} ${method} ${path} → ${statusCode} (${duration}ms)`);
+    }
+  });
+
+  next();
 }
 
 async function bootstrap() {
@@ -45,6 +65,8 @@ async function bootstrap() {
   const appRouter = createAppRouter(auth);
 
   app.use(helmet());
+  app.use(requestLogger);
+  
   app.enableCors({
     origin: [
       'http://localhost:3000',
@@ -69,20 +91,42 @@ async function bootstrap() {
   );
 
   const http = app.getHttpAdapter().getInstance();
+  
+  // Health check endpoint
+  http.get('/health', (_req, res) => {
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+    });
+  });
+
+  // Root endpoint with API info
   http.get('/', (_req, res) => {
     res.json({
-      message: 'Anmol API',
-      trpc: '/trpc',
-      storefront: 'http://localhost:3000',
-      admin: 'http://localhost:3002',
+      message: 'Anmol Vastralay API',
+      version: '0.0.1',
+      endpoints: {
+        health: '/health',
+        trpc: '/trpc',
+      },
+      services: {
+        storefront: process.env.FRONTEND_URL || 'http://localhost:3000',
+        admin: process.env.ADMIN_URL || 'http://localhost:3002',
+      },
+      documentation: '/docs (if available)',
     });
   });
 
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
-  console.log(`API:    http://localhost:${port}`);
-  console.log(`tRPC:   http://localhost:${port}/trpc`);
-  console.log(`Admin:  http://localhost:3002`);
+  
+  logger.log(`✓ API Server running on port ${port}`);
+  logger.log(`✓ tRPC Playground: http://localhost:${port}/trpc`);
+  logger.log(`✓ Health Check: http://localhost:${port}/health`);
+  logger.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.log(`✓ Database: ${process.env.DATABASE_URL?.split('@')[1] || 'not configured'}`);
 }
 
 void bootstrap();
