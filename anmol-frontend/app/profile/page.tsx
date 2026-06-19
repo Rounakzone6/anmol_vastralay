@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -13,7 +13,7 @@ import {
 
 type TabKey = 'overview' | 'addresses' | 'security';
 
-export default function ProfilePage() {
+function ProfileContent() {
   const { isAuthenticated, logout, updateUser } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -141,6 +141,19 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin h-8 w-8 border-4 border-[#85142b] border-t-transparent rounded-full" />
+      </div>
+    }>
+      <ProfileContent />
+    </Suspense>
+  );
+}
+
 
 /* ─── Overview Tab ───────────────────────────────────────────── */
 function OverviewTab({ profile, refetch, updateUser }: { profile: any; refetch: () => void; updateUser: (u: any) => void }) {
