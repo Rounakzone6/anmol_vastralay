@@ -1,5 +1,4 @@
 import {
-  GarmentSize,
   Prisma,
   Product,
   ProductImage,
@@ -9,11 +8,9 @@ import {
 import { z } from 'zod';
 import { withProductPricing } from '../utils/pricing';
 
-export const garmentSizeSchema = z.nativeEnum(GarmentSize);
-
 export const variantInputSchema = z.object({
   color: z.string().min(1),
-  size: garmentSizeSchema.optional(),
+  size: z.string().optional(),
   stockQty: z.number().int().min(0).default(0),
   sku: z.string().optional(),
 });
@@ -67,7 +64,7 @@ export const UpsertVariantSchema = z.object({
   productId: z.string(),
   variantId: z.string().optional(),
   color: z.string().min(1),
-  size: garmentSizeSchema.optional(),
+  size: z.string().optional(),
   stockQty: z.number().int().min(0),
   sku: z.string().optional(),
 });
@@ -125,7 +122,7 @@ export function mapProduct(product: ProductWithRelations) {
 
 export function variantSizeKey(
   kind: 'SAREE' | 'STANDARD',
-  size?: GarmentSize | null,
+  size?: string | null,
 ): string {
   if (kind === 'SAREE') return '';
   return size ?? '';

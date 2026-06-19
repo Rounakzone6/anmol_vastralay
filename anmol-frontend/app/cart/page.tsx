@@ -9,7 +9,7 @@ import { useAuth } from '../../lib/useAuth';
 
 export default function CartPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   
   const utils = trpc.useUtils();
   const { data: cart, isLoading } = trpc.cart.getCart.useQuery(undefined, {
@@ -25,6 +25,10 @@ export default function CartPage() {
   });
 
   // Checkout logic moved to /checkout page
+
+  if (!isHydrated) {
+    return <div className="p-8 text-center">Loading...</div>;
+  }
 
   if (!isAuthenticated) {
     return (

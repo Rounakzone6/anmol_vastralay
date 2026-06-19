@@ -6,11 +6,15 @@ import { trpc } from '../../lib/trpc';
 import { useAuth } from '../../lib/useAuth';
 
 export default function OrdersPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   
   const { data: orders, isLoading } = trpc.order.getOrderHistory.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+
+  if (!isHydrated) {
+    return <div className="p-8 text-center text-gray-500">Checking authentication...</div>;
+  }
 
   if (!isAuthenticated) {
     return (

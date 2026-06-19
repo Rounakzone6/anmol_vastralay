@@ -13,7 +13,7 @@ import { Plus, Trash2, Save, X } from 'lucide-react';
 
 type VariantRow = {
   color: string;
-  size?: 'M' | 'L' | 'XL' | 'XXL';
+  size?: string;
   stockQty: number;
 };
 
@@ -41,7 +41,7 @@ export function ProductForm({ productId }: ProductFormProps) {
   const [allowsExtraSaya, setAllowsExtraSaya] = useState(false);
   const [extraSayaPrice, setExtraSayaPrice] = useState('');
   const [variants, setVariants] = useState<VariantRow[]>([
-    { color: '', size: 'M', stockQty: 0 },
+    { color: '', size: '', stockQty: 0 },
   ]);
   const [images, setImages] = useState<(ProductImageSlot | null)[]>([
     null,
@@ -102,7 +102,7 @@ export function ProductForm({ productId }: ProductFormProps) {
   function addVariantRow() {
     setVariants((rows) => [
       ...rows,
-      { color: '', size: kind === 'STANDARD' ? 'M' : undefined, stockQty: 0 },
+      { color: '', size: kind === 'STANDARD' ? '' : undefined, stockQty: 0 },
     ]);
   }
 
@@ -244,22 +244,18 @@ export function ProductForm({ productId }: ProductFormProps) {
                   {kind === 'STANDARD' ? (
                     <div className="w-full sm:w-32 shrink-0">
                       <Label>Size</Label>
-                      <Select
-                        value={row.size ?? 'M'}
+                      <Input
+                        value={row.size ?? ''}
                         onChange={(e) => {
                           const next = [...variants];
                           next[i] = {
                             ...next[i],
-                            size: e.target.value as VariantRow['size'],
+                            size: e.target.value,
                           };
                           setVariants(next);
                         }}
-                      >
-                        <option value="M">M</option>
-                        <option value="L">L</option>
-                        <option value="XL">XL</option>
-                        <option value="XXL">XXL</option>
-                      </Select>
+                        placeholder="e.g., M, 85, 90"
+                      />
                     </div>
                   ) : null}
                   
@@ -310,7 +306,7 @@ export function ProductForm({ productId }: ProductFormProps) {
                     if (k === 'SAREE') {
                       setVariants([{ color: '', stockQty: 0 }]);
                     } else {
-                      setVariants([{ color: '', size: 'M', stockQty: 0 }]);
+                      setVariants([{ color: '', size: '', stockQty: 0 }]);
                     }
                   }}
                 >

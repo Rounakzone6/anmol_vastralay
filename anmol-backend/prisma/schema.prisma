@@ -24,12 +24,6 @@ enum ProductKind {
   STANDARD
 }
 
-enum GarmentSize {
-  M
-  L
-  XL
-  XXL
-}
 
 model User {
   id              String    @id @default(cuid())
@@ -122,7 +116,7 @@ model ProductVariant {
   productId  String
   product    Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
   color      String
-  size       GarmentSize?
+  size       String?
   /// Empty for saree; M/L/XL/XXL for standard — used in unique constraint
   sizeKey    String       @default("")
   stockQty   Int          @default(0)

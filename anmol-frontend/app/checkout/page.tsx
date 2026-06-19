@@ -11,7 +11,7 @@ import { ShieldCheck, Truck, CreditCard, ArrowLeft, Loader2 } from 'lucide-react
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   
   const [shippingAddress, setShippingAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'RAZORPAY'>('RAZORPAY');
@@ -67,6 +67,15 @@ export default function CheckoutPage() {
     },
     onError: (err) => setCheckoutError(err.message),
   });
+
+  if (!isHydrated) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center bg-gray-50">
+        <Loader2 className="w-10 h-10 text-[#85142b] animate-spin mb-4" />
+        <p className="text-gray-500 font-medium">Checking authentication...</p>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

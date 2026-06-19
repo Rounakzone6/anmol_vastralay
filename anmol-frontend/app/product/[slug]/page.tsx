@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ShoppingCart, ArrowLeft, ShieldCheck, Truck } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { trpc } from '../../../lib/trpc';
 import { useAuth } from '../../../lib/useAuth';
 
@@ -28,6 +28,23 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
   );
 
   const displayProduct = product || productById;
+
+  const [selectedColor, setSelectedColor] = useState<string>('');
+  const [selectedSize, setSelectedSize] = useState<string>('');
+
+  useEffect(() => {
+    if (displayProduct?.variants && displayProduct.variants.length > 0) {
+      const firstColor = displayProduct.variants[0].color;
+      setSelectedColor(firstColor);
+      
+      const firstVariantWithColor = displayProduct.variants.find((v: any) => v.color === firstColor);
+      if (firstVariantWithColor && firstVariantWithColor.size) {
+        setSelectedSize(firstVariantWithColor.size);
+      } else {
+        setSelectedSize('');
+      }
+    }
+  }, [displayProduct]);
 
   const addToCartMutation = trpc.cart.addToCart.useMutation({
     onSuccess: () => {
@@ -59,14 +76,44 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
     );
   }
 
+  const variants = displayProduct.variants || [];
+  const availableColors = Array.from(new Set(variants.map((v: any) => v.color).filter(Boolean))) as string[];
+  
+  // Sizes available for the currently selected color
+  const availableSizes = Array.from(
+    new Set(variants.filter((v: any) => v.color === selectedColor && v.size).map((v: any) => v.size))
+  ) as string[];
+
+  // Find the matching variant to check stock and get variantId
+  const selectedVariant = variants.find(
+    (v: any) => v.color === selectedColor && (v.size === selectedSize || (!v.size && !selectedSize))
+  );
+
+  const handleColorSelect = (color: string) => {
+    setSelectedColor(color);
+    // Reset size if the new color doesn't have the currently selected size
+    const sizesForColor = variants.filter((v: any) => v.color === color && v.size).map((v: any) => v.size);
+    if (sizesForColor.length > 0 && !sizesForColor.includes(selectedSize)) {
+      setSelectedSize(sizesForColor[0]);
+    } else if (sizesForColor.length === 0) {
+      setSelectedSize('');
+    }
+  };
+
   const handleAddToCart = () => {
     if (!isAuthenticated) {
       router.push('/login');
       return;
     }
     
+    if (variants.length > 0 && !selectedVariant) {
+      alert('Please select a valid color and size');
+      return;
+    }
+    
     addToCartMutation.mutate({
       productId: displayProduct.id,
+      variantId: selectedVariant?.id,
       quantity: 1,
     });
   };
@@ -129,6 +176,61 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
                </span>
             </div>
 
+            {/* Color Selection */}
+            {availableColors.length > 0 && (
+              <div className="mt-8 border-t border-gray-100 pt-8">
+                <h3 className="text-sm font-medium text-gray-900 mb-4">Color: <span className="text-gray-600 font-normal ml-1">{selectedColor}</span></h3>
+                <div className="flex flex-wrap gap-3">
+                  {availableColors.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => handleColorSelect(color)}
+                      className={`px-4 py-2 text-sm font-medium rounded-md border ${
+                        selectedColor === color
+                          ? 'border-[#85142b] bg-rose-50 text-[#85142b] shadow-sm'
+                          : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                      } transition-colors`}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Size Selection */}
+            {availableSizes.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-sm font-medium text-gray-900 mb-4">Size: <span className="text-gray-600 font-normal ml-1">{selectedSize}</span></h3>
+                <div className="flex flex-wrap gap-3">
+                  {availableSizes.map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => setSelectedSize(size)}
+                      className={`min-w-[3rem] px-4 py-2 text-sm font-medium rounded-md border ${
+                        selectedSize === size
+                          ? 'border-[#85142b] bg-[#85142b] text-white shadow-sm'
+                          : 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50'
+                      } transition-colors text-center`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Stock status */}
+            {variants.length > 0 && selectedVariant && (
+              <div className="mt-4">
+                {selectedVariant.stockQty > 0 ? (
+                  <p className="text-sm text-green-600 font-medium">In Stock ({selectedVariant.stockQty} available)</p>
+                ) : (
+                  <p className="text-sm text-red-600 font-medium">Out of Stock</p>
+                )}
+              </div>
+            )}
+
             <div className="mt-8 border-t border-gray-100 pt-8">
               <h3 className="text-sm font-medium text-gray-900 mb-4">Product Details</h3>
               <div className="space-y-4 text-sm text-gray-600 leading-relaxed">
@@ -151,10 +253,15 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
               <button
                 type="button"
                 onClick={handleAddToCart}
-                disabled={addToCartMutation.isPending}
-                className="flex max-w-xs flex-1 items-center justify-center rounded-lg border border-transparent bg-[#85142b] px-8 py-3.5 text-base font-bold text-white hover:bg-[#6c1023] focus:outline-none focus:ring-2 focus:ring-[#85142b] focus:ring-offset-2 disabled:opacity-50 sm:w-full shadow-md transition-all"
+                disabled={addToCartMutation.isPending || (variants.length > 0 && (!selectedVariant || selectedVariant.stockQty <= 0))}
+                className="flex max-w-xs flex-1 items-center justify-center rounded-lg border border-transparent bg-[#85142b] px-8 py-3.5 text-base font-bold text-white hover:bg-[#6c1023] focus:outline-none focus:ring-2 focus:ring-[#85142b] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed sm:w-full shadow-md transition-all"
               >
-                {addToCartMutation.isPending ? 'Adding...' : 'Add to Cart'}
+                {addToCartMutation.isPending 
+                  ? 'Adding...' 
+                  : (variants.length > 0 && selectedVariant && selectedVariant.stockQty <= 0) 
+                    ? 'Out of Stock' 
+                    : 'Add to Cart'
+                }
                 <ShoppingCart className="ml-2 h-5 w-5 flex-shrink-0" aria-hidden="true" />
               </button>
             </div>

@@ -75,6 +75,7 @@ export function useAuth() {
   return {
     isAuthenticated: hydrated ? store.isAuthenticated : false,
     user: hydrated ? store.user : null,
+    isHydrated: hydrated,
     login,
     logout,
     updateUser,

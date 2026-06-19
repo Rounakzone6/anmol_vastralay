@@ -14,7 +14,7 @@ import {
 type TabKey = 'overview' | 'addresses' | 'security';
 
 function ProfileContent() {
-  const { isAuthenticated, logout, updateUser } = useAuth();
+  const { isAuthenticated, logout, updateUser, isHydrated } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isClient, setIsClient] = useState(false);
@@ -22,10 +22,10 @@ function ProfileContent() {
 
   useEffect(() => {
     setIsClient(true);
-    if (!isAuthenticated) {
+    if (isHydrated && !isAuthenticated) {
       router.push('/login?redirect=/profile');
     }
-  }, [isAuthenticated, router]);
+  }, [isHydrated, isAuthenticated, router]);
 
   // Read tab from URL
   useEffect(() => {
@@ -41,7 +41,7 @@ function ProfileContent() {
 
   const profile = profileQuery.data;
 
-  if (!isClient || !isAuthenticated) {
+  if (!isClient || !isHydrated || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin h-8 w-8 border-4 border-[#85142b] border-t-transparent rounded-full" />

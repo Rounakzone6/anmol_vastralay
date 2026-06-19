@@ -8,12 +8,16 @@ import { useAuth } from '../../../lib/useAuth';
 
 export default function OrderDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isHydrated } = useAuth();
   
   const { data: order, isLoading, error } = trpc.order.getOrderDetails.useQuery(
     { orderId: id },
     { enabled: isAuthenticated && !!id }
   );
+
+  if (!isHydrated) {
+    return <div className="p-8 text-center text-gray-500">Checking authentication...</div>;
+  }
 
   if (!isAuthenticated) {
     return (
