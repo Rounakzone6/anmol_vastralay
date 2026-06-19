@@ -11,10 +11,10 @@ import { formatCurrency } from '@/lib/format';
 import { trpc } from '@/lib/trpc';
 import { Plus, Trash2, Save, X, Info, Package, Image as ImageIcon, LayoutGrid, Tag, Scissors, Check, Loader2, AlertCircle } from 'lucide-react';
 
-type VariantRow = {
+type VariantGroupRow = {
   color: string;
-  size?: string;
-  stockQty: number;
+  sizes: string;
+  stockQtys: string;
 };
 
 type ProductFormProps = {
@@ -42,8 +42,8 @@ export function ProductForm({ productId }: ProductFormProps) {
   const [discountPercent, setDiscountPercent] = useState('0');
   const [allowsExtraSaya, setAllowsExtraSaya] = useState(false);
   const [extraSayaPrice, setExtraSayaPrice] = useState('');
-  const [variants, setVariants] = useState<VariantRow[]>([
-    { color: '', size: '', stockQty: 0 },
+  const [variants, setVariants] = useState<VariantGroupRow[]>([
+    { color: '', sizes: '', stockQtys: '' },
   ]);
   const [images, setImages] = useState<(ProductImageSlot | null)[]>([
     null,
@@ -75,13 +75,30 @@ export function ProductForm({ productId }: ProductFormProps) {
     setDiscountPercent(String(product.discountPercent));
     setAllowsExtraSaya(product.allowsExtraSaya);
     setExtraSayaPrice(product.extraSayaPrice != null ? String(product.extraSayaPrice) : '');
-    setVariants(
-      product.variants.map((v) => ({
+    if (product.kind === 'SAREE') {
+      const mapped = product.variants.map((v) => ({
         color: v.color,
-        size: v.size ?? undefined,
-        stockQty: v.stockQty,
-      })),
-    );
+        sizes: '',
+        stockQtys: String(v.stockQty),
+      }));
+      setVariants(mapped.length > 0 ? mapped : [{ color: '', sizes: '', stockQtys: '' }]);
+    } else {
+      const grouped = new Map<string, { sizes: string[]; stockQtys: number[] }>();
+      product.variants.forEach((v) => {
+        if (!grouped.has(v.color)) {
+          grouped.set(v.color, { sizes: [], stockQtys: [] });
+        }
+        const g = grouped.get(v.color)!;
+        if (v.size) g.sizes.push(v.size);
+        g.stockQtys.push(v.stockQty);
+      });
+      const mapped = Array.from(grouped.entries()).map(([color, data]) => ({
+        color,
+        sizes: data.sizes.join(', '),
+        stockQtys: data.stockQtys.join(', '),
+      }));
+      setVariants(mapped.length > 0 ? mapped : [{ color: '', sizes: '', stockQtys: '' }]);
+    }
     const slots: (ProductImageSlot | null)[] = [null, null, null, null];
     product.images.forEach((img, i) => {
       if (i < 4) {
@@ -169,7 +186,7 @@ export function ProductForm({ productId }: ProductFormProps) {
   function addVariantRow() {
     setVariants((rows) => [
       ...rows,
-      { color: '', size: kind === 'STANDARD' ? '' : undefined, stockQty: 0 },
+      { color: '', sizes: '', stockQtys: '' },
     ]);
   }
 
@@ -208,11 +225,25 @@ export function ProductForm({ productId }: ProductFormProps) {
           : undefined,
       variants: variants
         .filter((v) => v.color.trim())
-        .map((v) => ({
-          color: v.color.trim(),
-          size: kind === 'STANDARD' ? v.size : undefined,
-          stockQty: v.stockQty,
-        })),
+        .flatMap((v) => {
+          const color = v.color.trim();
+          if (kind === 'SAREE') {
+            return [{ color, stockQty: Number(v.stockQtys.trim()) || 0 }];
+          } else {
+            const sizesArr = v.sizes.split(',').map((s) => s.trim()).filter(Boolean);
+            const stocksArr = v.stockQtys.split(',').map((s) => s.trim()).filter(Boolean);
+            
+            if (sizesArr.length === 0) {
+              return [{ color, stockQty: Number(stocksArr[0]) || 0 }];
+            }
+            
+            return sizesArr.map((size, idx) => ({
+              color,
+              size,
+              stockQty: Number(stocksArr[idx]) || 0
+            }));
+          }
+        }),
       imageUrls,
     };
 
@@ -353,7 +384,7 @@ export function ProductForm({ productId }: ProductFormProps) {
             
             <div className="space-y-4 relative z-10">
               {variants.map((row, i) => (
-                <div key={i} className="group flex flex-col sm:flex-row items-end gap-4 p-5 rounded-2xl border border-slate-200 bg-white hover:border-violet-200 hover:shadow-md transition-all">
+                <div key={i} className="group flex flex-col sm:flex-row items-start sm:items-end gap-4 p-5 rounded-2xl border border-slate-200 bg-white hover:border-violet-200 hover:shadow-md transition-all">
                   <div className="w-full sm:flex-1">
                     <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Color</Label>
                     <Input
@@ -364,41 +395,38 @@ export function ProductForm({ productId }: ProductFormProps) {
                         setVariants(next);
                       }}
                       required
-                      placeholder="e.g., Crimson Red"
+                      placeholder="e.g., Brown"
                       className="rounded-xl bg-slate-50/50 focus:bg-white"
                     />
                   </div>
                   
                   {kind === 'STANDARD' ? (
-                    <div className="w-full sm:w-32 shrink-0">
-                      <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Size</Label>
+                    <div className="w-full sm:flex-1">
+                      <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Sizes (comma-separated)</Label>
                       <Input
-                        value={row.size ?? ''}
+                        value={row.sizes}
                         onChange={(e) => {
                           const next = [...variants];
-                          next[i] = {
-                            ...next[i],
-                            size: e.target.value,
-                          };
+                          next[i] = { ...next[i], sizes: e.target.value };
                           setVariants(next);
                         }}
-                        placeholder="M, 85, 90"
+                        placeholder="e.g., 80, 85, 90"
                         className="rounded-xl bg-slate-50/50 focus:bg-white"
                       />
                     </div>
                   ) : null}
                   
-                  <div className="w-full sm:w-32 shrink-0">
-                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Stock Qty</Label>
+                  <div className="w-full sm:flex-1">
+                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Stock Qty {kind === 'STANDARD' && '(comma-separated)'}</Label>
                     <Input
-                      type="number"
-                      min={0}
-                      value={row.stockQty}
+                      type="text"
+                      value={row.stockQtys}
                       onChange={(e) => {
                         const next = [...variants];
-                        next[i] = { ...next[i], stockQty: Number(e.target.value) };
+                        next[i] = { ...next[i], stockQtys: e.target.value };
                         setVariants(next);
                       }}
+                      placeholder={kind === 'STANDARD' ? "e.g., 4, 3, 2" : "e.g., 5"}
                       className="rounded-xl bg-slate-50/50 focus:bg-white font-mono"
                     />
                   </div>
@@ -443,9 +471,9 @@ export function ProductForm({ productId }: ProductFormProps) {
                     const k = e.target.value as 'SAREE' | 'STANDARD';
                     setKind(k);
                     if (k === 'SAREE') {
-                      setVariants([{ color: '', stockQty: 0 }]);
+                      setVariants([{ color: '', sizes: '', stockQtys: '' }]);
                     } else {
-                      setVariants([{ color: '', size: '', stockQty: 0 }]);
+                      setVariants([{ color: '', sizes: '', stockQtys: '' }]);
                     }
                   }}
                   className="rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white shadow-inner font-medium"
