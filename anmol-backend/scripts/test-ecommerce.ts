@@ -11,7 +11,7 @@ import { PaymentService } from '../src/services/payment.service';
 import { UserService } from '../src/services/user.service';
 import { CustomerService } from '../src/services/customer.service';
 import { BannerService } from '../src/services/banner.service';
-import { TrackingService } from '../src/services/tracking.service';
+
 import { createAppRouter } from '../src/routers';
 
 async function runTests() {
@@ -31,7 +31,7 @@ async function runTests() {
     user: app.get(UserService),
     customer: app.get(CustomerService),
     banner: app.get(BannerService),
-    tracking: app.get(TrackingService),
+
   };
 
   const appRouter = createAppRouter(auth);

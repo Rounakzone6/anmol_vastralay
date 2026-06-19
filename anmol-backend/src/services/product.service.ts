@@ -113,63 +113,7 @@ export class ProductService {
     return mapProduct(product);
   }
 
-  async getRecommended(userId?: string, sessionId?: string) {
-    if (!userId && !sessionId) {
-      return this.list({ page: 1, pageSize: 4, includeInactive: false });
-    }
 
-    // Find recent interactions
-    const recentInteractions = await this.prisma.productInteraction.findMany({
-      where: {
-        OR: [
-          ...(userId ? [{ userId }] : []),
-          ...(sessionId ? [{ sessionId }] : []),
-        ],
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-      include: { product: true },
-    });
-
-    if (recentInteractions.length === 0) {
-      return this.list({ page: 1, pageSize: 4, includeInactive: false });
-    }
-
-    // Get unique categories from recent views
-    const categoryIds = Array.from(new Set(recentInteractions.map((i) => i.product.categoryId)));
-
-    const products = await this.prisma.product.findMany({
-      where: {
-        categoryId: { in: categoryIds },
-        isActive: true,
-      },
-      include: productInclude,
-      take: 4,
-      orderBy: { updatedAt: 'desc' },
-    });
-
-    // Fallback if not enough
-    if (products.length < 4) {
-      const more = await this.prisma.product.findMany({
-        where: {
-          isActive: true,
-          id: { notIn: products.map(p => p.id) }
-        },
-        include: productInclude,
-        take: 4 - products.length,
-        orderBy: { updatedAt: 'desc' },
-      });
-      products.push(...more);
-    }
-
-    return {
-      items: products.map(mapProduct),
-      total: products.length,
-      page: 1,
-      pageSize: 4,
-      totalPages: 1,
-    };
-  }
 
   async create(input: z.infer<typeof productBaseSchema>) {
     const category = await this.prisma.category.findUnique({

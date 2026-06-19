@@ -8,8 +8,8 @@ import { ShoppingCart, ArrowLeft, ShieldCheck, Truck } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { trpc } from '../../../lib/trpc';
 import { useAuth } from '../../../lib/useAuth';
-import { getSessionId } from '../../../components/ActivityTracker';
-import RecommendedProducts from '../../../components/RecommendedProducts';
+
+
 
 export default function ProductDetailsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -42,19 +42,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
     }
   });
 
-  const recordInteraction = trpc.tracking.recordInteraction.useMutation();
-  const hasRecorded = useRef(false);
 
-  useEffect(() => {
-    if (displayProduct && !hasRecorded.current) {
-      hasRecorded.current = true;
-      recordInteraction.mutate({
-        productId: displayProduct.id,
-        sessionId: getSessionId(),
-        action: 'VIEW'
-      });
-    }
-  }, [displayProduct, recordInteraction]);
 
   if (isLoading && !error) {
     return <div className="p-12 text-center text-gray-500 text-lg">Loading product details...</div>;
@@ -179,7 +167,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
           </div>
         </div>
       </div>
-      <RecommendedProducts />
+
     </div>
   );
 }

@@ -12,8 +12,7 @@ import {
   AddImageSchema,
   RemoveImageSchema,
   ProductIdSchema,
-  ProductSlugSchema,
-  GetRecommendedSchema
+  ProductSlugSchema
 } from '../models/product.model';
 
 export const productRouter = router({
@@ -35,11 +34,7 @@ export const productRouter = router({
       return ctx.services.product.getBySlug(input.slug);
     }),
 
-  getRecommended: publicProcedure
-    .input(GetRecommendedSchema)
-    .query(async ({ ctx, input }) => {
-      return ctx.services.product.getRecommended(ctx.user?.id, input.sessionId);
-    }),
+
 
   create: staffProcedure
     .input(productBaseSchema)

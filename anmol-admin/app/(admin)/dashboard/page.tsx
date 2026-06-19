@@ -19,9 +19,7 @@ export default function DashboardPage() {
   const { data: customers } = trpc.user.getCustomers.useQuery(undefined, {
     retry: false,
   });
-  const { data: visits } = trpc.tracking.getVisitsCount.useQuery(undefined, {
-    retry: false,
-  });
+
 
   const activeProducts = products?.items.filter((p) => p.isActive).length ?? 0;
   const lowStock =
@@ -88,15 +86,7 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        <Card className="flex items-start justify-between relative overflow-hidden group">
-          <div>
-            <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Platform Visits</p>
-            <p className="mt-2 text-4xl font-extrabold text-slate-900">{visits ?? '—'}</p>
-          </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 group-hover:scale-110 transition-transform">
-            <Package size={24} />
-          </div>
-        </Card>
+
       </div>
 
       <div className="mt-12">

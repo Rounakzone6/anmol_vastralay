@@ -15,7 +15,7 @@ import { PaymentService } from './services/payment.service';
 import { UserService } from './services/user.service';
 import { CustomerService } from './services/customer.service';
 import { BannerService } from './services/banner.service';
-import { TrackingService } from './services/tracking.service';
+
 import { createAppRouter } from './routers';
 
 function getBearerToken(req: Request): string | undefined {
@@ -39,7 +39,7 @@ async function bootstrap() {
     user: app.get(UserService),
     customer: app.get(CustomerService),
     banner: app.get(BannerService),
-    tracking: app.get(TrackingService),
+
   };
 
   const appRouter = createAppRouter(auth);
