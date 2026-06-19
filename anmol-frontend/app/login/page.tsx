@@ -92,7 +92,7 @@ export default function LoginPage() {
             ))}
           </div>
 
-          <p className="text-[11px] text-white/30">&copy; {new Date().getFullYear()} Anmol Vastralay. All rights reserved.</p>
+          <p className="text-[11px] text-white/70">&copy; {new Date().getFullYear()} Anmol Vastralay. All rights reserved.</p>
         </div>
       </div>
 
@@ -235,7 +235,7 @@ export default function LoginPage() {
             <Link href="/register" className="font-semibold text-[#85142b] hover:underline">Create account</Link>
           </p>
 
-          <p className="mt-5 text-center text-[11px] text-gray-300">
+          <p className="mt-5 text-center text-[11px] text-gray-500">
             By signing in, you agree to our{' '}
             <Link href="/terms" className="underline hover:text-gray-500">Terms</Link>
             {' '}&{' '}

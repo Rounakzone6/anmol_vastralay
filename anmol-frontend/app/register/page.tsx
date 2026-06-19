@@ -105,7 +105,7 @@ export default function RegisterPage() {
             ))}
           </div>
 
-          <p className="text-[11px] text-white/30">&copy; {new Date().getFullYear()} Anmol Vastralay. All rights reserved.</p>
+          <p className="text-[11px] text-white/70">&copy; {new Date().getFullYear()} Anmol Vastralay. All rights reserved.</p>
         </div>
       </div>
 
@@ -192,6 +192,28 @@ export default function RegisterPage() {
             {/* Email + Phone row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
+                <label className="block text-[13px] font-medium text-gray-700 mb-1.5" htmlFor="phone">
+                  Phone
+                </label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <Phone className={`h-[18px] w-[18px] transition-colors ${focusedField === 'phone' ? 'text-[#85142b]' : 'text-gray-300'}`} />
+                  </div>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    className="block w-full rounded-lg border border-gray-200 bg-gray-50/50 py-2.5 pl-10 pr-3 text-sm text-gray-900 placeholder-gray-400 transition-all duration-200 focus:bg-white focus:border-[#85142b] focus:ring-2 focus:ring-[#85142b]/10 focus:outline-none hover:border-gray-300 hover:bg-white"
+                    placeholder="9876543210"
+                    value={phone}
+                    onFocus={() => setFocusedField('phone')}
+                    onBlur={() => setFocusedField(null)}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div>
                 <label className="block text-[13px] font-medium text-gray-700 mb-1.5" htmlFor="email-address">
                   Email <span className="text-gray-400 text-xs">(optional)</span>
                 </label>
@@ -213,31 +235,7 @@ export default function RegisterPage() {
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-[13px] font-medium text-gray-700 mb-1.5" htmlFor="phone">
-                  Phone <span className="text-gray-400 text-xs">(optional)</span>
-                </label>
-                <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Phone className={`h-[18px] w-[18px] transition-colors ${focusedField === 'phone' ? 'text-[#85142b]' : 'text-gray-300'}`} />
-                  </div>
-                  <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    autoComplete="tel"
-                    className="block w-full rounded-lg border border-gray-200 bg-gray-50/50 py-2.5 pl-10 pr-3 text-sm text-gray-900 placeholder-gray-400 transition-all duration-200 focus:bg-white focus:border-[#85142b] focus:ring-2 focus:ring-[#85142b]/10 focus:outline-none hover:border-gray-300 hover:bg-white"
-                    placeholder="9876543210"
-                    value={phone}
-                    onFocus={() => setFocusedField('phone')}
-                    onBlur={() => setFocusedField(null)}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                </div>
-              </div>
             </div>
-            <p className="text-[11px] text-gray-400 -mt-1">Provide at least one — email or phone.</p>
-
             {/* Password */}
             <div>
               <label className="block text-[13px] font-medium text-gray-700 mb-1.5" htmlFor="password">
@@ -297,7 +295,7 @@ export default function RegisterPage() {
             <Link href="/login" className="font-semibold text-[#85142b] hover:underline">Sign in</Link>
           </p>
 
-          <p className="mt-4 text-center text-[11px] text-gray-300">
+          <p className="mt-4 text-center text-[11px] text-gray-500">
             By creating an account, you agree to our{' '}
             <Link href="/terms" className="underline hover:text-gray-500">Terms</Link>
             {' '}&{' '}

@@ -94,7 +94,7 @@ export default function Footer() {
           </p>
           <div className="flex flex-wrap justify-center md:justify-end gap-2 mt-4 md:mt-0">
             <span className="px-2 py-1.5 bg-white rounded-md shadow-sm border border-gray-200 flex items-center h-[26px]">
-              <Image src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="UPI" width={32} height={12} className="h-3 w-auto" />
+              <Image src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="UPI" width={32} height={12} className="h-3 w-auto" style={{ width: 'auto' }} />
             </span>
             <span className="px-2.5 py-1.5 bg-white text-blue-800 text-[11px] font-extrabold italic rounded-md shadow-sm border border-gray-200">
               VISA
