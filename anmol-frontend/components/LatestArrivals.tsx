@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { trpc } from '../lib/trpc';
 import { ShoppingBag } from 'lucide-react';
 
@@ -56,10 +57,11 @@ export default function LatestArrivals() {
             >
               <div className="aspect-h-5 aspect-w-4 bg-gray-100 relative">
                 {product.images.length > 0 ? (
-                  <img
-                    loading="lazy"
+                  <Image
                     src={product.images[0].url}
                     alt={product.name}
+                    fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                     className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
                   />
                 ) : (

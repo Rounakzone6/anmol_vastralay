@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const FAQS = [
@@ -100,7 +101,7 @@ export default function FAQPage() {
 
         <div className="mt-12 text-center">
           <p className="text-gray-600">
-            Still have questions? <a href="/contact" className="text-[#85142b] font-semibold hover:underline">Contact our support team</a>.
+            Still have questions? <Link href="/contact" className="text-[#85142b] font-semibold hover:underline">Contact our support team</Link>.
           </p>
         </div>
       </div>

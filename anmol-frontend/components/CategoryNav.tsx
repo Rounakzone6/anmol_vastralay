@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 
 const CATEGORIES = [
   { name: 'Saree', slug: 'saree', image: '/category-icons/cat_saree_1781796874870.png' },
@@ -27,12 +28,13 @@ export default function CategoryNav() {
               href={`/collections?category=${cat.slug}`}
               className="flex flex-col items-center flex-shrink-0 group w-16 sm:w-20"
             >
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#f8f8f8] flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg">
-                <img 
-                  loading="lazy"
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#f8f8f8] flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg relative">
+                <Image 
                   src={cat.image} 
                   alt={cat.name}
-                  className="w-full h-full object-cover mix-blend-multiply"
+                  fill
+                  sizes="(max-width: 640px) 64px, 80px"
+                  className="object-cover mix-blend-multiply"
                 />
               </div>
               <span className="mt-3 text-[11px] sm:text-sm font-medium text-gray-700 text-center group-hover:text-[#85142b] transition-colors leading-tight">

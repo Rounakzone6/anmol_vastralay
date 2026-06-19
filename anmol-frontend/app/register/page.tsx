@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Form from 'next/form';
 import { trpc } from '../../lib/trpc';
 import { useAuth } from '../../lib/useAuth';
 
@@ -42,7 +43,7 @@ export default function RegisterPage() {
             Join Anmol Vastralay today
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <Form action="" className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
             <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
               {error}
@@ -108,7 +109,7 @@ export default function RegisterPage() {
               {registerMutation.isPending ? 'Creating account...' : 'Register'}
             </button>
           </div>
-        </form>
+        </Form>
         <div className="text-center text-sm">
           <span className="text-gray-600">Already have an account? </span>
           <Link href="/login" className="font-medium text-[#85142b] hover:text-[#6c1023]">

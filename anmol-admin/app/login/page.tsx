@@ -5,22 +5,13 @@ import { useState } from 'react';
 import { Button, Input, Label } from '@/components/ui';
 import { setToken } from '@/lib/auth';
 import { trpc } from '@/lib/trpc';
+import { LogIn, ShoppingBag } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<'login' | 'bootstrap'>('login');
   const [error, setError] = useState<string | null>(null);
 
   const login = trpc.auth.login.useMutation({
-    onSuccess: (data) => {
-      setToken(data.token);
-      router.push('/dashboard');
-      router.refresh();
-    },
-    onError: (e) => setError(e.message),
-  });
-
-  const bootstrap = trpc.auth.bootstrapAdmin.useMutation({
     onSuccess: (data) => {
       setToken(data.token);
       router.push('/dashboard');
@@ -35,58 +26,80 @@ export default function LoginPage() {
     const form = new FormData(e.currentTarget);
     const email = String(form.get('email'));
     const password = String(form.get('password'));
-    const name = String(form.get('name') || 'Admin');
 
-    if (mode === 'bootstrap') {
-      bootstrap.mutate({ email, password, name });
-    } else {
-      login.mutate({ email, password });
-    }
+    login.mutate({ email, password });
   }
 
-  const pending = login.isPending || bootstrap.isPending;
+  const pending = login.isPending;
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-8 shadow-lg">
-        <h1 className="text-2xl font-bold text-violet-800">Anmol Admin</h1>
-        <p className="mt-1 text-sm text-zinc-600">
-          {mode === 'login' ? 'Staff sign in' : 'Create first admin account'}
-        </p>
+    <div className="flex min-h-screen items-center justify-center p-4 bg-slate-50 relative overflow-hidden">
+      {/* Abstract Background Shapes */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-violet-400/20 blur-3xl" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-400/20 blur-3xl" />
+      
+      <div className="w-full max-w-md relative z-10">
+        <div className="text-center mb-8">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-xl shadow-slate-200/50 mb-4 ring-1 ring-slate-900/5">
+            <ShoppingBag className="text-violet-600" size={32} />
+          </div>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Anmol Vastralay</h1>
+          <p className="mt-2 text-slate-500">
+            Sign in to access the administrator dashboard
+          </p>
+        </div>
 
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          {mode === 'bootstrap' ? (
+        <div className="rounded-2xl border border-white/40 bg-white/60 backdrop-blur-xl p-8 shadow-2xl shadow-slate-200/50 ring-1 ring-slate-900/5">
+          <form className="space-y-5" onSubmit={handleSubmit}>
             <div>
-              <Label>Name</Label>
-              <Input name="name" required minLength={2} placeholder="Your name" />
+              <Label className="text-slate-700">Email Address</Label>
+              <Input 
+                name="email" 
+                type="email" 
+                required 
+                placeholder="admin@anmolvastralay.com" 
+                className="mt-1.5 bg-white/80"
+              />
             </div>
-          ) : null}
-          <div>
-            <Label>Email</Label>
-            <Input name="email" type="email" required placeholder="staff@example.com" />
-          </div>
-          <div>
-            <Label>Password</Label>
-            <Input name="password" type="password" required minLength={6} />
-          </div>
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
-          <Button type="submit" className="w-full" disabled={pending}>
-            {pending ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create admin'}
-          </Button>
-        </form>
-
-        <button
-          type="button"
-          className="mt-4 w-full text-center text-sm text-violet-700 hover:underline"
-          onClick={() => {
-            setError(null);
-            setMode(mode === 'login' ? 'bootstrap' : 'login');
-          }}
-        >
-          {mode === 'login'
-            ? 'First time? Create admin account'
-            : 'Already have an account? Sign in'}
-        </button>
+            <div>
+              <div className="flex justify-between items-center">
+                <Label className="text-slate-700">Password</Label>
+              </div>
+              <Input 
+                name="password" 
+                type="password" 
+                required 
+                minLength={6} 
+                className="mt-1.5 bg-white/80"
+                placeholder="••••••••"
+              />
+            </div>
+            
+            {error ? (
+              <div className="p-3 text-sm text-rose-600 bg-rose-50/50 rounded-lg border border-rose-100 flex items-start gap-2">
+                <div className="mt-0.5 font-bold">!</div>
+                <p>{error}</p>
+              </div>
+            ) : null}
+            
+            <div className="pt-2">
+              <Button type="submit" className="w-full h-11 text-base shadow-md shadow-violet-500/20" disabled={pending}>
+                {pending ? (
+                  'Signing in…'
+                ) : (
+                  <>
+                    <LogIn size={18} className="mr-2" />
+                    Sign In to Dashboard
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
+        
+        <p className="mt-8 text-center text-sm text-slate-500">
+          &copy; {new Date().getFullYear()} Anmol Vastralay. All rights reserved.
+        </p>
       </div>
     </div>
   );

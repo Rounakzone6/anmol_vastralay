@@ -3,6 +3,14 @@ import { AppModule } from '../src/modules/app.module';
 import { AuthService } from '../src/services/auth.service';
 import { PrismaService } from '../src/services/prisma.service';
 import { CloudinaryService } from '../src/services/cloudinary.service';
+import { CategoryService } from '../src/services/category.service';
+import { ProductService } from '../src/services/product.service';
+import { CartService } from '../src/services/cart.service';
+import { OrderService } from '../src/services/order.service';
+import { PaymentService } from '../src/services/payment.service';
+import { UserService } from '../src/services/user.service';
+import { CustomerService } from '../src/services/customer.service';
+import { BannerService } from '../src/services/banner.service';
 import { createAppRouter } from '../src/routers';
 
 async function runTests() {
@@ -12,6 +20,17 @@ async function runTests() {
   const prisma = app.get(PrismaService);
   const auth = app.get(AuthService);
   const cloudinary = app.get(CloudinaryService);
+
+  const services = {
+    category: app.get(CategoryService),
+    product: app.get(ProductService),
+    cart: app.get(CartService),
+    order: app.get(OrderService),
+    payment: app.get(PaymentService),
+    user: app.get(UserService),
+    customer: app.get(CustomerService),
+    banner: app.get(BannerService),
+  };
 
   const appRouter = createAppRouter(auth);
 
@@ -26,6 +45,7 @@ async function runTests() {
     cloudinary,
     auth,
     user: null,
+    services,
   };
   
   // In trpc v10/v11 createCaller works on the router
@@ -43,6 +63,7 @@ async function runTests() {
     cloudinary,
     auth,
     user: regResult.user,
+    services,
   };
   
   const authCaller = appRouter.createCaller(authContext);
@@ -87,25 +108,22 @@ async function runTests() {
   console.log('\n3. Testing Checkout...');
   const order = await authCaller.order.createOrder({
     shippingAddress: '123 Test Street, India',
+    paymentMethod: 'COD',
   });
-  console.log('✅ Order created. ID:', order.id, '| Total Amount:', order.totalAmount.toString());
+  console.log('✅ Order created. ID:', order.orderId, '| Total Amount:', order.amount.toString());
 
   cart = await authCaller.cart.getCart();
   if (cart.items.length > 0) throw new Error('Cart should be empty after checkout');
   console.log('✅ Cart emptied after checkout.');
 
   console.log('\n4. Testing Payment...');
-  const payment = await authCaller.payment.processPayment({
-    orderId: order.id,
-    paymentMethod: 'TEST_CARD',
-  });
-  console.log('✅ Payment processed. Status:', payment.status);
+  console.log('✅ Payment skipped in test for COD. Status is handled internally.');
 
   console.log('\n5. Testing Order History...');
   const history = await authCaller.order.getOrderHistory();
   if (history.length === 0) throw new Error('Order history should not be empty');
   
-  const orderDetails = await authCaller.order.getOrderDetails({ orderId: order.id });
+  const orderDetails = await authCaller.order.getOrderDetails({ orderId: order.orderId });
   if (orderDetails.payments.length === 0) throw new Error('Order details should include payment');
   console.log('✅ Order history and details fetched successfully.');
 

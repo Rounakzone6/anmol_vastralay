@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 export default function AboutPage() {
   return (
@@ -17,13 +18,13 @@ export default function AboutPage() {
 
         <div className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
-            <div className="aspect-w-3 aspect-h-2 bg-gray-100 rounded-2xl overflow-hidden">
+            <div className="relative aspect-w-3 aspect-h-2 bg-gray-100 rounded-2xl overflow-hidden h-[500px]">
               {/* Using the Saree banner as a placeholder image for the about page */}
-              <img 
-                loading="lazy"
+              <Image 
                 src="/category-icons/cat_saree_1781796874870.png" 
                 alt="Anmol Vastralay Storefront" 
-                className="w-full h-[500px] object-cover"
+                fill
+                className="object-cover"
               />
             </div>
           </div>

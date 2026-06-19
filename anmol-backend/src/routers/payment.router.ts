@@ -1,60 +1,14 @@
-import { TRPCError } from '@trpc/server';
-import { z } from 'zod';
 import { protectedProcedure, router } from '../config/trpc.config';
+import { VerifyRazorpayPaymentSchema } from '../models/payment.model';
 
 export const paymentRouter = router({
   getPaymentHistory: protectedProcedure.query(async ({ ctx }) => {
-    return ctx.prisma.payment.findMany({
-      where: { userId: ctx.user!.id },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        order: true,
-      },
-    });
+    return ctx.services.payment.getPaymentHistory(ctx.user!.id);
   }),
 
-  processPayment: protectedProcedure
-    .input(z.object({
-      orderId: z.string(),
-      paymentMethod: z.string(),
-    }))
+  verifyRazorpayPayment: protectedProcedure
+    .input(VerifyRazorpayPaymentSchema)
     .mutation(async ({ ctx, input }) => {
-      const order = await ctx.prisma.order.findUnique({
-        where: { id: input.orderId },
-      });
-
-      if (!order || order.userId !== ctx.user!.id) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Order not found' });
-      }
-
-      if (order.status !== 'PENDING') {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Order cannot be paid' });
-      }
-
-      // Simulate payment processing delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const transactionId = `txn_${Date.now()}`;
-
-      // Create payment and update order
-      return ctx.prisma.$transaction(async (tx) => {
-        const payment = await tx.payment.create({
-          data: {
-            orderId: order.id,
-            userId: ctx.user!.id,
-            amount: order.totalAmount,
-            status: 'COMPLETED',
-            paymentMethod: input.paymentMethod,
-            transactionId,
-          },
-        });
-
-        await tx.order.update({
-          where: { id: order.id },
-          data: { status: 'PROCESSING' },
-        });
-
-        return payment;
-      });
+      return ctx.services.payment.verifyRazorpayPayment(ctx.user!.id, input);
     }),
 });

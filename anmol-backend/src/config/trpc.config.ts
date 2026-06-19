@@ -2,12 +2,30 @@ import { initTRPC, TRPCError } from '@trpc/server';
 import type { PrismaClient } from '@prisma/client';
 import type { AuthService, AuthUser } from '../services/auth.service';
 import type { CloudinaryService } from '../services/cloudinary.service';
+import type { CategoryService } from '../services/category.service';
+import type { ProductService } from '../services/product.service';
+import type { CartService } from '../services/cart.service';
+import type { OrderService } from '../services/order.service';
+import type { PaymentService } from '../services/payment.service';
+import type { UserService } from '../services/user.service';
+import type { CustomerService } from '../services/customer.service';
+import type { BannerService } from '../services/banner.service';
 
 export interface TRPCContext {
   prisma: PrismaClient;
   cloudinary: CloudinaryService;
   auth: AuthService;
   user: AuthUser | null;
+  services: {
+    category: CategoryService;
+    product: ProductService;
+    cart: CartService;
+    order: OrderService;
+    payment: PaymentService;
+    user: UserService;
+    customer: CustomerService;
+    banner: BannerService;
+  };
 }
 
 const t = initTRPC.context<TRPCContext>().create();

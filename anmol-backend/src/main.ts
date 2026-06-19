@@ -7,6 +7,14 @@ import { AppModule } from './modules/app.module';
 import { AuthService } from './services/auth.service';
 import { CloudinaryService } from './services/cloudinary.service';
 import { PrismaService } from './services/prisma.service';
+import { CategoryService } from './services/category.service';
+import { ProductService } from './services/product.service';
+import { CartService } from './services/cart.service';
+import { OrderService } from './services/order.service';
+import { PaymentService } from './services/payment.service';
+import { UserService } from './services/user.service';
+import { CustomerService } from './services/customer.service';
+import { BannerService } from './services/banner.service';
 import { createAppRouter } from './routers';
 
 function getBearerToken(req: Request): string | undefined {
@@ -20,6 +28,18 @@ async function bootstrap() {
   const prisma = app.get(PrismaService);
   const cloudinary = app.get(CloudinaryService);
   const auth = app.get(AuthService);
+  
+  const services = {
+    category: app.get(CategoryService),
+    product: app.get(ProductService),
+    cart: app.get(CartService),
+    order: app.get(OrderService),
+    payment: app.get(PaymentService),
+    user: app.get(UserService),
+    customer: app.get(CustomerService),
+    banner: app.get(BannerService),
+  };
+
   const appRouter = createAppRouter(auth);
 
   app.use(helmet());
@@ -41,7 +61,7 @@ async function bootstrap() {
       createContext: async ({ req }) => {
         const token = getBearerToken(req);
         const user = await auth.getUserFromToken(token);
-        return { prisma, cloudinary, auth, user };
+        return { prisma, cloudinary, auth, user, services };
       },
     }),
   );

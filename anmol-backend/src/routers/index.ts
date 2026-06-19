@@ -8,6 +8,7 @@ import { customerRouter } from './customer.router';
 import { cartRouter } from './cart.router';
 import { orderRouter } from './order.router';
 import { paymentRouter } from './payment.router';
+import { bannerRouter } from './banner.router';
 
 export function createAppRouter(auth: AuthService) {
   return router({
@@ -19,7 +20,9 @@ export function createAppRouter(auth: AuthService) {
     cart: cartRouter,
     order: orderRouter,
     payment: paymentRouter,
+    banner: bannerRouter,
   });
 }
 
 export type AppRouter = ReturnType<typeof createAppRouter>;
+

@@ -2,6 +2,7 @@
 
 import { use } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ShoppingCart, ArrowLeft, ShieldCheck, Truck } from 'lucide-react';
 import { trpc } from '../../../lib/trpc';
@@ -80,12 +81,16 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ slug:
           <div className="flex flex-col-reverse">
             <div className="aspect-h-5 aspect-w-4 w-full overflow-hidden rounded-lg bg-gray-50 border border-gray-100 shadow-sm">
               {displayProduct.images.length > 0 ? (
-                <img
-                  loading="lazy"
-                  src={displayProduct.images[0].url}
-                  alt={displayProduct.name}
-                  className="h-full w-full object-cover object-top"
-                />
+                <div className="relative w-full h-full">
+                  <Image
+                    src={displayProduct.images[0].url}
+                    alt={displayProduct.name}
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover object-top"
+                  />
+                </div>
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-gray-300">
                   <ShoppingCart size={48} strokeWidth={1} />

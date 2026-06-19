@@ -2,62 +2,41 @@
 
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-
-const BANNERS = [
-  {
-    id: 1,
-    image: '/banners/saree.png',
-    title: 'Exquisite Ethnic Wear',
-    subtitle: 'Discover premium sarees for every occasion',
-    buttonText: 'Shop Sarees',
-  },
-  {
-    id: 2,
-    image: '/banners/mens.png',
-    title: "Men's Premium Collection",
-    subtitle: 'Elevate your style with our latest arrivals',
-    buttonText: 'Shop Men',
-  },
-  {
-    id: 3,
-    image: '/banners/ladies.png',
-    title: 'Modern Western Wear',
-    subtitle: 'Chic, comfortable styles for the modern woman',
-    buttonText: 'Shop Western',
-  },
-  {
-    id: 4,
-    image: '/banners/kids.png',
-    title: "Kids' Fashion",
-    subtitle: 'Vibrant and comfortable outfits for your little ones',
-    buttonText: 'Shop Kids',
-  },
-  {
-    id: 5,
-    image: '/banners/accessories.png',
-    title: 'Festive Specials',
-    subtitle: 'Complete your look with our exclusive accessories',
-    buttonText: 'Shop Accessories',
-  },
-];
+import Image from 'next/image';
+import { trpc } from '../lib/trpc';
 
 export default function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  const { data: banners, isLoading } = trpc.banner.getBanners.useQuery({
+    placement: 'HERO',
+  });
+
   useEffect(() => {
+    if (!banners || banners.length === 0) return;
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev === BANNERS.length - 1 ? 0 : prev + 1));
+      setCurrentSlide((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [banners]);
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev === BANNERS.length - 1 ? 0 : prev + 1));
+    if (!banners) return;
+    setCurrentSlide((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev === 0 ? BANNERS.length - 1 : prev - 1));
+    if (!banners) return;
+    setCurrentSlide((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
   };
+
+  if (isLoading || !banners || banners.length === 0) {
+    return (
+      <div className="relative overflow-hidden bg-gray-50 h-[300px] sm:h-[400px] lg:h-[500px] flex items-center justify-center">
+        <p className="text-gray-400">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative overflow-hidden bg-gray-50 h-[300px] sm:h-[400px] lg:h-[500px]">
@@ -66,11 +45,13 @@ export default function HeroSlider() {
         className="flex h-full transition-transform duration-500 ease-in-out"
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
       >
-        {BANNERS.map((banner) => (
+        {banners.map((banner, index) => (
           <div key={banner.id} className="min-w-full relative h-full">
-            <img
-              src={banner.image}
+            <Image
+              src={banner.imageUrl}
               alt={banner.title}
+              fill
+              priority={index === 0}
               className="absolute inset-0 h-full w-full object-cover object-center"
             />
             <div className="relative z-20 h-full flex items-center px-8 sm:px-16 lg:px-24">
@@ -82,7 +63,7 @@ export default function HeroSlider() {
                   {banner.subtitle}
                 </p>
                 <button className="bg-[#85142b] hover:bg-[#6c1023] text-white px-8 py-3 rounded-md font-medium transition-colors shadow-sm">
-                  {banner.buttonText}
+                  {banner.buttonText || 'Shop Now'}
                 </button>
               </div>
             </div>
@@ -108,7 +89,7 @@ export default function HeroSlider() {
 
       {/* Dots */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex space-x-2">
-        {BANNERS.map((_, index) => (
+        {banners.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}

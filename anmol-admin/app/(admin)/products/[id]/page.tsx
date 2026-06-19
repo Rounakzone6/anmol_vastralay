@@ -5,6 +5,7 @@ import { ProductForm } from '@/components/product-form';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui';
 import { trpc } from '@/lib/trpc';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function EditProductPage({
   params,
@@ -24,16 +25,27 @@ export default function EditProductPage({
   return (
     <div>
       <PageHeader
-        title={product?.name ?? 'Edit product'}
-        description="Update pricing, variants, and stock"
+        title={product?.name ?? 'Edit Product'}
+        description="Update pricing, variants, and stock quantities."
         action={
           product ? (
             <Button
               type="button"
               variant="secondary"
               onClick={() => setActive.mutate({ id, isActive: !product.isActive })}
+              className={product.isActive ? 'bg-rose-50 text-rose-600 hover:bg-rose-100 ring-rose-200' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 ring-emerald-200'}
             >
-              {product.isActive ? 'Hide from shop' : 'Publish'}
+              {product.isActive ? (
+                <>
+                  <EyeOff size={16} className="mr-2" />
+                  Hide from shop
+                </>
+              ) : (
+                <>
+                  <Eye size={16} className="mr-2" />
+                  Publish to shop
+                </>
+              )}
             </Button>
           ) : null
         }

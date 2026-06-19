@@ -1,47 +1,20 @@
-import { z } from 'zod';
 import { protectedProcedure, router } from '../config/trpc.config';
+import { UpdateProfileSchema, AddAddressSchema } from '../models/customer.model';
 
 export const customerRouter = router({
   updateProfile: protectedProcedure
-    .input(z.object({
-      name: z.string().min(2).optional(),
-    }))
+    .input(UpdateProfileSchema)
     .mutation(async ({ ctx, input }) => {
-      return ctx.prisma.user.update({
-        where: { id: ctx.user!.id },
-        data: input,
-        select: { id: true, email: true, name: true, role: true },
-      });
+      return ctx.services.customer.updateProfile(ctx.user!.id, input);
     }),
 
   getAddresses: protectedProcedure.query(async ({ ctx }) => {
-    return ctx.prisma.address.findMany({
-      where: { userId: ctx.user!.id },
-      orderBy: { createdAt: 'desc' },
-    });
+    return ctx.services.customer.getAddresses(ctx.user!.id);
   }),
 
   addAddress: protectedProcedure
-    .input(z.object({
-      street: z.string(),
-      city: z.string(),
-      state: z.string(),
-      country: z.string(),
-      zipCode: z.string(),
-      isDefault: z.boolean().optional(),
-    }))
+    .input(AddAddressSchema)
     .mutation(async ({ ctx, input }) => {
-      if (input.isDefault) {
-        await ctx.prisma.address.updateMany({
-          where: { userId: ctx.user!.id },
-          data: { isDefault: false },
-        });
-      }
-      return ctx.prisma.address.create({
-        data: {
-          ...input,
-          userId: ctx.user!.id,
-        },
-      });
+      return ctx.services.customer.addAddress(ctx.user!.id, input);
     }),
 });

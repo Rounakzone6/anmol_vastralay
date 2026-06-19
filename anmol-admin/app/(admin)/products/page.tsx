@@ -4,9 +4,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { PageHeader } from '@/components/page-header';
-import { Button, Card, Input, Select } from '@/components/ui';
+import { Button, Card, Input, Select, Badge } from '@/components/ui';
 import { formatCurrency } from '@/lib/format';
 import { trpc } from '@/lib/trpc';
+import { Plus, Search, Filter } from 'lucide-react';
 
 export default function ProductsPage() {
   const [search, setSearch] = useState('');
@@ -20,100 +21,133 @@ export default function ProductsPage() {
   });
 
   return (
-    <div>
+    <div className="pb-12">
       <PageHeader
         title="Products"
-        description="Manage sarees, kurtis, suits, and all inventory"
+        description="Manage your sarees, kurtis, suits, and entire inventory catalog."
         action={
           <Link href="/products/new">
-            <Button>Add product</Button>
+            <Button>
+              <Plus size={16} className="mr-2" />
+              Add Product
+            </Button>
           </Link>
         }
       />
 
-      <Card className="mb-6 flex flex-wrap gap-4 p-4">
-        <Input
-          className="max-w-xs"
-          placeholder="Search by name…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <Select
-          className="max-w-xs"
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-        >
-          <option value="">All categories</option>
-          {categories?.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </Select>
-      </Card>
+      <div className="mb-6 flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1 max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search size={16} className="text-slate-400" />
+          </div>
+          <Input
+            className="pl-10"
+            placeholder="Search products by name…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="relative w-full sm:w-64">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+            <Filter size={16} className="text-slate-400" />
+          </div>
+          <Select
+            className="pl-10"
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+          >
+            <option value="">All categories</option>
+            {categories?.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+      </div>
 
-      <Card className="overflow-hidden p-0">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5">
         {isLoading ? (
-          <p className="p-6 text-sm text-zinc-500">Loading…</p>
+          <p className="p-8 text-center text-sm font-medium text-slate-500">Loading products…</p>
+        ) : !data?.items.length ? (
+          <div className="p-12 text-center flex flex-col items-center justify-center">
+            <p className="text-lg font-medium text-slate-900 mb-2">No products found</p>
+            <p className="text-sm text-slate-500 max-w-md">
+              {search || categoryId ? "Try adjusting your filters to find what you're looking for." : "You haven't added any products to your catalog yet."}
+            </p>
+          </div>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="border-b bg-zinc-50 text-zinc-600">
+            <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
               <tr>
-                <th className="px-4 py-3">Photo</th>
-                <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Price</th>
-                <th className="px-4 py-3">Variants</th>
-                <th className="px-4 py-3">Status</th>
+                <th className="px-6 py-4">Product</th>
+                <th className="px-6 py-4 hidden md:table-cell">Type & Category</th>
+                <th className="px-6 py-4">Price</th>
+                <th className="px-6 py-4 hidden sm:table-cell">Inventory</th>
+                <th className="px-6 py-4 text-right">Status</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100">
               {data?.items.map((p) => {
                 const thumb = p.images[0]?.url;
                 return (
-                <tr key={p.id} className="border-b last:border-0">
-                  <td className="px-4 py-3">
-                    {thumb ? (
-                      <div className="relative h-14 w-11 overflow-hidden rounded bg-zinc-100">
-                        <Image
-                          src={thumb}
-                          alt=""
-                          fill
-                          className="object-cover"
-                          unoptimized
-                        />
+                <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-4">
+                      {thumb ? (
+                        <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded-lg bg-slate-100 shadow-sm border border-slate-200/50">
+                          <Image
+                            src={thumb}
+                            alt={p.name}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex h-16 w-12 shrink-0 items-center justify-center rounded-lg bg-slate-100 border border-slate-200/50 text-xs text-slate-400">
+                          N/A
+                        </div>
+                      )}
+                      <div>
+                        <Link
+                          href={`/products/${p.id}`}
+                          className="font-semibold text-slate-900 hover:text-violet-600 transition-colors line-clamp-2"
+                        >
+                          {p.name}
+                        </Link>
+                        {/* Mobile only display for category */}
+                        <p className="text-xs text-slate-500 mt-1 md:hidden">{p.category?.name}</p>
                       </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 hidden md:table-cell">
+                    <div className="flex flex-col gap-1 items-start">
+                      <span className="font-medium text-slate-700">{p.kind}</span>
+                      {p.category?.name && (
+                        <Badge variant="default" className="text-[10px] uppercase tracking-wider">{p.category.name}</Badge>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-slate-900">{formatCurrency(p.sellingPrice)}</span>
+                      {p.discountPercent > 0 ? (
+                        <span className="text-xs text-slate-400 line-through mt-0.5">
+                          {formatCurrency(p.netPrice)}
+                        </span>
+                      ) : null}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 hidden sm:table-cell text-slate-700 font-medium">
+                    {p.variants.length} variant{p.variants.length !== 1 ? 's' : ''}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    {p.isActive ? (
+                      <Badge variant="success">Active</Badge>
                     ) : (
-                      <span className="text-xs text-zinc-400">No image</span>
+                      <Badge variant="default">Draft</Badge>
                     )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/products/${p.id}`}
-                      className="font-medium text-violet-700 hover:underline"
-                    >
-                      {p.name}
-                    </Link>
-                    <p className="text-xs text-zinc-500">{p.category?.name}</p>
-                  </td>
-                  <td className="px-4 py-3">{p.kind}</td>
-                  <td className="px-4 py-3">
-                    <span className="font-medium">{formatCurrency(p.sellingPrice)}</span>
-                    {p.discountPercent > 0 ? (
-                      <span className="ml-1 text-xs text-zinc-400 line-through">
-                        {formatCurrency(p.netPrice)}
-                      </span>
-                    ) : null}
-                  </td>
-                  <td className="px-4 py-3">{p.variants.length}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs ${
-                        p.isActive ? 'bg-green-100 text-green-800' : 'bg-zinc-200'
-                      }`}
-                    >
-                      {p.isActive ? 'Active' : 'Hidden'}
-                    </span>
                   </td>
                 </tr>
               );
@@ -121,7 +155,7 @@ export default function ProductsPage() {
             </tbody>
           </table>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

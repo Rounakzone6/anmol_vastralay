@@ -11,9 +11,6 @@ export default function CartPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   
-  const [shippingAddress, setShippingAddress] = useState('');
-  const [checkoutError, setCheckoutError] = useState('');
-
   const utils = trpc.useUtils();
   const { data: cart, isLoading } = trpc.cart.getCart.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -27,23 +24,7 @@ export default function CartPage() {
     onSuccess: () => utils.cart.getCart.invalidate(),
   });
 
-  const createOrder = trpc.order.createOrder.useMutation({
-    onSuccess: () => {
-      utils.cart.getCart.invalidate();
-      router.push('/orders');
-    },
-    onError: (err) => setCheckoutError(err.message),
-  });
-
-  const handleCheckout = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!shippingAddress.trim()) {
-      setCheckoutError('Shipping address is required');
-      return;
-    }
-    setCheckoutError('');
-    createOrder.mutate({ shippingAddress });
-  };
+  // Checkout logic moved to /checkout page
 
   if (!isAuthenticated) {
     return (
@@ -164,34 +145,14 @@ export default function CartPage() {
             </div>
           </dl>
 
-          <form className="mt-6" onSubmit={handleCheckout}>
-            <div className="mb-4">
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-                Shipping Address
-              </label>
-              <textarea
-                id="address"
-                rows={3}
-                required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#85142b] focus:ring-[#85142b] sm:text-sm border p-2"
-                placeholder="Enter your full address"
-                value={shippingAddress}
-                onChange={(e) => setShippingAddress(e.target.value)}
-              />
-            </div>
-
-            {checkoutError && (
-              <p className="mt-2 text-sm text-red-600">{checkoutError}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={createOrder.isPending}
-              className="mt-4 w-full rounded-md border border-transparent bg-[#85142b] px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-[#6c1023] focus:outline-none focus:ring-2 focus:ring-[#85142b] focus:ring-offset-2 disabled:opacity-50"
+          <div className="mt-6">
+            <Link
+              href="/checkout"
+              className="w-full flex items-center justify-center rounded-md border border-transparent bg-[#85142b] px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-[#6c1023] focus:outline-none focus:ring-2 focus:ring-[#85142b] focus:ring-offset-2"
             >
-              {createOrder.isPending ? 'Processing...' : 'Checkout'}
-            </button>
-          </form>
+              Proceed to Checkout
+            </Link>
+          </div>
         </section>
       </div>
     </div>

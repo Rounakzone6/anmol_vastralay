@@ -6,9 +6,10 @@ import {
   ProductImageUpload,
   type ProductImageSlot,
 } from '@/components/product-image-upload';
-import { Button, Input, Label, Select, Textarea } from '@/components/ui';
+import { Button, Input, Label, Select, Textarea, Card } from '@/components/ui';
 import { formatCurrency } from '@/lib/format';
 import { trpc } from '@/lib/trpc';
+import { Plus, Trash2, Save, X } from 'lucide-react';
 
 type VariantRow = {
   color: string;
@@ -156,190 +157,268 @@ export function ProductForm({ productId }: ProductFormProps) {
   const pending = create.isPending || update.isPending;
 
   return (
-    <form className="space-y-8" onSubmit={handleSubmit}>
-      <section className="grid gap-4 rounded-xl border border-zinc-200 bg-white p-6 md:grid-cols-2">
-        <h2 className="md:col-span-2 text-lg font-semibold">Basic info</h2>
-        <div>
-          <Label>Product name</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} required />
-        </div>
-        <div>
-          <Label>Category</Label>
-          <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
-            <option value="">Select category</option>
-            {categories?.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div>
-          <Label>Product type</Label>
-          <Select
-            value={kind}
-            onChange={(e) => {
-              const k = e.target.value as 'SAREE' | 'STANDARD';
-              setKind(k);
-              if (k === 'SAREE') {
-                setVariants([{ color: '', stockQty: 0 }]);
-              } else {
-                setVariants([{ color: '', size: 'M', stockQty: 0 }]);
-              }
-            }}
-          >
-            <option value="STANDARD">Standard (sizes M–XXL)</option>
-            <option value="SAREE">Saree (colors only + extra saya)</option>
-          </Select>
-        </div>
-        <div className="md:col-span-2">
-          <Label>Description</Label>
-          <Textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-          />
-        </div>
-      </section>
-
-      <ProductImageUpload
-        value={images}
-        onChange={setImages}
-        error={imageError}
-      />
-
-      <section className="grid gap-4 rounded-xl border border-zinc-200 bg-white p-6 md:grid-cols-3">
-        <h2 className="md:col-span-3 text-lg font-semibold">Pricing</h2>
-        <div>
-          <Label>Net price (₹)</Label>
-          <Input
-            type="number"
-            min={1}
-            step="0.01"
-            value={netPrice}
-            onChange={(e) => setNetPrice(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <Label>Discount %</Label>
-          <Input
-            type="number"
-            min={0}
-            max={100}
-            value={discountPercent}
-            onChange={(e) => setDiscountPercent(e.target.value)}
-          />
-        </div>
-        <div>
-          <Label>Selling price</Label>
-          <p className="mt-2 text-2xl font-bold text-violet-800">{formatCurrency(selling)}</p>
-        </div>
-      </section>
-
-      {kind === 'SAREE' ? (
-        <section className="rounded-xl border border-zinc-200 bg-white p-6">
-          <label className="flex items-center gap-2 text-sm font-medium">
-            <input
-              type="checkbox"
-              checked={allowsExtraSaya}
-              onChange={(e) => setAllowsExtraSaya(e.target.checked)}
-            />
-            Customer can add extra saya piece
-          </label>
-          {allowsExtraSaya ? (
-            <div className="mt-4 max-w-xs">
-              <Label>Extra saya price (₹)</Label>
-              <Input
-                type="number"
-                min={1}
-                value={extraSayaPrice}
-                onChange={(e) => setExtraSayaPrice(e.target.value)}
-                required
-              />
-            </div>
-          ) : null}
-        </section>
-      ) : null}
-
-      <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Variants (stock)</h2>
-          <Button type="button" variant="secondary" onClick={addVariantRow}>
-            Add row
+    <form onSubmit={handleSubmit} className="pb-12">
+      {/* Header Actions */}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold text-slate-900">{isEdit ? 'Edit Product' : 'New Product'}</h2>
+        <div className="flex gap-3">
+          <Button type="button" variant="outline" onClick={() => router.back()}>
+            <X size={16} className="mr-2" />
+            Cancel
+          </Button>
+          <Button type="submit" disabled={pending}>
+            <Save size={16} className="mr-2" />
+            {pending ? 'Saving…' : 'Save Product'}
           </Button>
         </div>
-        <div className="space-y-3">
-          {variants.map((row, i) => (
-            <div key={i} className="grid gap-3 md:grid-cols-4">
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Main Content Column (Left - 2/3) */}
+        <div className="lg:col-span-2 space-y-8">
+          
+          <Card className="p-8">
+            <h3 className="text-lg font-semibold text-slate-900 mb-6">Basic Information</h3>
+            <div className="space-y-6">
               <div>
-                <Label>Color</Label>
-                <Input
-                  value={row.color}
-                  onChange={(e) => {
-                    const next = [...variants];
-                    next[i] = { ...next[i], color: e.target.value };
-                    setVariants(next);
-                  }}
-                  required
+                <Label>Product Name</Label>
+                <Input 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  required 
+                  placeholder="e.g., Summer Floral Saree"
+                  className="text-lg py-3"
                 />
               </div>
-              {kind === 'STANDARD' ? (
-                <div>
-                  <Label>Size</Label>
-                  <Select
-                    value={row.size ?? 'M'}
-                    onChange={(e) => {
-                      const next = [...variants];
-                      next[i] = {
-                        ...next[i],
-                        size: e.target.value as VariantRow['size'],
-                      };
-                      setVariants(next);
-                    }}
-                  >
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                    <option value="XL">XL</option>
-                    <option value="XXL">XXL</option>
-                  </Select>
-                </div>
-              ) : null}
               <div>
-                <Label>Quantity</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={row.stockQty}
-                  onChange={(e) => {
-                    const next = [...variants];
-                    next[i] = { ...next[i], stockQty: Number(e.target.value) };
-                    setVariants(next);
-                  }}
+                <Label>Description</Label>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={6}
+                  placeholder="Describe the product material, design, and care instructions..."
                 />
-              </div>
-              <div className="flex items-end">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setVariants(variants.filter((_, j) => j !== i))}
-                  disabled={variants.length <= 1}
-                >
-                  Remove
-                </Button>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
+          </Card>
 
-      <div className="flex gap-3">
-        <Button type="submit" disabled={pending}>
-          {pending ? 'Saving…' : isEdit ? 'Update product' : 'Create product'}
-        </Button>
-        <Button type="button" variant="secondary" onClick={() => router.back()}>
-          Cancel
-        </Button>
+          <Card className="p-8">
+            <h3 className="text-lg font-semibold text-slate-900 mb-6">Media</h3>
+            <ProductImageUpload
+              value={images}
+              onChange={setImages}
+              error={imageError}
+            />
+          </Card>
+
+          <Card className="p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">Inventory & Variants</h3>
+                <p className="text-sm text-slate-500 mt-1">Manage stock quantities for different options.</p>
+              </div>
+              <Button type="button" variant="secondary" onClick={addVariantRow}>
+                <Plus size={16} className="mr-2" />
+                Add Variant
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              {variants.map((row, i) => (
+                <div key={i} className="flex flex-col sm:flex-row items-end gap-4 p-4 rounded-xl border border-slate-100 bg-slate-50/50">
+                  <div className="w-full sm:flex-1">
+                    <Label>Color</Label>
+                    <Input
+                      value={row.color}
+                      onChange={(e) => {
+                        const next = [...variants];
+                        next[i] = { ...next[i], color: e.target.value };
+                        setVariants(next);
+                      }}
+                      required
+                      placeholder="e.g., Red"
+                    />
+                  </div>
+                  
+                  {kind === 'STANDARD' ? (
+                    <div className="w-full sm:w-32 shrink-0">
+                      <Label>Size</Label>
+                      <Select
+                        value={row.size ?? 'M'}
+                        onChange={(e) => {
+                          const next = [...variants];
+                          next[i] = {
+                            ...next[i],
+                            size: e.target.value as VariantRow['size'],
+                          };
+                          setVariants(next);
+                        }}
+                      >
+                        <option value="M">M</option>
+                        <option value="L">L</option>
+                        <option value="XL">XL</option>
+                        <option value="XXL">XXL</option>
+                      </Select>
+                    </div>
+                  ) : null}
+                  
+                  <div className="w-full sm:w-32 shrink-0">
+                    <Label>Stock</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={row.stockQty}
+                      onChange={(e) => {
+                        const next = [...variants];
+                        next[i] = { ...next[i], stockQty: Number(e.target.value) };
+                        setVariants(next);
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="w-full sm:w-auto flex justify-end shrink-0">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                      onClick={() => setVariants(variants.filter((_, j) => j !== i))}
+                      disabled={variants.length <= 1}
+                    >
+                      <Trash2 size={18} />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        {/* Sidebar Column (Right - 1/3) */}
+        <div className="space-y-8">
+          
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-6">Organization</h3>
+            <div className="space-y-6">
+              <div>
+                <Label>Product Type</Label>
+                <Select
+                  value={kind}
+                  onChange={(e) => {
+                    const k = e.target.value as 'SAREE' | 'STANDARD';
+                    setKind(k);
+                    if (k === 'SAREE') {
+                      setVariants([{ color: '', stockQty: 0 }]);
+                    } else {
+                      setVariants([{ color: '', size: 'M', stockQty: 0 }]);
+                    }
+                  }}
+                >
+                  <option value="STANDARD">Standard Clothing</option>
+                  <option value="SAREE">Saree</option>
+                </Select>
+              </div>
+              <div>
+                <Label>Category</Label>
+                <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
+                  <option value="">Select category...</option>
+                  {categories?.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-6">Pricing</h3>
+            <div className="space-y-6">
+              <div>
+                <Label>Net Price (₹)</Label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-slate-500 font-medium">₹</span>
+                  </div>
+                  <Input
+                    className="pl-8 font-medium"
+                    type="number"
+                    min={1}
+                    step="0.01"
+                    value={netPrice}
+                    onChange={(e) => setNetPrice(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <div className="flex justify-between">
+                  <Label>Discount (%)</Label>
+                </div>
+                <div className="relative mt-1.5">
+                  <Input
+                    className="pr-8"
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={discountPercent}
+                    onChange={(e) => setDiscountPercent(e.target.value)}
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <span className="text-slate-500 font-medium">%</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t border-slate-100">
+                <Label className="text-slate-500">Final Selling Price</Label>
+                <p className="mt-1 text-3xl font-bold text-violet-700">{formatCurrency(selling)}</p>
+              </div>
+            </div>
+          </Card>
+
+          {kind === 'SAREE' ? (
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Extra Options</h3>
+              <label className="flex items-start gap-3 p-4 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+                <div className="flex items-center h-5 mt-0.5">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 text-violet-600 rounded border-slate-300 focus:ring-violet-500"
+                    checked={allowsExtraSaya}
+                    onChange={(e) => setAllowsExtraSaya(e.target.checked)}
+                  />
+                </div>
+                <div>
+                  <p className="font-medium text-slate-900">Add Saya Piece</p>
+                  <p className="text-sm text-slate-500">Allow customers to purchase an additional saya.</p>
+                </div>
+              </label>
+              
+              {allowsExtraSaya ? (
+                <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <Label>Saya Price (₹)</Label>
+                  <div className="relative mt-1.5">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-slate-500 font-medium">₹</span>
+                    </div>
+                    <Input
+                      className="pl-8"
+                      type="number"
+                      min={1}
+                      value={extraSayaPrice}
+                      onChange={(e) => setExtraSayaPrice(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              ) : null}
+            </Card>
+          ) : null}
+
+        </div>
       </div>
     </form>
   );

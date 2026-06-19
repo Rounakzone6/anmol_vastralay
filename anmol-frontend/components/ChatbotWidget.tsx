@@ -3,6 +3,7 @@
 import { useChat } from '@ai-sdk/react';
 import { Bot, Send, Loader2, ShoppingBag, MessageSquare, X } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
+import Link from 'next/link';
 
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -161,10 +162,10 @@ export default function ChatbotWidget() {
                                  {products.length > 0 ? (
                                    <div className="space-y-1">
                                      {products.map((p: any) => (
-                                       <a key={p.id} href={p.link} className="flex justify-between items-center p-1.5 hover:bg-white rounded border border-transparent hover:border-gray-200 transition-colors">
+                                       <Link key={p.id} href={p.link} className="flex justify-between items-center p-1.5 hover:bg-white rounded border border-transparent hover:border-gray-200 transition-colors">
                                          <span className="font-medium truncate mr-2">{p.name}</span>
                                          <span className="font-bold shrink-0">₹{p.price}</span>
-                                       </a>
+                                       </Link>
                                      ))}
                                    </div>
                                  ) : (

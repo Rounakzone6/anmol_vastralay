@@ -1,78 +1,24 @@
-import { z } from 'zod';
-import { adminProcedure, notFound, router, staffProcedure } from '../config/trpc.config';
+import { adminProcedure, router, staffProcedure } from '../config/trpc.config';
+import { CreateUserSchema, UserIdSchema } from '../models/user.model';
 
 export const userRouter = router({
   getUsers: staffProcedure.query(async ({ ctx }) => {
-    return ctx.prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    return ctx.services.user.getUsers();
   }),
 
   getCustomers: staffProcedure.query(async ({ ctx }) => {
-    return ctx.prisma.user.findMany({
-      where: { role: 'CUSTOMER' },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        createdAt: true,
-        _count: {
-          select: { orders: true }
-        }
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    return ctx.services.user.getCustomers();
   }),
 
   createUser: adminProcedure
-    .input(
-      z.object({
-        email: z.string().email('Invalid email address'),
-        name: z.string().min(2, 'Name must be at least 2 characters'),
-        password: z.string().min(6, 'Password must be at least 6 characters'),
-        role: z.enum(['ADMIN', 'STAFF']).optional(),
-      }),
-    )
+    .input(CreateUserSchema)
     .mutation(async ({ ctx, input }) => {
-      const hashedPassword = await ctx.auth.hashPassword(input.password);
-      return ctx.prisma.user.create({
-        data: {
-          email: input.email,
-          name: input.name,
-          password: hashedPassword,
-          role: input.role ?? 'STAFF',
-        },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          createdAt: true,
-        },
-      });
+      return ctx.services.user.createUser(input);
     }),
 
   getUserById: staffProcedure
-    .input(z.object({ id: z.string() }))
+    .input(UserIdSchema)
     .query(async ({ ctx, input }) => {
-      const user = await ctx.prisma.user.findUnique({
-        where: { id: input.id },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          createdAt: true,
-        },
-      });
-      if (!user) notFound('User');
-      return user;
+      return ctx.services.user.getUserById(input.id);
     }),
 });

@@ -1,167 +1,51 @@
-import { z } from 'zod';
-import { DEFAULT_CATEGORIES } from '../utils/default-categories';
-import { slugify, uniqueSlug } from '../utils/slug';
-import { badRequest, notFound, router, staffProcedure, publicProcedure } from '../config/trpc.config';
+import { router, staffProcedure, publicProcedure } from '../config/trpc.config';
+import {
+  ListCategorySchema,
+  CategoryIdSchema,
+  CategorySlugSchema,
+  CreateCategorySchema,
+  UpdateCategorySchema,
+  DeleteCategorySchema,
+} from '../models/category.model';
 
 export const categoryRouter = router({
   list: publicProcedure
-    .input(
-      z
-        .object({
-          includeInactive: z.boolean().optional(),
-          search: z.string().optional(),
-        })
-        .optional(),
-    )
+    .input(ListCategorySchema.optional())
     .query(async ({ ctx, input }) => {
-      const where = {
-        ...(input?.includeInactive ? {} : { isActive: true }),
-        ...(input?.search
-          ? { name: { contains: input.search, mode: 'insensitive' as const } }
-          : {}),
-      };
-
-      return ctx.prisma.category.findMany({
-        where,
-        orderBy: { name: 'asc' },
-        include: { _count: { select: { products: true } } },
-      });
+      return ctx.services.category.list(input);
     }),
 
   getById: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(CategoryIdSchema)
     .query(async ({ ctx, input }) => {
-      const category = await ctx.prisma.category.findUnique({
-        where: { id: input.id },
-        include: { _count: { select: { products: true } } },
-      });
-      if (!category) notFound('Category');
-      return category;
+      return ctx.services.category.getById(input.id);
     }),
 
   getBySlug: publicProcedure
-    .input(z.object({ slug: z.string() }))
+    .input(CategorySlugSchema)
     .query(async ({ ctx, input }) => {
-      const category = await ctx.prisma.category.findUnique({
-        where: { slug: input.slug },
-      });
-      if (!category) notFound('Category');
-      return category;
+      return ctx.services.category.getBySlug(input.slug);
     }),
 
   create: staffProcedure
-    .input(
-      z.object({
-        name: z.string().min(2),
-        slug: z.string().optional(),
-        description: z.string().optional(),
-        imageUrl: z.string().url().optional(),
-      }),
-    )
+    .input(CreateCategorySchema)
     .mutation(async ({ ctx, input }) => {
-      const slug =
-        input.slug?.trim() ||
-        (await uniqueSlug(input.name, async (s) => {
-          const row = await ctx.prisma.category.findUnique({
-            where: { slug: s },
-          });
-          return Boolean(row);
-        }));
-
-      if (input.slug && slugify(input.slug) !== input.slug) {
-        badRequest('Slug must be lowercase letters, numbers, and hyphens only');
-      }
-
-      return ctx.prisma.category.create({
-        data: {
-          name: input.name,
-          slug,
-          description: input.description,
-          imageUrl: input.imageUrl,
-        },
-      });
+      return ctx.services.category.create(input);
     }),
 
   update: staffProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        name: z.string().min(2).optional(),
-        slug: z.string().optional(),
-        description: z.string().nullable().optional(),
-        imageUrl: z.string().url().nullable().optional(),
-        isActive: z.boolean().optional(),
-      }),
-    )
+    .input(UpdateCategorySchema)
     .mutation(async ({ ctx, input }) => {
-      const existing = await ctx.prisma.category.findUnique({
-        where: { id: input.id },
-      });
-      if (!existing) notFound('Category');
-
-      let slug = input.slug;
-      if (slug) {
-        slug = slugify(slug);
-        const clash = await ctx.prisma.category.findFirst({
-          where: { slug, NOT: { id: input.id } },
-        });
-        if (clash) badRequest('Slug already in use');
-      }
-
-      return ctx.prisma.category.update({
-        where: { id: input.id },
-        data: {
-          name: input.name,
-          slug,
-          description: input.description,
-          imageUrl: input.imageUrl,
-          isActive: input.isActive,
-        },
-      });
+      return ctx.services.category.update(input);
     }),
 
   delete: staffProcedure
-    .input(z.object({ id: z.string(), hard: z.boolean().optional() }))
+    .input(DeleteCategorySchema)
     .mutation(async ({ ctx, input }) => {
-      const existing = await ctx.prisma.category.findUnique({
-        where: { id: input.id },
-        include: { _count: { select: { products: true } } },
-      });
-      if (!existing) notFound('Category');
-
-      if (input.hard) {
-        if (existing._count.products > 0) {
-          badRequest(
-            `Cannot delete "${existing.name}" — ${existing._count.products} product(s) still use it. Hide the category or move those products first.`,
-          );
-        }
-        await ctx.prisma.category.delete({ where: { id: input.id } });
-        return { success: true, mode: 'deleted' as const };
-      }
-
-      await ctx.prisma.category.update({
-        where: { id: input.id },
-        data: { isActive: false },
-      });
-      return { success: true, mode: 'hidden' as const };
+      return ctx.services.category.delete(input);
     }),
 
   seedDefaults: staffProcedure.mutation(async ({ ctx }) => {
-    for (const cat of DEFAULT_CATEGORIES) {
-      await ctx.prisma.category.upsert({
-        where: { slug: cat.slug },
-        create: {
-          name: cat.name,
-          slug: cat.slug,
-          description: cat.description,
-        },
-        update: {
-          name: cat.name,
-          description: cat.description,
-          isActive: true,
-        },
-      });
-    }
-    return { count: DEFAULT_CATEGORIES.length };
+    return ctx.services.category.seedDefaults();
   }),
 });

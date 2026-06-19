@@ -65,6 +65,28 @@ export class AuthService {
     return { token, user };
   }
 
+  async register(input: { email: string; name: string; password: string }) {
+    try {
+      const hashedPassword = await this.hashPassword(input.password);
+      await this.prisma.user.create({
+        data: {
+          email: input.email,
+          name: input.name,
+          password: hashedPassword,
+          role: 'CUSTOMER',
+          cart: { create: {} }
+        },
+        select: { id: true, email: true, name: true, role: true },
+      });
+      return await this.login(input.email, input.password);
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        throw new Error('CONFLICT:Email already exists');
+      }
+      throw new Error(`BAD_REQUEST:${error.message || 'Registration failed'}`);
+    }
+  }
+
   async getUserFromToken(token: string | undefined): Promise<AuthUser | null> {
     if (!token) return null;
 

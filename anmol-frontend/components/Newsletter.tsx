@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Send } from 'lucide-react';
 
 export default function Newsletter() {
@@ -76,9 +77,9 @@ export default function Newsletter() {
           )}
           <p className="mt-3 text-sm text-gray-500">
             We care about the protection of your data. Read our{' '}
-            <a href="/privacy" className="font-medium text-[#85142b] underline">
+            <Link href="/privacy" className="font-medium text-[#85142b] hover:underline">
               Privacy Policy.
-            </a>
+            </Link>
           </p>
         </div>
       </div>

@@ -1,17 +1,12 @@
 import { TRPCError } from '@trpc/server';
-import { z } from 'zod';
 import type { AuthService } from '../services/auth.service';
-import { badRequest, publicProcedure, router, protectedProcedure } from '../config/trpc.config';
+import { publicProcedure, router, protectedProcedure } from '../config/trpc.config';
+import { LoginSchema, RegisterSchema } from '../models/auth.model';
 
 export const createAuthRouter = (auth: AuthService) =>
   router({
     login: publicProcedure
-      .input(
-        z.object({
-          email: z.string().email(),
-          password: z.string().min(6),
-        }),
-      )
+      .input(LoginSchema)
       .mutation(async ({ input }) => {
         try {
           return await auth.login(input.email, input.password);
@@ -24,37 +19,21 @@ export const createAuthRouter = (auth: AuthService) =>
       }),
 
     register: publicProcedure
-      .input(
-        z.object({
-          email: z.string().email(),
-          name: z.string().min(2),
-          password: z.string().min(6),
-        }),
-      )
-      .mutation(async ({ ctx, input }) => {
+      .input(RegisterSchema)
+      .mutation(async ({ input }) => {
         try {
-          const hashedPassword = await ctx.auth.hashPassword(input.password);
-          const user = await ctx.prisma.user.create({
-            data: {
-              email: input.email,
-              name: input.name,
-              password: hashedPassword,
-              role: 'CUSTOMER',
-              cart: { create: {} }
-            },
-            select: { id: true, email: true, name: true, role: true },
-          });
-          return await auth.login(input.email, input.password);
+          return await auth.register(input);
         } catch (error: any) {
-          if (error.code === 'P2002') {
+          const message = error.message as string;
+          if (message.startsWith('CONFLICT:')) {
             throw new TRPCError({
               code: 'CONFLICT',
-              message: 'Email already exists',
+              message: message.replace('CONFLICT:', ''),
             });
           }
           throw new TRPCError({
             code: 'BAD_REQUEST',
-            message: error.message || 'Registration failed',
+            message: message.replace('BAD_REQUEST:', ''),
           });
         }
       }),
