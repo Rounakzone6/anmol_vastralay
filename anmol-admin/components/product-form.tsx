@@ -6,7 +6,7 @@ import {
   ProductImageUpload,
   type ProductImageSlot,
 } from '@/components/product-image-upload';
-import { Button, Input, Label, Select, Textarea, Card } from '@/components/ui';
+import { Button, Input, Label, Select, Card } from '@/components/ui';
 import { formatCurrency } from '@/lib/format';
 import { trpc } from '@/lib/trpc';
 import { Plus, Trash2, Save, X, Info, Package, Image as ImageIcon, LayoutGrid, Tag, Scissors, Check, Loader2, AlertCircle } from 'lucide-react';
@@ -404,6 +404,7 @@ export function ProductForm({ productId }: ProductFormProps) {
                     <div className="w-full sm:flex-1">
                       <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Sizes (comma-separated)</Label>
                       <Input
+                        type="text"
                         value={row.sizes}
                         onChange={(e) => {
                           const next = [...variants];
@@ -426,6 +427,7 @@ export function ProductForm({ productId }: ProductFormProps) {
                         next[i] = { ...next[i], stockQtys: e.target.value };
                         setVariants(next);
                       }}
+                      required
                       placeholder={kind === 'STANDARD' ? "e.g., 4, 3, 2" : "e.g., 5"}
                       className="rounded-xl bg-slate-50/50 focus:bg-white font-mono"
                     />
