@@ -18,7 +18,7 @@ export class CategoryService {
 
     return this.prisma.category.findMany({
       where,
-      orderBy: { name: 'asc' },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       include: { 
         _count: { select: { products: true } },
         subcategories: {
@@ -139,6 +139,18 @@ export class CategoryService {
       });
     }
     return { count: DEFAULT_CATEGORIES.length };
+  }
+
+  async reorder(input: z.infer<typeof import('../models/category.model').ReorderCategorySchema>) {
+    await this.prisma.$transaction(
+      input.map((item) =>
+        this.prisma.category.update({
+          where: { id: item.id },
+          data: { sortOrder: item.sortOrder },
+        })
+      )
+    );
+    return { success: true };
   }
 
   // --- SUBCATEGORY ---

@@ -10,6 +10,7 @@ import {
   UpdateSubcategorySchema,
   CreateItemTypeSchema,
   UpdateItemTypeSchema,
+  ReorderCategorySchema,
 } from '../models/category.model';
 import { z } from 'zod';
 
@@ -48,6 +49,12 @@ export const categoryRouter = router({
     .input(DeleteCategorySchema)
     .mutation(async ({ ctx, input }) => {
       return ctx.services.category.delete(input);
+    }),
+
+  reorder: staffProcedure
+    .input(ReorderCategorySchema)
+    .mutation(async ({ ctx, input }) => {
+      return ctx.services.category.reorder(input);
     }),
 
   seedDefaults: staffProcedure.mutation(async ({ ctx }) => {
