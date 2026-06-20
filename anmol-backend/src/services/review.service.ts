@@ -58,53 +58,63 @@ export class ReviewService {
       if (error instanceof TRPCError) throw error;
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to add review',
+        message: error?.message || 'Failed to add review',
         cause: error,
       });
     }
   }
 
   async listReviews(input: ListReviewsInput) {
-    const limit = input.limit ?? 10;
-    
-    const items = await this.prisma.review.findMany({
-      where: { productId: input.productId },
-      take: limit + 1,
-      cursor: input.cursor ? { id: input.cursor } : undefined,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            profileImage: true,
+    try {
+      const limit = input.limit ?? 10;
+      
+      const items = await this.prisma.review.findMany({
+        where: { productId: input.productId },
+        take: limit + 1,
+        cursor: input.cursor ? { id: input.cursor } : undefined,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              profileImage: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    let nextCursor: typeof input.cursor | undefined = undefined;
-    if (items.length > limit) {
-      const nextItem = items.pop();
-      nextCursor = nextItem!.id;
+      let nextCursor: typeof input.cursor | undefined = undefined;
+      if (items.length > limit) {
+        const nextItem = items.pop();
+        nextCursor = nextItem!.id;
+      }
+
+      return {
+        items,
+        nextCursor,
+      };
+    } catch (error) {
+      console.error('Failed to list reviews:', error);
+      return { items: [], nextCursor: undefined };
     }
-
-    return {
-      items,
-      nextCursor,
-    };
   }
 
   async getStats(productId: string) {
-    const stats = await this.prisma.review.aggregate({
-      where: { productId },
-      _avg: { rating: true },
-      _count: { id: true },
-    });
+    try {
+      const stats = await this.prisma.review.aggregate({
+        where: { productId },
+        _avg: { rating: true },
+        _count: { id: true },
+      });
 
-    return {
-      averageRating: stats._avg.rating || 0,
-      totalCount: stats._count.id || 0,
-    };
+      return {
+        averageRating: stats._avg.rating || 0,
+        totalCount: stats._count.id || 0,
+      };
+    } catch (error) {
+      console.error('Failed to get review stats:', error);
+      return { averageRating: 0, totalCount: 0 };
+    }
   }
 }

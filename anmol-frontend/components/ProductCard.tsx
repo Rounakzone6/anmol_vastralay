@@ -52,12 +52,12 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
 
   return (
     <div
-      className="group relative flex flex-col w-full bg-white transition-all duration-300"
+      className="group relative flex flex-col w-full bg-white rounded-2xl p-3 transition-all duration-300 hover:shadow-2xl border border-transparent hover:border-gray-100"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Image Container - Using 3:4 aspect ratio standard for fashion e-commerce */}
-      <div className="relative w-full aspect-[3/4] overflow-hidden bg-gray-100 mb-3">
+      {/* Image Container */}
+      <div className="relative w-full aspect-square overflow-hidden bg-[#faf9f7] rounded-xl mb-4 group-hover:bg-white transition-colors duration-300">
         <Link href={href} className="block w-full h-full">
           {currentImage ? (
             <Image
@@ -65,10 +65,10 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
               alt={product.name}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-cover object-top transition-transform duration-700 ease-in-out group-hover:scale-105"
+              className="object-contain p-4 transition-transform duration-700 ease-in-out group-hover:scale-110"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400 text-sm">
+            <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
               No Image
             </div>
           )}
@@ -77,18 +77,18 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
         {/* Badges Overlay */}
         <div className="absolute top-2 left-2 flex flex-col gap-1.5 z-10 pointer-events-none">
           {isOutOfStock ? (
-            <span className="bg-white/90 text-gray-800 text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
+            <span className="bg-black/80 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">
               Sold Out
             </span>
           ) : (
             <>
               {isNew && !discountPct && (
-                <span className="bg-white/90 text-gray-800 text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
+                <span className="bg-[#85142b] text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider shadow-sm">
                   New
                 </span>
               )}
               {discountPct > 0 && (
-                <span className="bg-[#ff3f6c] text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider shadow-sm">
+                <span className="bg-green-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider shadow-sm">
                   -{Math.round(discountPct)}%
                 </span>
               )}
@@ -103,19 +103,19 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             e.stopPropagation();
             setIsWishlisted((w) => !w);
           }}
-          className="absolute top-2 right-2 p-2 rounded-full bg-white/80 hover:bg-white transition-all duration-200 z-10 shadow-sm opacity-0 group-hover:opacity-100 sm:opacity-100 translate-y-1 group-hover:translate-y-0 sm:translate-y-0"
+          className="absolute top-2 right-2 p-2 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-300 z-10 shadow hover:shadow-md opacity-0 group-hover:opacity-100 sm:opacity-100 translate-y-1 group-hover:translate-y-0 sm:translate-y-0"
           aria-label="Wishlist"
         >
           <Heart
-            size={16}
-            className={`transition-colors ${isWishlisted ? 'fill-[#ff3f6c] text-[#ff3f6c]' : 'text-gray-600'}`}
+            size={18}
+            className={`transition-colors ${isWishlisted ? 'fill-[#85142b] text-[#85142b]' : 'text-gray-500'}`}
           />
         </button>
 
         {/* Quick Add Overlay (Appears on Hover) - Premium touch */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out hidden lg:block">
+        <div className="absolute bottom-0 left-0 right-0 p-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out hidden lg:block">
           <button 
-            className="w-full bg-white/95 backdrop-blur-sm text-gray-900 font-semibold text-xs py-2.5 uppercase tracking-wider border border-gray-200 shadow-lg hover:bg-gray-900 hover:text-white transition-colors"
+            className="w-full bg-white/95 backdrop-blur-md rounded-lg text-[#85142b] font-bold text-xs py-3 uppercase tracking-wider shadow-lg hover:bg-[#85142b] hover:text-white transition-colors"
             onClick={(e) => {
               e.preventDefault();
               // Add to cart logic could go here
@@ -126,42 +126,42 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
         </div>
       </div>
 
-      {/* Info Section - Minimalist approach */}
-      <div className="flex flex-col px-1">
+      {/* Info Section */}
+      <div className="flex flex-col px-1 flex-1">
         <Link href={href} className="group-hover:opacity-80 transition-opacity">
           {product.brand && (
-            <h3 className="text-[12px] font-bold uppercase tracking-wide text-gray-900 mb-1 line-clamp-1">
+            <h3 className="text-xs sm:text-sm font-extrabold uppercase tracking-widest text-[#85142b] mb-1 line-clamp-1">
               {product.brand}
             </h3>
           )}
-          <p className="text-[13px] text-gray-500 font-normal line-clamp-1 mb-1.5" title={product.name}>
+          <p className="text-sm sm:text-base text-gray-800 font-semibold line-clamp-2 mb-2" title={product.name}>
             {product.name}
           </p>
         </Link>
         
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-[14px] font-bold text-gray-900">
+        <div className="flex items-baseline gap-2 mb-3 mt-auto pt-2">
+          <span className="text-base sm:text-xl font-black text-gray-900 tracking-tight">
             ₹{netPrice.toLocaleString('en-IN')}
           </span>
           {mrp && (
-            <span className="text-[12px] text-gray-400 line-through">
+            <span className="text-xs sm:text-sm text-gray-400 line-through font-medium">
               ₹{Math.round(mrp).toLocaleString('en-IN')}
             </span>
           )}
           {discountPct > 0 && (
-            <span className="text-[11px] font-bold text-orange-500">
-              ({Math.round(discountPct)}% OFF)
+            <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-md hidden sm:inline-block">
+              {Math.round(discountPct)}% OFF
             </span>
           )}
         </div>
 
         {/* Ratings (Mock) & Colors */}
-        <div className="flex items-center justify-between mt-auto">
+        <div className="flex items-center justify-between mt-1 border-t border-gray-50 pt-3">
            {/* Mock Rating */}
-           <div className="flex items-center gap-1">
-             <Star size={10} className="fill-green-600 text-green-600" />
-             <span className="text-[11px] font-bold text-gray-700">4.2</span>
-             <span className="text-[10px] text-gray-400 border-l border-gray-300 pl-1 ml-0.5">128</span>
+           <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
+             <Star size={12} className="fill-yellow-400 text-yellow-400" />
+             <span className="text-xs font-bold text-gray-700">4.2</span>
+             <span className="text-[10px] text-gray-400 border-l border-gray-300 pl-1.5 ml-0.5">128</span>
            </div>
 
            {/* Color Dots */}
@@ -170,13 +170,13 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
                {colors.slice(0, 3).map((color, i) => (
                  <span
                    key={i}
-                   className="w-3 h-3 rounded-full border border-gray-200 shadow-sm"
+                   className="w-3.5 h-3.5 rounded-full border border-gray-200 shadow-sm"
                    style={{ backgroundColor: getColorHex(color as string) }}
                    title={color as string}
                  />
                ))}
                {colors.length > 3 && (
-                 <span className="text-[9px] text-gray-500 font-medium pl-0.5">+{colors.length - 3}</span>
+                 <span className="text-[10px] text-gray-500 font-medium pl-1">+{colors.length - 3}</span>
                )}
              </div>
            )}
