@@ -12,6 +12,7 @@ import { UserService } from '../services/user.service';
 import { CustomerService } from '../services/customer.service';
 import { BannerService } from '../services/banner.service';
 import { OtpService } from '../services/otp.service';
+import { ReviewService } from '../services/review.service';
 
 
 @Module({
@@ -31,7 +32,7 @@ import { OtpService } from '../services/otp.service';
     CustomerService,
     BannerService,
     OtpService,
-
+    ReviewService,
   ],
 })
 export class AppModule {}

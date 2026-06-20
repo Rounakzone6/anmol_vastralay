@@ -132,7 +132,7 @@ export default function CategoriesPage() {
         title="Categories"
         description="Manage your product categories like Silk, Suti, and Saree."
         action={
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap cursor-pointer gap-3">
             <Button type="button" onClick={() => setShowForm((v) => !v)}>
               {showForm ? 'Cancel' : (
                 <>

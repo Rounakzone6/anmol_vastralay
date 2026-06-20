@@ -9,6 +9,7 @@ import { cartRouter } from './cart.router';
 import { orderRouter } from './order.router';
 import { paymentRouter } from './payment.router';
 import { bannerRouter } from './banner.router';
+import { reviewRouter } from './review.router';
 
 
 export function createAppRouter(auth: AuthService) {
@@ -22,7 +23,7 @@ export function createAppRouter(auth: AuthService) {
     order: orderRouter,
     payment: paymentRouter,
     banner: bannerRouter,
-
+    review: reviewRouter,
   });
 }
 

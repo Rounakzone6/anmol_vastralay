@@ -10,6 +10,7 @@ import type { PaymentService } from '../services/payment.service';
 import type { UserService } from '../services/user.service';
 import type { CustomerService } from '../services/customer.service';
 import type { BannerService } from '../services/banner.service';
+import type { ReviewService } from '../services/review.service';
 
 
 export interface TRPCContext {
@@ -26,7 +27,7 @@ export interface TRPCContext {
     user: UserService;
     customer: CustomerService;
     banner: BannerService;
-
+    review: ReviewService;
   };
 }
 

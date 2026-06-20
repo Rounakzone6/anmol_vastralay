@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
-import { ShoppingBag, Heart, Star, Zap } from 'lucide-react';
+import { Heart, Star } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -20,13 +20,12 @@ interface Product {
 
 interface ProductCardProps {
   product: Product;
-  /** Optional: index for staggered animation delay */
   index?: number;
 }
 
 export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const [imgIdx, setImgIdx] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
   const netPrice = Number(product.netPrice);
   const discountPct = Number(product.discountPercent || 0);
@@ -34,7 +33,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
     ? Number(product.mrp || netPrice * (1 + discountPct / 100))
     : null;
 
-  const isNew = index < 4; // first 4 products get "New" badge
+  const isNew = index < 4; // Mocking "New" badge for first 4
   const colors = product.variants
     ? Array.from(new Set(product.variants.map((v) => v.color).filter(Boolean)))
     : [];
@@ -45,144 +44,143 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   const isOutOfStock = totalStock === 0;
 
   const href = `/product/${product.slug || product.id}`;
+  
+  // E-commerce standard: show second image on hover if available
+  const currentImage = isHovered && product.images?.length > 1 
+    ? product.images[1].url 
+    : (product.images?.[0]?.url || '');
 
   return (
     <div
-      className="product-card group relative flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300"
-      style={{ animationDelay: `${index * 60}ms` }}
+      className="group relative flex flex-col w-full bg-white transition-all duration-300"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* ── Image Container ── */}
-      <Link href={href} className="relative block overflow-hidden bg-[#faf9f7]" style={{ paddingBottom: '130%' }}>
-        {product.images?.length > 0 ? (
-          <>
+      {/* Image Container - Using 3:4 aspect ratio standard for fashion e-commerce */}
+      <div className="relative w-full aspect-[3/4] overflow-hidden bg-gray-100 mb-3">
+        <Link href={href} className="block w-full h-full">
+          {currentImage ? (
             <Image
-              src={product.images[imgIdx]?.url || product.images[0].url}
+              src={currentImage}
               alt={product.name}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+              className="object-cover object-top transition-transform duration-700 ease-in-out group-hover:scale-105"
             />
-            {/* second image on hover (if exists) */}
-            {product.images.length > 1 && (
-              <Image
-                src={product.images[1].url}
-                alt={product.name}
-                fill
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                className="absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500 opacity-0 group-hover:opacity-100"
-              />
-            )}
-          </>
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
-            <ShoppingBag size={48} strokeWidth={1} className="text-gray-200" />
-          </div>
-        )}
-
-        {/* ── Overlay gradient for badges ── */}
-        <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/10 to-transparent pointer-events-none" />
-
-        {/* ── Badges ── */}
-        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5">
-          {discountPct > 0 && (
-            <span className="inline-flex items-center gap-0.5 bg-[#85142b] text-white text-[11px] font-bold px-2 py-1 rounded-lg shadow-md">
-              <Zap size={10} fill="white" />
-              {Math.round(discountPct)}% OFF
-            </span>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400 text-sm">
+              No Image
+            </div>
           )}
-          {isNew && !discountPct && (
-            <span className="bg-emerald-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg shadow-md">
-              NEW
-            </span>
-          )}
-          {isOutOfStock && (
-            <span className="bg-gray-600/90 backdrop-blur-sm text-white text-[11px] font-bold px-2.5 py-1 rounded-lg">
+        </Link>
+
+        {/* Badges Overlay */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1.5 z-10 pointer-events-none">
+          {isOutOfStock ? (
+            <span className="bg-white/90 text-gray-800 text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
               Sold Out
             </span>
+          ) : (
+            <>
+              {isNew && !discountPct && (
+                <span className="bg-white/90 text-gray-800 text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
+                  New
+                </span>
+              )}
+              {discountPct > 0 && (
+                <span className="bg-[#ff3f6c] text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider shadow-sm">
+                  -{Math.round(discountPct)}%
+                </span>
+              )}
+            </>
           )}
         </div>
 
-        {/* ── Wishlist Button ── */}
+        {/* Wishlist Button - Absolute top right */}
         <button
           onClick={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             setIsWishlisted((w) => !w);
           }}
-          aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-          className="absolute top-2.5 right-2.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm shadow-md opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-200 hover:scale-110"
+          className="absolute top-2 right-2 p-2 rounded-full bg-white/80 hover:bg-white transition-all duration-200 z-10 shadow-sm opacity-0 group-hover:opacity-100 sm:opacity-100 translate-y-1 group-hover:translate-y-0 sm:translate-y-0"
+          aria-label="Wishlist"
         >
           <Heart
-            size={15}
-            className={isWishlisted ? 'fill-[#85142b] stroke-[#85142b]' : 'stroke-gray-500'}
+            size={16}
+            className={`transition-colors ${isWishlisted ? 'fill-[#ff3f6c] text-[#ff3f6c]' : 'text-gray-600'}`}
           />
         </button>
 
-        {/* ── Color dot strip (bottom of image) ── */}
-        {colors.length > 1 && (
-          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200">
-            {colors.slice(0, 6).map((color, ci) => (
-              <span
-                key={ci}
-                title={color as string}
-                className="h-3 w-3 rounded-full border-2 border-white shadow-sm"
-                style={{ background: getColorHex(color as string) }}
-              />
-            ))}
-            {colors.length > 6 && (
-              <span className="text-[9px] text-white font-bold bg-black/40 px-1 rounded">
-                +{colors.length - 6}
-              </span>
-            )}
-          </div>
-        )}
-      </Link>
-
-      {/* ── Info Section ── */}
-      <div className="flex flex-col p-3 sm:p-4 flex-grow">
-        {/* Brand */}
-        {product.brand && (
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#85142b] mb-0.5 truncate">
-            {product.brand}
-          </p>
-        )}
-
-        {/* Name */}
-        <Link href={href}>
-          <h3 className="text-sm sm:text-[15px] font-semibold text-gray-800 line-clamp-2 leading-snug mb-2 group-hover:text-[#85142b] transition-colors duration-200">
-            {product.name}
-          </h3>
-        </Link>
-
-        {/* Ratings placeholder — 4.2★ style */}
-        <div className="flex items-center gap-1 mb-2">
-          <div className="flex items-center gap-0.5 bg-green-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-            <Star size={8} fill="white" strokeWidth={0} />
-            4.2
-          </div>
-          <span className="text-[10px] text-gray-400">(128)</span>
+        {/* Quick Add Overlay (Appears on Hover) - Premium touch */}
+        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out hidden lg:block">
+          <button 
+            className="w-full bg-white/95 backdrop-blur-sm text-gray-900 font-semibold text-xs py-2.5 uppercase tracking-wider border border-gray-200 shadow-lg hover:bg-gray-900 hover:text-white transition-colors"
+            onClick={(e) => {
+              e.preventDefault();
+              // Add to cart logic could go here
+            }}
+          >
+            Quick View
+          </button>
         </div>
+      </div>
 
-        {/* Pricing */}
-        <div className="mt-auto flex items-baseline gap-2 flex-wrap">
-          <span className="text-base sm:text-lg font-bold text-gray-900">
+      {/* Info Section - Minimalist approach */}
+      <div className="flex flex-col px-1">
+        <Link href={href} className="group-hover:opacity-80 transition-opacity">
+          {product.brand && (
+            <h3 className="text-[12px] font-bold uppercase tracking-wide text-gray-900 mb-1 line-clamp-1">
+              {product.brand}
+            </h3>
+          )}
+          <p className="text-[13px] text-gray-500 font-normal line-clamp-1 mb-1.5" title={product.name}>
+            {product.name}
+          </p>
+        </Link>
+        
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[14px] font-bold text-gray-900">
             ₹{netPrice.toLocaleString('en-IN')}
           </span>
           {mrp && (
-            <span className="text-xs text-gray-400 line-through">
+            <span className="text-[12px] text-gray-400 line-through">
               ₹{Math.round(mrp).toLocaleString('en-IN')}
             </span>
           )}
           {discountPct > 0 && (
-            <span className="text-xs font-bold text-green-600">
-              {Math.round(discountPct)}% off
+            <span className="text-[11px] font-bold text-orange-500">
+              ({Math.round(discountPct)}% OFF)
             </span>
           )}
         </div>
 
-        {/* Free Delivery */}
-        <p className="mt-1.5 text-[10px] font-semibold text-green-700 uppercase tracking-wider">
-          Free Delivery
-        </p>
+        {/* Ratings (Mock) & Colors */}
+        <div className="flex items-center justify-between mt-auto">
+           {/* Mock Rating */}
+           <div className="flex items-center gap-1">
+             <Star size={10} className="fill-green-600 text-green-600" />
+             <span className="text-[11px] font-bold text-gray-700">4.2</span>
+             <span className="text-[10px] text-gray-400 border-l border-gray-300 pl-1 ml-0.5">128</span>
+           </div>
+
+           {/* Color Dots */}
+           {colors.length > 0 && (
+             <div className="flex gap-1 items-center">
+               {colors.slice(0, 3).map((color, i) => (
+                 <span
+                   key={i}
+                   className="w-3 h-3 rounded-full border border-gray-200 shadow-sm"
+                   style={{ backgroundColor: getColorHex(color as string) }}
+                   title={color as string}
+                 />
+               ))}
+               {colors.length > 3 && (
+                 <span className="text-[9px] text-gray-500 font-medium pl-0.5">+{colors.length - 3}</span>
+               )}
+             </div>
+           )}
+        </div>
       </div>
     </div>
   );

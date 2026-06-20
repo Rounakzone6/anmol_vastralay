@@ -15,6 +15,7 @@ import { PaymentService } from './services/payment.service';
 import { UserService } from './services/user.service';
 import { CustomerService } from './services/customer.service';
 import { BannerService } from './services/banner.service';
+import { ReviewService } from './services/review.service';
 
 import { createAppRouter } from './routers';
 
@@ -59,7 +60,7 @@ async function bootstrap() {
     user: app.get(UserService),
     customer: app.get(CustomerService),
     banner: app.get(BannerService),
-
+    review: app.get(ReviewService),
   };
 
   const appRouter = createAppRouter(auth);

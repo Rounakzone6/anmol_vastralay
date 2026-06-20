@@ -150,14 +150,14 @@ export function SortableCategoryRow({
           <Button
             type="button"
             variant="outline"
-            className="px-2 py-1 text-xs"
+            className="px-2 py-1 text-xs cursor-pointer"
             onClick={() => onStartEdit(c)}
           >
             <Edit2 size={14} className="mr-1" />
             Edit
           </Button>
           <Link href={`/categories/${c.id}`}>
-            <Button type="button" variant="outline" className="px-2 py-1 text-xs">
+            <Button type="button" variant="outline" className="px-2 py-1 text-xs cursor-pointer">
               <Settings2 size={14} className="mr-1" />
               Manage
             </Button>
@@ -165,7 +165,7 @@ export function SortableCategoryRow({
           <Button
             type="button"
             variant="danger"
-            className="px-2 py-1 text-xs"
+            className="px-2 py-1 text-xs cursor-pointer"
             disabled={c._count.products > 0}
             title={c._count.products > 0 ? 'Remove or reassign products before deleting' : ''}
             onClick={() => onDelete(c)}
