@@ -1,5 +1,5 @@
 -- AlterTable
-ALTER TABLE "Category" ADD COLUMN     "sortOrder" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Category" ADD COLUMN IF NOT EXISTS "sortOrder" INTEGER NOT NULL DEFAULT 0;
 
 -- CreateTable
 CREATE TABLE "Review" (
