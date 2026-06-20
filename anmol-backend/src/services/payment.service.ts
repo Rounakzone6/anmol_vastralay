@@ -47,19 +47,25 @@ export class PaymentService {
         data: { status: 'COMPLETED' },
       });
 
-      const order = await tx.order.update({
+      const order = await tx.order.findUnique({
         where: { id: payment.orderId },
-        data: { status: 'PROCESSING' },
         include: { items: true },
       });
 
-      // Deduct inventory for online payments after successful verification
-      for (const item of order.items) {
-        if (item.variantId) {
-          await tx.productVariant.update({
-            where: { id: item.variantId },
-            data: { stockQty: { decrement: item.quantity } },
-          });
+      if (order && order.status === 'PENDING') {
+        await tx.order.update({
+          where: { id: order.id },
+          data: { status: 'PROCESSING' },
+        });
+
+        // Deduct inventory for online payments exactly once
+        for (const item of order.items) {
+          if (item.variantId) {
+            await tx.productVariant.update({
+              where: { id: item.variantId },
+              data: { stockQty: { decrement: item.quantity } },
+            });
+          }
         }
       }
 

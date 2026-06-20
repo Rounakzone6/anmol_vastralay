@@ -13,7 +13,7 @@ import { CustomerService } from '../services/customer.service';
 import { BannerService } from '../services/banner.service';
 import { OtpService } from '../services/otp.service';
 import { ReviewService } from '../services/review.service';
-
+import { WebhookController } from '../controllers/webhook.controller';
 
 @Module({
   imports: [
@@ -21,6 +21,9 @@ import { ReviewService } from '../services/review.service';
     PrismaModule,
     CloudinaryModule,
     AuthModule,
+  ],
+  controllers: [
+    WebhookController,
   ],
   providers: [
     CategoryService,

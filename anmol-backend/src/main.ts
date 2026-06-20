@@ -46,7 +46,7 @@ function requestLogger(req: Request, res: Response, next: NextFunction) {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   const prisma = app.get(PrismaService);
   const cloudinary = app.get(CloudinaryService);
   const auth = app.get(AuthService);

@@ -276,11 +276,11 @@ const Navbar = () => {
       {isOpen && (
         <div className="border-t border-gray-200 bg-white px-4 py-3 shadow-inner md:hidden">
           <div className="space-y-3 font-medium text-gray-700">
-            <Link href="/categories/saree" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Saree Special</Link>
-            <Link href="/categories/mens" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Mens Wear (Jeans-Shirt)</Link>
-            <Link href="/categories/ladies" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Ladies Wear (Kurti, Frock)</Link>
-            <Link href="/categories/kids" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Kids Wear</Link>
-            <Link href="/categories/suiting-shirting" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Suiting-Shirting</Link>
+            <Link href="/collections?category=saree" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Saree Special</Link>
+            <Link href="/collections?category=mens" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Mens Wear (Jeans-Shirt)</Link>
+            <Link href="/collections?category=ladies" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Ladies Wear (Kurti, Frock)</Link>
+            <Link href="/collections?category=kids" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Kids Wear</Link>
+            <Link href="/collections?category=suiting-shirting" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Suiting-Shirting</Link>
             <hr className="border-gray-200" />
             {isClient && isAuthenticated ? (
               <>
