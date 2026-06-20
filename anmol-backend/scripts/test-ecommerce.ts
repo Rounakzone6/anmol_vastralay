@@ -11,6 +11,7 @@ import { PaymentService } from '../src/services/payment.service';
 import { UserService } from '../src/services/user.service';
 import { CustomerService } from '../src/services/customer.service';
 import { BannerService } from '../src/services/banner.service';
+import { ReviewService } from '../src/services/review.service';
 
 import { createAppRouter } from '../src/routers';
 
@@ -31,6 +32,7 @@ async function runTests() {
     user: app.get(UserService),
     customer: app.get(CustomerService),
     banner: app.get(BannerService),
+    review: app.get(ReviewService),
 
   };
 
