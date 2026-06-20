@@ -20,7 +20,7 @@ export default function CategoryNav() {
     return (
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-start justify-start sm:justify-center overflow-x-auto py-4 gap-4 sm:gap-8 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="flex items-start justify-start sm:justify-center overflow-x-auto py-4 gap-2 sm:gap-8 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="flex flex-col items-center flex-shrink-0 group w-16 sm:w-20 animate-pulse">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-200" />
