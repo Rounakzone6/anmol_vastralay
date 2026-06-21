@@ -53,7 +53,7 @@ export function SareeBanner() {
             Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500">Anmol Vastralay</span>
           </h1>
           <p className="text-indigo-100/90 max-w-2xl text-lg sm:text-xl font-light">
-            Manage your elegant collection of sarees, track your latest orders, and monitor your store's performance.
+            Manage your elegant collection, track your latest orders, and monitor your store's performance.
           </p>
         </motion.div>
       </div>

@@ -89,14 +89,26 @@ const Navbar = () => {
         <div className="flex h-20 items-center justify-between gap-4">
           
           {/* Logo Section */}
-          <div className="shrink-0">
-            <Link href="/" className="flex flex-col">
-              <span className="text-xl font-extrabold tracking-wide text-[#85142b] sm:text-2xl">
-                अनमोल वस्त्रालय
-              </span>
-              <span className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase sm:text-xs">
-                Anmol Vastralay
-              </span>
+          <div className="shrink-0 flex items-center">
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-full overflow-hidden shadow-sm transition-transform duration-300 group-hover:scale-105 group-hover:shadow-md">
+                <video
+                  src="/logo.mp4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xl font-extrabold tracking-wide text-[#85142b] sm:text-2xl group-hover:text-[#b01e3f] transition-colors">
+                  अनमोल वस्त्रालय
+                </span>
+                <span className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase sm:text-xs">
+                  Anmol Vastralay
+                </span>
+              </div>
             </Link>
           </div>
 

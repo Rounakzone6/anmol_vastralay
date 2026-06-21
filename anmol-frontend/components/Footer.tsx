@@ -11,13 +11,25 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           {/* Brand & Description */}
           <div className="md:col-span-1">
-            <Link href="/" className="flex flex-col mb-4">
-              <span className="text-xl font-extrabold tracking-wide text-[#85142b]">
-                अनमोल वस्त्रालय
-              </span>
-              <span className="text-xs font-semibold tracking-widest text-gray-500 uppercase">
-                Anmol Vastralay
-              </span>
+            <Link href="/" className="flex items-center gap-3 group mb-4">
+              <div className="relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden shadow-sm transition-transform duration-300 group-hover:scale-105 group-hover:shadow-md">
+                <video
+                  src="/logo.mp4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xl font-extrabold tracking-wide text-[#85142b] group-hover:text-[#b01e3f] transition-colors">
+                  अनमोल वस्त्रालय
+                </span>
+                <span className="text-xs font-semibold tracking-widest text-gray-500 uppercase">
+                  Anmol Vastralay
+                </span>
+              </div>
             </Link>
             <p className="text-gray-600 text-sm mb-4 leading-relaxed">
               Your one-stop destination for premium ethnic wear, western fashion, and authentic traditional clothing. Elevating your style since our establishment.
