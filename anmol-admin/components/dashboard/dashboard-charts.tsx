@@ -96,9 +96,9 @@ export function DashboardCharts() {
         </Card>
 
         {/* Payment Methods Chart */}
-        <Card className="p-6 border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-md flex flex-col">
+        <Card className="p-6 border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-md">
           <h3 className="text-lg font-bold text-slate-800 mb-6">Payment Methods</h3>
-          <div className="h-72 w-full flex-1 flex items-center justify-center">
+          <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
