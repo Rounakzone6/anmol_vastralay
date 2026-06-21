@@ -6,7 +6,8 @@ import { PageHeader } from '@/components/page-header';
 import { Button, Card, Input, Label } from '@/components/ui';
 import { trpc } from '@/lib/trpc';
 import { fileToDataUri } from '@/lib/images';
-import { UploadCloud, Edit3, Check, X, Loader2 } from 'lucide-react';
+import { UploadCloud, Edit3, Check, X } from 'lucide-react';
+import { Spinner } from '@/components/ui';
 
 // Reusable component for inline text editing
 function InlineEdit({ 
@@ -110,7 +111,7 @@ export default function BannersVisualEditor() {
   if (isLoading) {
     return (
       <div className="p-20 flex flex-col items-center justify-center text-slate-400">
-        <Loader2 className="h-8 w-8 animate-spin mb-4" />
+        <Spinner size={32} className="mb-4" />
         <p className="text-sm font-medium">Loading banners...</p>
       </div>
     );
@@ -154,7 +155,10 @@ export default function BannersVisualEditor() {
           {/* Image Upload Overlay */}
           <label className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
             {uploadingId === banner.id ? (
-              <span className="text-white font-medium">Uploading...</span>
+              <div className="flex flex-col items-center">
+                <Spinner size={32} className="mb-2 text-white" />
+                <span className="text-white font-medium">Uploading...</span>
+              </div>
             ) : (
               <>
                 <UploadCloud className="text-white mb-2" size={32} />

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { fileToDataUri } from '@/lib/images';
 import { trpc } from '@/lib/trpc';
 import { Image as ImageIcon, UploadCloud, X } from 'lucide-react';
+import { Spinner } from '@/components/ui';
 
 type ImageUploadProps = {
   value: string | null;
@@ -72,7 +73,10 @@ export function ImageUpload({
       ) : (
         <label className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 text-center text-slate-500 hover:bg-slate-100 hover:border-slate-400 cursor-pointer transition-colors w-32 ${aspectClass}`}>
           {isUploading ? (
-            <span className="text-sm font-medium animate-pulse">Uploading…</span>
+            <div className="flex flex-col items-center">
+              <Spinner size={24} className="mb-2" />
+              <span className="text-sm font-medium">Uploading…</span>
+            </div>
           ) : (
             <>
               <div className="rounded-full bg-slate-200/50 p-2 mb-2 text-slate-400">

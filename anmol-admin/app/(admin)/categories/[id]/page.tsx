@@ -2,9 +2,9 @@
 
 import { use, useState } from 'react';
 import { PageHeader } from '@/components/page-header';
-import { Button, Card, Input, Label, Textarea } from '@/components/ui';
+import { Button, Card, Input, Label, Textarea, Spinner } from '@/components/ui';
 import { trpc } from '@/lib/trpc';
-import { Plus, Trash2, Edit2, ArrowLeft, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CategoryDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -50,7 +50,7 @@ export default function CategoryDetailsPage({ params }: { params: Promise<{ id: 
 
   if (!category) return (
     <div className="p-12 flex flex-col items-center justify-center text-slate-400">
-      <Loader2 className="h-8 w-8 animate-spin mb-4" />
+      <Spinner size={32} className="mb-4" />
       <p className="text-sm font-medium">Loading category details...</p>
     </div>
   );

@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/page-header';
-import { Button, Card, Input, Label, Textarea, Badge } from '@/components/ui';
+import { Button, Card, Input, Label, Textarea, Badge, Spinner } from '@/components/ui';
 import { ImageUpload } from '@/components/image-upload';
 import { trpc } from '@/lib/trpc';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -121,7 +121,7 @@ export default function CategoriesPage() {
       setLocalCategories(newCategories);
       
       reorder.mutate(
-        newCategories.map((c, idx) => ({ id: c.id, sortOrder: idx }))
+        newCategories.map((c: any, idx) => ({ id: c.id, sortOrder: idx }))
       );
     }
   };
@@ -196,7 +196,7 @@ export default function CategoriesPage() {
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5">
         {isLoading ? (
           <div className="p-12 flex flex-col items-center justify-center text-slate-400">
-            <Loader2 className="h-8 w-8 animate-spin mb-4" />
+            <Spinner size={32} className="mb-4" />
             <p className="text-sm font-medium">Loading categories...</p>
           </div>
         ) : !localCategories.length ? (
@@ -207,40 +207,42 @@ export default function CategoriesPage() {
             </p>
           </div>
         ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
-                <tr>
-                  <th className="px-3 py-4 w-10"></th>
-                  <th className="px-6 py-4 w-20 text-center">Logo</th>
-                  <th className="px-6 py-4">Name</th>
-                  <th className="px-6 py-4 text-center">Products</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                <SortableContext items={localCategories.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                  {localCategories.map((c) => (
-                    <SortableCategoryRow
-                      key={c.id}
-                      category={c}
-                      editingId={editingId}
-                      editName={editName}
-                      editDescription={editDescription}
-                      editImageUrl={editImageUrl}
-                      isUpdating={update.isPending}
-                      onEditChange={handleEditChange}
-                      onStartEdit={startEdit}
-                      onCancelEdit={() => setEditingId(null)}
-                      onSaveEdit={handleSaveEdit}
-                      onDelete={handleDelete}
-                    />
-                  ))}
-                </SortableContext>
-              </tbody>
-            </table>
-          </DndContext>
+          <div className="overflow-x-auto">
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <table className="w-full text-left text-sm min-w-[700px]">
+                <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                  <tr>
+                    <th className="px-3 py-4 w-10"></th>
+                    <th className="px-6 py-4 w-20 text-center">Logo</th>
+                    <th className="px-6 py-4">Name</th>
+                    <th className="px-6 py-4 text-center">Products</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  <SortableContext items={localCategories.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                    {localCategories.map((c: any) => (
+                      <SortableCategoryRow
+                        key={c.id}
+                        category={c}
+                        editingId={editingId}
+                        editName={editName}
+                        editDescription={editDescription}
+                        editImageUrl={editImageUrl}
+                        isUpdating={update.isPending}
+                        onEditChange={handleEditChange}
+                        onStartEdit={startEdit}
+                        onCancelEdit={() => setEditingId(null)}
+                        onSaveEdit={handleSaveEdit}
+                        onDelete={handleDelete}
+                      />
+                    ))}
+                  </SortableContext>
+                </tbody>
+              </table>
+            </DndContext>
+          </div>
         )}
       </div>
     </div>

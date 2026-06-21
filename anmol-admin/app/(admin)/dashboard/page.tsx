@@ -9,6 +9,7 @@ import { Tags, Package, AlertTriangle, ShieldCheck, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { SareeBanner } from '@/components/dashboard/saree-banner';
 import { DashboardCharts } from '@/components/dashboard/dashboard-charts';
+import { Spinner } from '@/components/ui';
 
 export default function DashboardPage() {
   const { data: categories } = trpc.category.list.useQuery({});
@@ -123,48 +124,59 @@ export default function DashboardPage() {
           </Link>
         </div>
         
+        
         <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white/80 backdrop-blur-xl shadow-sm">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50/50 text-slate-600 font-semibold border-b border-slate-200/60">
-              <tr>
-                <th className="px-6 py-4 uppercase tracking-wider text-xs">Name</th>
-                <th className="px-6 py-4 uppercase tracking-wider text-xs">Category</th>
-                <th className="px-6 py-4 uppercase tracking-wider text-xs">Selling Price</th>
-                <th className="px-6 py-4 uppercase tracking-wider text-xs">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100/80">
-              {products?.items.slice(0, 8).map((p: any) => (
-                <tr key={p.id} className="hover:bg-violet-50/30 transition-colors group">
-                  <td className="px-6 py-4">
-                    <Link href={`/products/${p.id}`} className="font-semibold text-slate-900 group-hover:text-violet-600 transition-colors flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200/50">
-                        {p.images?.[0] ? (
-                           <img src={p.images[0].url} alt={p.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <Package className="h-5 w-5 text-slate-400" />
-                        )}
-                      </div>
-                      {p.name}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4 text-slate-600">
-                    <Badge variant="default" className="bg-slate-100/80 text-slate-700 font-medium border-slate-200/60">
-                      {p.category?.name || 'Uncategorized'}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 text-slate-700 font-medium">{formatCurrency(p.sellingPrice)}</td>
-                  <td className="px-6 py-4">
-                    {p.isActive ? (
-                      <Badge variant="success" className="bg-emerald-100/80 text-emerald-700 border-emerald-200/60">Active</Badge>
-                    ) : (
-                      <Badge variant="default" className="bg-slate-100/80 text-slate-600 border-slate-200/60">Draft</Badge>
-                    )}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm min-w-[600px]">
+              <thead className="bg-slate-50/50 text-slate-600 font-semibold border-b border-slate-200/60">
+                <tr>
+                  <th className="px-6 py-4 uppercase tracking-wider text-xs">Name</th>
+                  <th className="px-6 py-4 uppercase tracking-wider text-xs">Category</th>
+                  <th className="px-6 py-4 uppercase tracking-wider text-xs">Selling Price</th>
+                  <th className="px-6 py-4 uppercase tracking-wider text-xs">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100/80">
+                {!products && (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center">
+                      <Spinner className="mx-auto" />
+                      <p className="mt-4 text-sm text-slate-500">Loading products...</p>
+                    </td>
+                  </tr>
+                )}
+                {products?.items.slice(0, 8).map((p: any) => (
+                  <tr key={p.id} className="hover:bg-violet-50/30 transition-colors group">
+                    <td className="px-6 py-4">
+                      <Link href={`/products/${p.id}`} className="font-semibold text-slate-900 group-hover:text-violet-600 transition-colors flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200/50 shrink-0">
+                          {p.images?.[0] ? (
+                             <img src={p.images[0].url} alt={p.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <Package className="h-5 w-5 text-slate-400" />
+                          )}
+                        </div>
+                        <span className="truncate max-w-[200px] sm:max-w-xs">{p.name}</span>
+                      </Link>
+                    </td>
+                    <td className="px-6 py-4 text-slate-600">
+                      <Badge variant="default" className="bg-slate-100/80 text-slate-700 font-medium border-slate-200/60 whitespace-nowrap">
+                        {p.category?.name || 'Uncategorized'}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 font-medium whitespace-nowrap">{formatCurrency(p.sellingPrice)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {p.isActive ? (
+                        <Badge variant="success" className="bg-emerald-100/80 text-emerald-700 border-emerald-200/60">Active</Badge>
+                      ) : (
+                        <Badge variant="default" className="bg-slate-100/80 text-slate-600 border-slate-200/60">Draft</Badge>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           {products?.items.length === 0 && (
             <div className="p-12 text-center flex flex-col items-center justify-center text-slate-500">
               <Package className="h-12 w-12 text-slate-300 mb-4" />

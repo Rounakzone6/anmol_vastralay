@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-import { Label } from '@/components/ui';
+import { Label, Spinner } from '@/components/ui';
 import { fileToDataUri } from '@/lib/images';
 import { trpc } from '@/lib/trpc';
 
@@ -97,7 +97,14 @@ export function ProductImageUpload({
               </div>
             ) : (
               <label className="mt-2 flex aspect-[3/4] cursor-pointer flex-col items-center justify-center rounded-md bg-zinc-50 text-center text-xs text-zinc-500 hover:bg-zinc-100">
-                <span>{uploadingSlot === i ? 'Uploading…' : 'Click to upload'}</span>
+                {uploadingSlot === i ? (
+                  <div className="flex flex-col items-center">
+                    <Spinner size={20} className="mb-2" />
+                    <span>Uploading…</span>
+                  </div>
+                ) : (
+                  <span>Click to upload</span>
+                )}
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/jpg"

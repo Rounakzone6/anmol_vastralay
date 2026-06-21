@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { PageHeader } from '@/components/page-header';
-import { Button, Card, Input, Label, Select, Badge } from '@/components/ui';
+import { Button, Card, Input, Label, Select, Badge, Spinner } from '@/components/ui';
 import { formatDate } from '@/lib/format';
 import { trpc } from '@/lib/trpc';
-import { Plus, ShieldAlert, Shield, Loader2 } from 'lucide-react';
+import { Plus, ShieldAlert, Shield } from 'lucide-react';
 
 export default function StaffPage() {
   const utils = trpc.useUtils();
@@ -116,7 +116,7 @@ export default function StaffPage() {
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5 mt-6">
         {isLoading ? (
           <div className="p-12 flex flex-col items-center justify-center text-slate-400">
-            <Loader2 className="h-8 w-8 animate-spin mb-4" />
+            <Spinner size={32} className="mb-4" />
             <p className="text-sm font-medium">Loading staff directory...</p>
           </div>
         ) : error ? (
@@ -135,39 +135,41 @@ export default function StaffPage() {
             </p>
           </div>
         ) : (
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-4">Name</th>
-                <th className="px-6 py-4">Contact</th>
-                <th className="px-6 py-4">Role Status</th>
-                <th className="px-6 py-4 text-right">Date Added</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {staff.map((u) => (
-                <tr key={u.id} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${u.role === 'ADMIN' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                        {u.name ? u.name.charAt(0).toUpperCase() : '?'}
-                      </div>
-                      <span className="font-semibold text-slate-900">{u.name || 'Unnamed'}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-slate-600">{u.email || '-'}</td>
-                  <td className="px-6 py-4">
-                    {u.role === 'ADMIN' ? (
-                      <Badge variant="default" className="bg-indigo-50 text-indigo-700 border-indigo-200 border">Administrator</Badge>
-                    ) : (
-                      <Badge variant="default" className="bg-emerald-50 text-emerald-700 border-emerald-200 border">Staff Member</Badge>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-right text-slate-500">{formatDate(u.createdAt)}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm min-w-[600px]">
+              <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                <tr>
+                  <th className="px-6 py-4">Name</th>
+                  <th className="px-6 py-4">Contact</th>
+                  <th className="px-6 py-4">Role Status</th>
+                  <th className="px-6 py-4 text-right">Date Added</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {staff.map((u: any) => (
+                  <tr key={u.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${u.role === 'ADMIN' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                          {u.name ? u.name.charAt(0).toUpperCase() : '?'}
+                        </div>
+                        <span className="font-semibold text-slate-900 whitespace-nowrap">{u.name || 'Unnamed'}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-slate-600 whitespace-nowrap">{u.email || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {u.role === 'ADMIN' ? (
+                        <Badge variant="default" className="bg-indigo-50 text-indigo-700 border-indigo-200 border">Administrator</Badge>
+                      ) : (
+                        <Badge variant="default" className="bg-emerald-50 text-emerald-700 border-emerald-200 border">Staff Member</Badge>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right text-slate-500 whitespace-nowrap">{formatDate(u.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

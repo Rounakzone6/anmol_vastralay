@@ -1,9 +1,8 @@
 'use client';
 
 import { PageHeader } from '@/components/page-header';
-import { Card, Select, Badge } from '@/components/ui';
+import { Card, Select, Badge, Spinner } from '@/components/ui';
 import { trpc } from '@/lib/trpc';
-import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 const STATUS_STYLES = {
@@ -30,7 +29,7 @@ export default function OrdersPage() {
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5 mt-6">
         {isLoading ? (
           <div className="p-12 flex flex-col items-center justify-center text-slate-400">
-            <Loader2 className="h-8 w-8 animate-spin mb-4" />
+            <Spinner size={32} className="mb-4" />
             <p className="text-sm font-medium">Loading orders...</p>
           </div>
         ) : !orders?.length ? (
@@ -41,60 +40,62 @@ export default function OrdersPage() {
             </p>
           </div>
         ) : (
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-4">Order ID</th>
-                <th className="px-6 py-4">Customer</th>
-                <th className="px-6 py-4">Items</th>
-                <th className="px-6 py-4">Total Amount</th>
-                <th className="px-6 py-4">Date</th>
-                <th className="px-6 py-4 text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {orders.map((o) => (
-                <tr key={o.id} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-6 py-4 font-mono text-xs text-slate-500">
-                    <Link href={`/orders/${o.id}`} className="hover:text-violet-600 transition-colors">
-                      {o.id.slice(-8).toUpperCase()}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="font-semibold text-slate-900">{o.user.name || '—'}</div>
-                    <div className="text-xs text-slate-500 mt-0.5">{o.user.phone || '-'}</div>
-                  </td>
-                  <td className="px-6 py-4 text-slate-700 font-medium">
-                    {o.items.length} item{o.items.length !== 1 ? 's' : ''}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="font-semibold text-slate-900">
-                      ₹{Number(o.totalAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">
-                    {new Date(o.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <Select
-                      className={`inline-block w-auto !py-1.5 !pl-3 !pr-8 !text-xs font-semibold border ${STATUS_STYLES[o.status as keyof typeof STATUS_STYLES] || 'bg-slate-50 text-slate-700'} rounded-full cursor-pointer transition-colors focus:ring-2 focus:ring-offset-1 focus:ring-slate-200`}
-                      value={o.status}
-                      onChange={(e) => {
-                        updateStatus.mutate({ orderId: o.id, status: e.target.value as any });
-                      }}
-                      disabled={updateStatus.isPending}
-                    >
-                      <option value="PENDING">Pending</option>
-                      <option value="PROCESSING">Processing</option>
-                      <option value="SHIPPED">Shipped</option>
-                      <option value="DELIVERED">Delivered</option>
-                      <option value="CANCELLED">Cancelled</option>
-                    </Select>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm min-w-[800px]">
+              <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                <tr>
+                  <th className="px-6 py-4">Order ID</th>
+                  <th className="px-6 py-4">Customer</th>
+                  <th className="px-6 py-4">Items</th>
+                  <th className="px-6 py-4">Total Amount</th>
+                  <th className="px-6 py-4">Date</th>
+                  <th className="px-6 py-4 text-right">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {orders.map((o: any) => (
+                  <tr key={o.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="px-6 py-4 font-mono text-xs text-slate-500">
+                      <Link href={`/orders/${o.id}`} className="hover:text-violet-600 transition-colors">
+                        {o.id.slice(-8).toUpperCase()}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="font-semibold text-slate-900 whitespace-nowrap">{o.user.name || '—'}</div>
+                      <div className="text-xs text-slate-500 mt-0.5 whitespace-nowrap">{o.user.phone || '-'}</div>
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 font-medium whitespace-nowrap">
+                      {o.items.length} item{o.items.length !== 1 ? 's' : ''}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="font-semibold text-slate-900 whitespace-nowrap">
+                        ₹{Number(o.totalAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-slate-500 whitespace-nowrap">
+                      {new Date(o.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </td>
+                    <td className="px-6 py-4 text-right whitespace-nowrap">
+                      <Select
+                        className={`inline-block w-auto !py-1.5 !pl-3 !pr-8 !text-xs font-semibold border ${STATUS_STYLES[o.status as keyof typeof STATUS_STYLES] || 'bg-slate-50 text-slate-700'} rounded-full cursor-pointer transition-colors focus:ring-2 focus:ring-offset-1 focus:ring-slate-200`}
+                        value={o.status}
+                        onChange={(e) => {
+                          updateStatus.mutate({ orderId: o.id, status: e.target.value as any });
+                        }}
+                        disabled={updateStatus.isPending}
+                      >
+                        <option value="PENDING">Pending</option>
+                        <option value="PROCESSING">Processing</option>
+                        <option value="SHIPPED">Shipped</option>
+                        <option value="DELIVERED">Delivered</option>
+                        <option value="CANCELLED">Cancelled</option>
+                      </Select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

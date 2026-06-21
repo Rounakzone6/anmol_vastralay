@@ -1,4 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react';
+import { Loader2 } from 'lucide-react';
 
 export function Button({
   className = '',
@@ -96,5 +97,19 @@ export function Badge({
     <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${variants[variant]} ${className}`}>
       {children}
     </span>
+  );
+}
+
+export function Spinner({ className = '', size = 24 }: { className?: string; size?: number }) {
+  return (
+    <div className={`flex items-center justify-center ${className}`}>
+      <Loader2 size={size} className="animate-spin text-violet-600" />
+    </div>
+  );
+}
+
+export function Skeleton({ className = '' }: { className?: string }) {
+  return (
+    <div className={`animate-pulse rounded-md bg-slate-200/60 ${className}`} />
   );
 }
