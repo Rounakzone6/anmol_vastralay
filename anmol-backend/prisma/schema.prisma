@@ -213,6 +213,8 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+  RETURNED
+  REPLACED
 }
 
 model Order {
@@ -224,6 +226,7 @@ model Order {
   shippingAddress String
   items           OrderItem[]
   payments        Payment[]
+  returnRequests  ReturnRequest[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 }
@@ -238,6 +241,36 @@ model OrderItem {
   variant   ProductVariant? @relation(fields: [variantId], references: [id])
   quantity  Int
   price     Decimal         @db.Decimal(10, 2)
+  returnRequestsAsOriginal    ReturnRequest[] @relation("OriginalItem")
+  returnRequestsAsReplacement ReturnRequest?  @relation("ReplacementItem")
+}
+
+enum ReturnType {
+  REFUND
+  REPLACEMENT
+}
+
+enum ReturnStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model ReturnRequest {
+  id                  String       @id @default(cuid())
+  orderId             String
+  order               Order        @relation(fields: [orderId], references: [id])
+  originalItemId      String       // The OrderItem being returned
+  originalItem        OrderItem    @relation("OriginalItem", fields: [originalItemId], references: [id])
+  type                ReturnType
+  status              ReturnStatus @default(PENDING)
+  reason              String?
+  // If replacement, link to the new OrderItem that was sent as a replacement
+  replacementItemId   String?      @unique
+  replacementItem     OrderItem?   @relation("ReplacementItem", fields: [replacementItemId], references: [id])
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
 }
 
 enum PaymentStatus {
