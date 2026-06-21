@@ -1,6 +1,6 @@
-import type { Decimal } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
 
-type Numeric = Decimal | number | string;
+type Numeric = Prisma.Decimal | number | string;
 
 function toNumber(value: Numeric): number {
   return typeof value === 'number' ? value : Number(value);

@@ -36,8 +36,8 @@ const mockCategoryData = [
 ];
 
 const mockPaymentData = [
-  { name: 'Online Payment', value: 75 },
-  { name: 'Cash on Delivery', value: 25 },
+  { name: 'Online', value: 75 },
+  { name: 'COD', value: 25 },
 ];
 
 const mockReturnsData = [
@@ -105,12 +105,13 @@ export function DashboardCharts() {
                   data={mockPaymentData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={70}
-                  outerRadius={100}
+                  innerRadius={65}
+                  outerRadius={90}
                   paddingAngle={5}
                   dataKey="value"
                   stroke="none"
                   label={({ name, percent = 0 }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  labelLine={{ stroke: '#94a3b8', strokeWidth: 1 }}
                 >
                   {mockPaymentData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={PAYMENT_COLORS[index % PAYMENT_COLORS.length]} />
