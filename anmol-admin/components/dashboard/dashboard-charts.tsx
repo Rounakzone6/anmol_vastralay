@@ -63,7 +63,7 @@ export function DashboardCharts() {
         <Card className="p-6 border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-md">
           <h3 className="text-lg font-bold text-slate-800 mb-6">Sales Overview</h3>
           <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={288}>
               <AreaChart
                 data={mockSalesData}
                 margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
@@ -99,7 +99,7 @@ export function DashboardCharts() {
         <Card className="p-6 border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-md">
           <h3 className="text-lg font-bold text-slate-800 mb-6">Payment Methods</h3>
           <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={288}>
               <PieChart>
                 <Pie
                   data={mockPaymentData}
@@ -136,7 +136,7 @@ export function DashboardCharts() {
             <h3 className="text-lg font-bold text-slate-800">Returns Analysis</h3>
           </div>
           <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={256}>
               <BarChart
                 data={mockReturnsData}
                 layout="vertical"
