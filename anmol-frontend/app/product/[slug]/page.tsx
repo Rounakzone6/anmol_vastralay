@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import {
   ShoppingCart,
   ArrowLeft,
-  ShieldCheck,
   Truck,
   RotateCcw,
   Star,
@@ -189,11 +188,6 @@ export default function ProductDetailsPage({
       (v.size === selectedSize || (!v.size && !selectedSize))
   );
 
-  const isOutOfStock =
-    variants.length > 0 &&
-    selectedVariant &&
-    selectedVariant.stockQty <= 0;
-
   const handleColorSelect = (color: string) => {
     setSelectedColor(color);
     const sizesForColor = variants
@@ -220,11 +214,6 @@ export default function ProductDetailsPage({
       variantId: selectedVariant?.id,
       quantity: 1,
     });
-  };
-
-  const handleBuyNow = () => {
-    handleAddToCart();
-    // After cart add succeeds, redirect is handled in onSuccess (go to cart → checkout)
   };
 
   /* ── Color → hex helper ── */
@@ -790,7 +779,13 @@ export default function ProductDetailsPage({
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-full bg-gray-100 flex flex-shrink-0 items-center justify-center text-gray-500 font-bold uppercase text-sm overflow-hidden">
                       {review.user?.profileImage ? (
-                        <img src={review.user.profileImage} alt="" className="w-full h-full object-cover" />
+                        <Image
+                          src={review.user.profileImage}
+                          alt=""
+                          width={40}
+                          height={40}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
                         review.user?.name?.charAt(0) || 'U'
                       )}
