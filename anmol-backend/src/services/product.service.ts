@@ -20,9 +20,12 @@ import {
   mapProduct,
   productInclude,
   variantSizeKey,
-  variantInputSchema
+  variantInputSchema,
 } from '../models/product.model';
-import { MAX_PRODUCT_IMAGES, validateProductImages } from '../utils/product-images';
+import {
+  MAX_PRODUCT_IMAGES,
+  validateProductImages,
+} from '../utils/product-images';
 
 @Injectable()
 export class ProductService {
@@ -70,7 +73,9 @@ export class ProductService {
       ...(input?.categoryId ? { categoryId: input.categoryId } : {}),
       ...(input?.subcategoryId ? { subcategoryId: input.subcategoryId } : {}),
       ...(input?.itemTypeId ? { itemTypeId: input.itemTypeId } : {}),
-      ...(input?.categorySlug ? { category: { slug: input.categorySlug } } : {}),
+      ...(input?.categorySlug
+        ? { category: { slug: input.categorySlug } }
+        : {}),
       ...(input?.kind ? { kind: input.kind } : {}),
       ...(input?.search
         ? { name: { contains: input.search, mode: 'insensitive' as const } }
@@ -115,15 +120,14 @@ export class ProductService {
     return mapProduct(product);
   }
 
-
-
   async create(input: z.infer<typeof productBaseSchema>) {
     const category = await this.prisma.category.findUnique({
       where: { id: input.categoryId },
     });
     if (!category) notFound('Category');
 
-    const allowsExtraSaya = input.allowsExtraSaya ?? input.kind === ProductKind.SAREE;
+    const allowsExtraSaya =
+      input.allowsExtraSaya ?? input.kind === ProductKind.SAREE;
     this.validateProductVariants(
       input.kind,
       allowsExtraSaya,
@@ -155,7 +159,10 @@ export class ProductService {
         netPrice: input.netPrice,
         discountPercent: input.discountPercent,
         allowsExtraSaya,
-        extraSayaPrice: allowsExtraSaya && input.extraSayaPrice != null ? input.extraSayaPrice : null,
+        extraSayaPrice:
+          allowsExtraSaya && input.extraSayaPrice != null
+            ? input.extraSayaPrice
+            : null,
         // Prisma variant creation (size is now a string)
         variants: input.variants?.length
           ? {
@@ -212,7 +219,11 @@ export class ProductService {
         extraSayaPrice,
         input.variants,
       );
-    } else if (kind === ProductKind.SAREE && allowsExtraSaya && extraSayaPrice == null) {
+    } else if (
+      kind === ProductKind.SAREE &&
+      allowsExtraSaya &&
+      extraSayaPrice == null
+    ) {
       badRequest('Set extraSayaPrice when allowsExtraSaya is enabled');
     } else if (kind === ProductKind.STANDARD && allowsExtraSaya) {
       badRequest('Extra saya is only available for saree products');
@@ -241,13 +252,16 @@ export class ProductService {
           slug,
           brand: input.brand,
           categoryId: input.categoryId,
-          subcategoryId: input.subcategoryId !== undefined ? input.subcategoryId : undefined,
-          itemTypeId: input.itemTypeId !== undefined ? input.itemTypeId : undefined,
+          subcategoryId:
+            input.subcategoryId !== undefined ? input.subcategoryId : undefined,
+          itemTypeId:
+            input.itemTypeId !== undefined ? input.itemTypeId : undefined,
           kind: input.kind,
           netPrice: input.netPrice,
           discountPercent: input.discountPercent,
           allowsExtraSaya,
-          extraSayaPrice: allowsExtraSaya && extraSayaPrice != null ? extraSayaPrice : null,
+          extraSayaPrice:
+            allowsExtraSaya && extraSayaPrice != null ? extraSayaPrice : null,
         },
       });
 

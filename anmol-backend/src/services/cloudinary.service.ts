@@ -1,4 +1,8 @@
-import { Injectable, ServiceUnavailableException, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  ServiceUnavailableException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary } from 'cloudinary';
 
@@ -16,7 +20,11 @@ export class CloudinaryService implements OnModuleInit {
     this.configured = Boolean(cloudName && apiKey && apiSecret);
 
     if (this.configured) {
-      cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
+      cloudinary.config({
+        cloud_name: cloudName,
+        api_key: apiKey,
+        api_secret: apiSecret,
+      });
     }
   }
 

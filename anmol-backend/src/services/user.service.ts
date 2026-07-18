@@ -39,8 +39,8 @@ export class UserService {
         name: true,
         createdAt: true,
         _count: {
-          select: { orders: true }
-        }
+          select: { orders: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });

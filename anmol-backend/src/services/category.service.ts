@@ -4,7 +4,12 @@ import { badRequest, notFound } from '../config/trpc.config';
 import { slugify, uniqueSlug } from '../utils/slug';
 import { DEFAULT_CATEGORIES } from '../utils/default-categories';
 import { z } from 'zod';
-import { CreateCategorySchema, UpdateCategorySchema, DeleteCategorySchema, ListCategorySchema } from '../models/category.model';
+import {
+  CreateCategorySchema,
+  UpdateCategorySchema,
+  DeleteCategorySchema,
+  ListCategorySchema,
+} from '../models/category.model';
 
 @Injectable()
 export class CategoryService {
@@ -13,19 +18,21 @@ export class CategoryService {
   async list(input?: z.infer<typeof ListCategorySchema>) {
     const where = {
       ...(input?.includeInactive ? {} : { isActive: true }),
-      ...(input?.search ? { name: { contains: input.search, mode: 'insensitive' as const } } : {}),
+      ...(input?.search
+        ? { name: { contains: input.search, mode: 'insensitive' as const } }
+        : {}),
     };
 
     return this.prisma.category.findMany({
       where,
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-      include: { 
+      include: {
         _count: { select: { products: true } },
         subcategories: {
           include: {
-            itemTypes: true
-          }
-        }
+            itemTypes: true,
+          },
+        },
       },
     });
   }
@@ -141,22 +148,32 @@ export class CategoryService {
     return { count: DEFAULT_CATEGORIES.length };
   }
 
-  async reorder(input: z.infer<typeof import('../models/category.model').ReorderCategorySchema>) {
+  async reorder(
+    input: z.infer<
+      typeof import('../models/category.model').ReorderCategorySchema
+    >,
+  ) {
     await this.prisma.$transaction(
       input.map((item) =>
         this.prisma.category.update({
           where: { id: item.id },
           data: { sortOrder: item.sortOrder },
-        })
-      )
+        }),
+      ),
     );
     return { success: true };
   }
 
   // --- SUBCATEGORY ---
-  async createSubcategory(input: z.infer<typeof import('../models/category.model').CreateSubcategorySchema>) {
+  async createSubcategory(
+    input: z.infer<
+      typeof import('../models/category.model').CreateSubcategorySchema
+    >,
+  ) {
     const slug = await uniqueSlug(input.name, async (s) => {
-      const row = await this.prisma.subcategory.findUnique({ where: { slug: s } });
+      const row = await this.prisma.subcategory.findUnique({
+        where: { slug: s },
+      });
       return Boolean(row);
     });
     return this.prisma.subcategory.create({
@@ -165,18 +182,22 @@ export class CategoryService {
         slug,
         categoryId: input.categoryId,
         description: input.description,
-      }
+      },
     });
   }
 
-  async updateSubcategory(input: z.infer<typeof import('../models/category.model').UpdateSubcategorySchema>) {
+  async updateSubcategory(
+    input: z.infer<
+      typeof import('../models/category.model').UpdateSubcategorySchema
+    >,
+  ) {
     return this.prisma.subcategory.update({
       where: { id: input.id },
       data: {
         name: input.name,
         description: input.description,
         isActive: input.isActive,
-      }
+      },
     });
   }
 
@@ -186,7 +207,11 @@ export class CategoryService {
   }
 
   // --- ITEMTYPE ---
-  async createItemType(input: z.infer<typeof import('../models/category.model').CreateItemTypeSchema>) {
+  async createItemType(
+    input: z.infer<
+      typeof import('../models/category.model').CreateItemTypeSchema
+    >,
+  ) {
     const slug = await uniqueSlug(input.name, async (s) => {
       const row = await this.prisma.itemType.findUnique({ where: { slug: s } });
       return Boolean(row);
@@ -197,18 +222,22 @@ export class CategoryService {
         slug,
         subcategoryId: input.subcategoryId,
         description: input.description,
-      }
+      },
     });
   }
 
-  async updateItemType(input: z.infer<typeof import('../models/category.model').UpdateItemTypeSchema>) {
+  async updateItemType(
+    input: z.infer<
+      typeof import('../models/category.model').UpdateItemTypeSchema
+    >,
+  ) {
     return this.prisma.itemType.update({
       where: { id: input.id },
       data: {
         name: input.name,
         description: input.description,
         isActive: input.isActive,
-      }
+      },
     });
   }
 
@@ -217,4 +246,3 @@ export class CategoryService {
     return { success: true };
   }
 }
-

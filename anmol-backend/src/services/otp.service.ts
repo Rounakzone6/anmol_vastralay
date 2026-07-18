@@ -29,13 +29,17 @@ export class OtpService {
         this.logger.warn('Twilio initialization failed:', err);
       }
     } else {
-      this.logger.warn('⚠ Twilio not configured — SMS OTP will use console logging');
+      this.logger.warn(
+        '⚠ Twilio not configured — SMS OTP will use console logging',
+      );
     }
   }
 
   private initSendGrid() {
     const apiKey = this.config.get<string>('SENDGRID_API_KEY');
-    this.sendgridFromEmail = this.config.get<string>('SENDGRID_FROM_EMAIL') || 'noreply@anmolvastralay.com';
+    this.sendgridFromEmail =
+      this.config.get<string>('SENDGRID_FROM_EMAIL') ||
+      'noreply@anmolvastralay.com';
 
     if (apiKey && !apiKey.startsWith('your_')) {
       try {
@@ -48,7 +52,9 @@ export class OtpService {
         this.logger.warn('SendGrid initialization failed:', err);
       }
     } else {
-      this.logger.warn('⚠ SendGrid not configured — Email OTP will use console logging');
+      this.logger.warn(
+        '⚠ SendGrid not configured — Email OTP will use console logging',
+      );
     }
   }
 

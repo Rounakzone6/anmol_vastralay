@@ -55,14 +55,19 @@ export const ListProductSchema = z.object({
 export const ProductIdSchema = z.object({ id: z.string() });
 export const ProductSlugSchema = z.object({ slug: z.string() });
 
-
 export const UpdateProductSchema = productBaseSchema
   .partial()
   .extend({ id: z.string() })
   .required({ id: true });
 
-export const DeleteProductSchema = z.object({ id: z.string(), hard: z.boolean().optional() });
-export const SetProductActiveSchema = z.object({ id: z.string(), isActive: z.boolean() });
+export const DeleteProductSchema = z.object({
+  id: z.string(),
+  hard: z.boolean().optional(),
+});
+export const SetProductActiveSchema = z.object({
+  id: z.string(),
+  isActive: z.boolean(),
+});
 
 export const UpsertVariantSchema = z.object({
   productId: z.string(),
@@ -119,9 +124,10 @@ export function mapProduct(product: ProductWithRelations) {
 
   const reviews = product.reviews || [];
   const reviewCount = reviews.length;
-  const averageRating = reviewCount > 0 
-    ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviewCount 
-    : 0;
+  const averageRating =
+    reviewCount > 0
+      ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviewCount
+      : 0;
 
   return {
     ...priced,

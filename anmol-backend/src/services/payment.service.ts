@@ -19,7 +19,10 @@ export class PaymentService {
     });
   }
 
-  async verifyRazorpayPayment(userId: string, input: z.infer<typeof VerifyRazorpayPaymentSchema>) {
+  async verifyRazorpayPayment(
+    userId: string,
+    input: z.infer<typeof VerifyRazorpayPaymentSchema>,
+  ) {
     const secret = process.env.RAZORPAY_KEY_SECRET || 'dummy_key_secret';
 
     const generatedSignature = crypto
@@ -28,7 +31,10 @@ export class PaymentService {
       .digest('hex');
 
     if (generatedSignature !== input.razorpay_signature) {
-      throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid payment signature' });
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Invalid payment signature',
+      });
     }
 
     // Find the payment record
@@ -37,7 +43,10 @@ export class PaymentService {
     });
 
     if (!payment || payment.userId !== userId) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'Payment record not found' });
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Payment record not found',
+      });
     }
 
     // Update payment and order in transaction

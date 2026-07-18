@@ -48,7 +48,10 @@ export class CustomerService {
     return user;
   }
 
-  async updateProfile(userId: string, input: z.infer<typeof UpdateProfileSchema>) {
+  async updateProfile(
+    userId: string,
+    input: z.infer<typeof UpdateProfileSchema>,
+  ) {
     const data: Record<string, unknown> = {};
     if (input.name !== undefined) data.name = input.name;
     if (input.gender !== undefined) data.gender = input.gender;
@@ -273,15 +276,15 @@ export class CustomerService {
 
     // Mark OTP as verified
     await this.prisma.otpCode.update({
-      where: { id: otpRecord!.id },
+      where: { id: otpRecord.id },
       data: { verified: true },
     });
 
     // Mark user's email/phone as verified
     const updateData =
       input.type === 'EMAIL'
-        ? { emailVerified: true, email: otpRecord!.target }
-        : { phoneVerified: true, phone: otpRecord!.target };
+        ? { emailVerified: true, email: otpRecord.target }
+        : { phoneVerified: true, phone: otpRecord.target };
 
     const user = await this.prisma.user.update({
       where: { id: userId },
@@ -314,7 +317,7 @@ export class CustomerService {
       );
     }
 
-    const isValid = await bcrypt.compare(input.currentPassword, user!.password!);
+    const isValid = await bcrypt.compare(input.currentPassword, user.password);
     if (!isValid) {
       badRequest('Current password is incorrect');
     }
@@ -340,17 +343,17 @@ export class CustomerService {
     if (!user) notFound('User');
 
     // For password-based accounts, verify password
-    if (user!.password) {
-      const isValid = await bcrypt.compare(input.password, user!.password);
+    if (user.password) {
+      const isValid = await bcrypt.compare(input.password, user.password);
       if (!isValid) {
         badRequest('Password is incorrect');
       }
     }
 
     // Clean up Cloudinary profile image if exists
-    if (user!.profileImageId) {
+    if (user.profileImageId) {
       try {
-        await this.cloudinary.deleteImage(user!.profileImageId);
+        await this.cloudinary.deleteImage(user.profileImageId);
       } catch {
         // Ignore
       }

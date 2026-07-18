@@ -11,7 +11,6 @@ import { paymentRouter } from './payment.router';
 import { bannerRouter } from './banner.router';
 import { reviewRouter } from './review.router';
 
-
 export function createAppRouter(auth: AuthService) {
   return router({
     auth: createAuthRouter(auth),
@@ -28,4 +27,3 @@ export function createAppRouter(auth: AuthService) {
 }
 
 export type AppRouter = ReturnType<typeof createAppRouter>;
-

@@ -12,7 +12,7 @@ import {
   AddImageSchema,
   RemoveImageSchema,
   ProductIdSchema,
-  ProductSlugSchema
+  ProductSlugSchema,
 } from '../models/product.model';
 
 export const productRouter = router({
@@ -33,8 +33,6 @@ export const productRouter = router({
     .query(async ({ ctx, input }) => {
       return ctx.services.product.getBySlug(input.slug);
     }),
-
-
 
   create: staffProcedure
     .input(productBaseSchema)
@@ -96,4 +94,3 @@ export const productRouter = router({
       return ctx.services.product.removeImage(input);
     }),
 });
-;

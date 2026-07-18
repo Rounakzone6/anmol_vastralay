@@ -18,7 +18,7 @@ export class WebhookController {
   ) {
     try {
       const secret = process.env.RAZORPAY_WEBHOOK_SECRET || '';
-      
+
       // If no secret is configured, just warn and return 200 to prevent retries
       if (!secret) {
         this.logger.warn('RAZORPAY_WEBHOOK_SECRET is not configured');
@@ -26,7 +26,9 @@ export class WebhookController {
       }
 
       if (!req.rawBody) {
-        this.logger.error('rawBody is missing. Ensure NestFactory is configured with { rawBody: true }');
+        this.logger.error(
+          'rawBody is missing. Ensure NestFactory is configured with { rawBody: true }',
+        );
         return res.status(400).send('Bad Request');
       }
 
@@ -54,7 +56,7 @@ export class WebhookController {
       if (event === 'payment.captured' || event === 'payment.authorized') {
         const paymentEntity = payload.payload.payment.entity;
         const razorpayOrderId = paymentEntity.order_id;
-        
+
         if (razorpayOrderId) {
           await this.prisma.$transaction(async (tx) => {
             // Update payment status to COMPLETED
@@ -93,19 +95,23 @@ export class WebhookController {
               }
             }
           });
-          this.logger.log(`Payment marked COMPLETED for Razorpay Order: ${razorpayOrderId}`);
+          this.logger.log(
+            `Payment marked COMPLETED for Razorpay Order: ${razorpayOrderId}`,
+          );
         }
       } else if (event === 'payment.failed') {
         const paymentEntity = payload.payload.payment.entity;
         const razorpayOrderId = paymentEntity.order_id;
-        
+
         if (razorpayOrderId) {
           // Mark payment as FAILED
           await this.prisma.payment.updateMany({
             where: { transactionId: razorpayOrderId },
             data: { status: 'FAILED' },
           });
-          this.logger.log(`Payment marked FAILED for Razorpay Order: ${razorpayOrderId}`);
+          this.logger.log(
+            `Payment marked FAILED for Razorpay Order: ${razorpayOrderId}`,
+          );
         }
       }
 

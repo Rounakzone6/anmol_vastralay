@@ -38,7 +38,9 @@ function requestLogger(req: Request, res: Response, next: NextFunction) {
     const statusCode = res.statusCode;
     const statusColor = statusCode >= 400 ? '❌' : '✓';
     if (process.env.NODE_ENV !== 'production' || statusCode >= 400) {
-      logger.log(`${statusColor} ${method} ${path} → ${statusCode} (${duration}ms)`);
+      logger.log(
+        `${statusColor} ${method} ${path} → ${statusCode} (${duration}ms)`,
+      );
     }
   });
 
@@ -50,7 +52,7 @@ async function bootstrap() {
   const prisma = app.get(PrismaService);
   const cloudinary = app.get(CloudinaryService);
   const auth = app.get(AuthService);
-  
+
   const services = {
     category: app.get(CategoryService),
     product: app.get(ProductService),
@@ -67,7 +69,7 @@ async function bootstrap() {
 
   app.use(helmet());
   app.use(requestLogger);
-  
+
   app.enableCors({
     origin: (origin, callback) => {
       const allowedOrigins = [
@@ -79,10 +81,12 @@ async function bootstrap() {
 
       // Allow if it matches explicit URLs, or if it's a Vercel preview URL for frontend or admin
       if (
-        !origin || 
-        allowedOrigins.includes(origin) || 
-        (origin.startsWith('https://anmol-vastralay') && origin.endsWith('.vercel.app')) ||
-        (origin.startsWith('https://anmol-admin') && origin.endsWith('.vercel.app'))
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        (origin.startsWith('https://anmol-vastralay') &&
+          origin.endsWith('.vercel.app')) ||
+        (origin.startsWith('https://anmol-admin') &&
+          origin.endsWith('.vercel.app'))
       ) {
         callback(null, true);
       } else {
@@ -106,7 +110,7 @@ async function bootstrap() {
   );
 
   const http = app.getHttpAdapter().getInstance();
-  
+
   // Health check endpoint
   http.get('/health', (_req, res) => {
     res.json({
@@ -136,12 +140,14 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
-  
+
   logger.log(`✓ API Server running on port ${port}`);
   logger.log(`✓ tRPC Playground: http://localhost:${port}/trpc`);
   logger.log(`✓ Health Check: http://localhost:${port}/health`);
   logger.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
-  logger.log(`✓ Database: ${process.env.DATABASE_URL?.split('@')[1] || 'not configured'}`);
+  logger.log(
+    `✓ Database: ${process.env.DATABASE_URL?.split('@')[1] || 'not configured'}`,
+  );
 }
 
 void bootstrap();

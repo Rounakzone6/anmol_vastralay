@@ -63,25 +63,37 @@ export const categoryRouter = router({
 
   createSubcategory: staffProcedure
     .input(CreateSubcategorySchema)
-    .mutation(async ({ ctx, input }) => ctx.services.category.createSubcategory(input)),
+    .mutation(async ({ ctx, input }) =>
+      ctx.services.category.createSubcategory(input),
+    ),
 
   updateSubcategory: staffProcedure
     .input(UpdateSubcategorySchema)
-    .mutation(async ({ ctx, input }) => ctx.services.category.updateSubcategory(input)),
+    .mutation(async ({ ctx, input }) =>
+      ctx.services.category.updateSubcategory(input),
+    ),
 
   deleteSubcategory: staffProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(async ({ ctx, input }) => ctx.services.category.deleteSubcategory(input.id)),
+    .mutation(async ({ ctx, input }) =>
+      ctx.services.category.deleteSubcategory(input.id),
+    ),
 
   createItemType: staffProcedure
     .input(CreateItemTypeSchema)
-    .mutation(async ({ ctx, input }) => ctx.services.category.createItemType(input)),
+    .mutation(async ({ ctx, input }) =>
+      ctx.services.category.createItemType(input),
+    ),
 
   updateItemType: staffProcedure
     .input(UpdateItemTypeSchema)
-    .mutation(async ({ ctx, input }) => ctx.services.category.updateItemType(input)),
+    .mutation(async ({ ctx, input }) =>
+      ctx.services.category.updateItemType(input),
+    ),
 
   deleteItemType: staffProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(async ({ ctx, input }) => ctx.services.category.deleteItemType(input.id)),
+    .mutation(async ({ ctx, input }) =>
+      ctx.services.category.deleteItemType(input.id),
+    ),
 });

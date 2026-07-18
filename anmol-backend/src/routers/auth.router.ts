@@ -1,22 +1,28 @@
 import { TRPCError } from '@trpc/server';
 import type { AuthService } from '../services/auth.service';
-import { publicProcedure, router, protectedProcedure } from '../config/trpc.config';
-import { LoginSchema, RegisterSchema, GoogleAuthSchema } from '../models/auth.model';
+import {
+  publicProcedure,
+  router,
+  protectedProcedure,
+} from '../config/trpc.config';
+import {
+  LoginSchema,
+  RegisterSchema,
+  GoogleAuthSchema,
+} from '../models/auth.model';
 
 export const createAuthRouter = (auth: AuthService) =>
   router({
-    login: publicProcedure
-      .input(LoginSchema)
-      .mutation(async ({ input }) => {
-        try {
-          return await auth.login(input.identifier, input.password);
-        } catch (error: any) {
-          throw new TRPCError({
-            code: 'UNAUTHORIZED',
-            message: error.message || 'Invalid credentials',
-          });
-        }
-      }),
+    login: publicProcedure.input(LoginSchema).mutation(async ({ input }) => {
+      try {
+        return await auth.login(input.identifier, input.password);
+      } catch (error: any) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: error.message || 'Invalid credentials',
+        });
+      }
+    }),
 
     register: publicProcedure
       .input(RegisterSchema)

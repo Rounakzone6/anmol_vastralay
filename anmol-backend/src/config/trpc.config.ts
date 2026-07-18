@@ -12,7 +12,6 @@ import type { CustomerService } from '../services/customer.service';
 import type { BannerService } from '../services/banner.service';
 import type { ReviewService } from '../services/review.service';
 
-
 export interface TRPCContext {
   prisma: PrismaClient;
   cloudinary: CloudinaryService;
@@ -50,14 +49,20 @@ export const protectedProcedure = publicProcedure.use(({ ctx, next }) => {
 
 export const staffProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (ctx.user.role !== 'STAFF' && ctx.user.role !== 'ADMIN') {
-    throw new TRPCError({ code: 'FORBIDDEN', message: 'Staff access required' });
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'Staff access required',
+    });
   }
   return next({ ctx });
 });
 
 export const adminProcedure = staffProcedure.use(({ ctx, next }) => {
   if (ctx.user.role !== 'ADMIN') {
-    throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin access required' });
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'Admin access required',
+    });
   }
   return next({ ctx });
 });

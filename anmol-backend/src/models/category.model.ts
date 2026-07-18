@@ -29,10 +29,12 @@ export const DeleteCategorySchema = z.object({
   hard: z.boolean().optional(),
 });
 
-export const ReorderCategorySchema = z.array(z.object({
-  id: z.string(),
-  sortOrder: z.number(),
-}));
+export const ReorderCategorySchema = z.array(
+  z.object({
+    id: z.string(),
+    sortOrder: z.number(),
+  }),
+);
 
 export const CreateSubcategorySchema = z.object({
   name: z.string().min(2),

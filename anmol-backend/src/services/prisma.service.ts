@@ -5,19 +5,21 @@ import { PrismaPg } from '@prisma/adapter-pg';
 
 @Injectable()
 export class PrismaService
- extends PrismaClient
-  implements OnModuleInit, OnModuleDestroy{
-  
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   constructor() {
     const connectionString = process.env.DATABASE_URL;
     // Render and Supabase require SSL for external connections
-    const isRemote = connectionString?.includes('render.com') || connectionString?.includes('supabase.co');
-    
-    const pool = new Pool({ 
+    const isRemote =
+      connectionString?.includes('render.com') ||
+      connectionString?.includes('supabase.co');
+
+    const pool = new Pool({
       connectionString,
-      ...(isRemote ? { ssl: { rejectUnauthorized: false } } : {})
+      ...(isRemote ? { ssl: { rejectUnauthorized: false } } : {}),
     });
-    
+
     const adapter = new PrismaPg(pool);
     super({ adapter });
   }

@@ -16,9 +16,9 @@ export function computeSellingPrice(
   return Math.round(selling * 100) / 100;
 }
 
-export function withProductPricing<T extends { netPrice: Numeric; discountPercent: Numeric }>(
-  product: T,
-) {
+export function withProductPricing<
+  T extends { netPrice: Numeric; discountPercent: Numeric },
+>(product: T) {
   const netPrice = toNumber(product.netPrice);
   const discountPercent = toNumber(product.discountPercent);
   const sellingPrice = computeSellingPrice(netPrice, discountPercent);

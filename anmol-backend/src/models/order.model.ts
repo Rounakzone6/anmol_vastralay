@@ -9,5 +9,11 @@ export const OrderIdSchema = z.object({ orderId: z.string() });
 
 export const UpdateOrderStatusSchema = z.object({
   orderId: z.string(),
-  status: z.enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
+  status: z.enum([
+    'PENDING',
+    'PROCESSING',
+    'SHIPPED',
+    'DELIVERED',
+    'CANCELLED',
+  ]),
 });

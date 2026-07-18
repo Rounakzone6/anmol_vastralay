@@ -3,13 +3,21 @@ import { PrismaService } from './prisma.service';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import Razorpay from 'razorpay';
-import { CreateOrderSchema, OrderIdSchema, UpdateOrderStatusSchema } from '../models/order.model';
+import {
+  CreateOrderSchema,
+  OrderIdSchema,
+  UpdateOrderStatusSchema,
+} from '../models/order.model';
+import { WhatsappService } from './whatsapp.service';
 
 @Injectable()
 export class OrderService {
   private razorpay: Razorpay;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly whatsappService: WhatsappService,
+  ) {
     this.razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID || 'dummy_key_id',
       key_secret: process.env.RAZORPAY_KEY_SECRET || 'dummy_key_secret',
@@ -40,7 +48,7 @@ export class OrderService {
     }
 
     // 3. Create order in transaction
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const order = await tx.order.create({
         data: {
           userId,
@@ -112,6 +120,19 @@ export class OrderService {
         amount: totalAmount,
       };
     });
+
+    // 6. Send WhatsApp confirmation if user has phone
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (user?.phone) {
+      // Send async without blocking response
+      this.whatsappService
+        .sendOrderConfirmation(user.phone, result.orderId, result.amount)
+        .catch((err) =>
+          console.error('Failed to send WA order confirmation', err),
+        );
+    }
+
+    return result;
   }
 
   async getOrderHistory(userId: string) {
@@ -122,7 +143,7 @@ export class OrderService {
         items: {
           include: {
             product: {
-              include: { images: true }
+              include: { images: true },
             },
             variant: true,
           },
@@ -138,7 +159,7 @@ export class OrderService {
         items: {
           include: {
             product: {
-              include: { images: true }
+              include: { images: true },
             },
             variant: true,
           },

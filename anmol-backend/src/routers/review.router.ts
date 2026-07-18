@@ -1,4 +1,8 @@
-import { router, publicProcedure, protectedProcedure } from '../config/trpc.config';
+import {
+  router,
+  publicProcedure,
+  protectedProcedure,
+} from '../config/trpc.config';
 import { z } from 'zod';
 import { AddReviewSchema, ListReviewsSchema } from '../models/review.model';
 

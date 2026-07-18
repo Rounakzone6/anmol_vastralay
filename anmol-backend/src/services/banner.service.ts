@@ -122,7 +122,10 @@ export class BannerService {
 
   async createBanner(input: z.infer<typeof CreateBannerSchema>) {
     // Upload image to cloudinary
-    const { url, publicId } = await this.cloudinary.uploadImage(input.imageData, 'anmol/banners');
+    const { url, publicId } = await this.cloudinary.uploadImage(
+      input.imageData,
+      'anmol/banners',
+    );
 
     return this.prisma.banner.create({
       data: {
@@ -139,7 +142,9 @@ export class BannerService {
   }
 
   async updateBanner(input: z.infer<typeof UpdateBannerSchema>) {
-    const existing = await this.prisma.banner.findUnique({ where: { id: input.id } });
+    const existing = await this.prisma.banner.findUnique({
+      where: { id: input.id },
+    });
     if (!existing) notFound('Banner');
 
     let newUrl = existing.imageUrl;
@@ -147,14 +152,19 @@ export class BannerService {
 
     if (input.imageData) {
       // Upload new image
-      const result = await this.cloudinary.uploadImage(input.imageData, 'anmol/banners');
+      const result = await this.cloudinary.uploadImage(
+        input.imageData,
+        'anmol/banners',
+      );
       newUrl = result.url;
       newPublicId = result.publicId;
 
       // Delete old image if it existed
       if (existing.publicId) {
         await this.cloudinary.deleteImage(existing.publicId).catch(() => {
-          console.warn(`Failed to delete old banner image: ${existing.publicId}`);
+          console.warn(
+            `Failed to delete old banner image: ${existing.publicId}`,
+          );
         });
       }
     }
@@ -163,12 +173,21 @@ export class BannerService {
       where: { id: input.id },
       data: {
         title: input.title ?? existing.title,
-        subtitle: input.subtitle !== undefined ? (input.subtitle || null) : existing.subtitle,
-        buttonText: input.buttonText !== undefined ? (input.buttonText || null) : existing.buttonText,
+        subtitle:
+          input.subtitle !== undefined
+            ? input.subtitle || null
+            : existing.subtitle,
+        buttonText:
+          input.buttonText !== undefined
+            ? input.buttonText || null
+            : existing.buttonText,
         imageUrl: newUrl,
         publicId: newPublicId,
         placement: input.placement ?? existing.placement,
-        linkUrl: input.linkUrl !== undefined ? (input.linkUrl || null) : existing.linkUrl,
+        linkUrl:
+          input.linkUrl !== undefined
+            ? input.linkUrl || null
+            : existing.linkUrl,
         isActive: input.isActive ?? existing.isActive,
       },
     });

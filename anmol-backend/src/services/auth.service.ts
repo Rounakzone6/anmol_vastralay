@@ -69,10 +69,7 @@ export class AuthService {
 
     const record = await this.prisma.user.findFirst({
       where: {
-        OR: [
-          { email: identifier },
-          { phone: identifier },
-        ],
+        OR: [{ email: identifier }, { phone: identifier }],
       },
     });
 
@@ -99,7 +96,12 @@ export class AuthService {
     return { token, user };
   }
 
-  async register(input: { email?: string; phone?: string; name: string; password: string }) {
+  async register(input: {
+    email?: string;
+    phone?: string;
+    name: string;
+    password: string;
+  }) {
     if (!input.email && !input.phone) {
       throw new Error('BAD_REQUEST:Either email or phone number is required');
     }
@@ -135,7 +137,9 @@ export class AuthService {
     }
   }
 
-  async googleAuth(credential: string): Promise<{ token: string; user: AuthUser }> {
+  async googleAuth(
+    credential: string,
+  ): Promise<{ token: string; user: AuthUser }> {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     if (!clientId) {
       throw new Error('BAD_REQUEST:Google Sign-In is not configured');
@@ -164,10 +168,7 @@ export class AuthService {
     // Try to find existing user by googleId or email
     let record = await this.prisma.user.findFirst({
       where: {
-        OR: [
-          { googleId },
-          ...(email ? [{ email }] : []),
-        ],
+        OR: [{ googleId }, ...(email ? [{ email }] : [])],
       },
     });
 

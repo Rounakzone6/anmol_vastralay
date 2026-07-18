@@ -19,7 +19,7 @@ export class CartService {
         items: {
           include: {
             product: {
-              include: { images: true }
+              include: { images: true },
             },
             variant: true,
           },
@@ -34,7 +34,7 @@ export class CartService {
           items: {
             include: {
               product: {
-                include: { images: true }
+                include: { images: true },
               },
               variant: true,
             },
@@ -83,7 +83,10 @@ export class CartService {
     });
   }
 
-  async updateQuantity(userId: string, input: z.infer<typeof UpdateCartQuantitySchema>) {
+  async updateQuantity(
+    userId: string,
+    input: z.infer<typeof UpdateCartQuantitySchema>,
+  ) {
     // Ensure the item belongs to user's cart
     const cartItem = await this.prisma.cartItem.findUnique({
       where: { id: input.cartItemId },
@@ -91,7 +94,10 @@ export class CartService {
     });
 
     if (!cartItem || cartItem.cart.userId !== userId) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'Cart item not found' });
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Cart item not found',
+      });
     }
 
     if (input.quantity <= 0) {
@@ -107,14 +113,20 @@ export class CartService {
     });
   }
 
-  async removeFromCart(userId: string, input: z.infer<typeof RemoveFromCartSchema>) {
+  async removeFromCart(
+    userId: string,
+    input: z.infer<typeof RemoveFromCartSchema>,
+  ) {
     const cartItem = await this.prisma.cartItem.findUnique({
       where: { id: input.cartItemId },
       include: { cart: true },
     });
 
     if (!cartItem || cartItem.cart.userId !== userId) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'Cart item not found' });
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Cart item not found',
+      });
     }
 
     await this.prisma.cartItem.delete({

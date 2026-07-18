@@ -67,7 +67,7 @@ export class ReviewService {
   async listReviews(input: ListReviewsInput) {
     try {
       const limit = input.limit ?? 10;
-      
+
       const items = await this.prisma.review.findMany({
         where: { productId: input.productId },
         take: limit + 1,

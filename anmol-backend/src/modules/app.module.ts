@@ -13,6 +13,7 @@ import { CustomerService } from '../services/customer.service';
 import { BannerService } from '../services/banner.service';
 import { OtpService } from '../services/otp.service';
 import { ReviewService } from '../services/review.service';
+import { WhatsappService } from '../services/whatsapp.service';
 import { WebhookController } from '../controllers/webhook.controller';
 
 @Module({
@@ -22,9 +23,7 @@ import { WebhookController } from '../controllers/webhook.controller';
     CloudinaryModule,
     AuthModule,
   ],
-  controllers: [
-    WebhookController,
-  ],
+  controllers: [WebhookController],
   providers: [
     CategoryService,
     ProductService,
@@ -36,6 +35,7 @@ import { WebhookController } from '../controllers/webhook.controller';
     BannerService,
     OtpService,
     ReviewService,
+    WhatsappService,
   ],
 })
 export class AppModule {}
