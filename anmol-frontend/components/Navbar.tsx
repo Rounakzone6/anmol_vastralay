@@ -4,8 +4,8 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, X, Search, ShoppingCart, Heart, LogOut, User, MapPin, Package, ChevronDown, Shield } from "lucide-react";
-import { useAuth } from "../lib/useAuth";
-import { trpc } from "../lib/trpc";
+import { useAuth } from "@/lib/useAuth";
+import { trpc } from "@/lib/trpc";
 
 const ProfileAvatar = ({ size = 36, profileImg, displayName, initials }: { size?: number, profileImg?: string | null, displayName: string, initials: string }) => (
   profileImg ? (

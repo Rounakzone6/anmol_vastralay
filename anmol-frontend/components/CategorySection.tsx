@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { trpc } from '../lib/trpc';
+import { trpc } from '@/lib/trpc';
 import { ShoppingBag, Shirt, Baby, Wind, Sparkles, BoxSelect, Layers } from 'lucide-react';
-import ProductCard from './ProductCard';
+import ProductCard from '@/components/ProductCard';
 
 function getCategoryIcon(slug: string) {
   switch(slug) {

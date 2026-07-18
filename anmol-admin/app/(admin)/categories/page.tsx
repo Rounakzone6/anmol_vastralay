@@ -21,7 +21,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { SortableCategoryRow } from './components/sortable-category-row';
+import { SortableCategoryRow } from '@/app/(admin)/categories/components/sortable-category-row';
 
 export default function CategoriesPage() {
   const utils = trpc.useUtils();

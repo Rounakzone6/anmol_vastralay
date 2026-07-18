@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { trpc } from '../lib/trpc';
+import { trpc } from '@/lib/trpc';
 import { ShoppingBag, ChevronRight } from 'lucide-react';
-import ProductCard from './ProductCard';
+import ProductCard from '@/components/ProductCard';
 
 export default function LatestArrivals() {
   const {

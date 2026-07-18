@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
+import { PrismaService } from '@backend/services/prisma.service';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import Razorpay from 'razorpay';
 import {
   CreateOrderSchema,
   UpdateOrderStatusSchema,
-} from '../models/order.model';
-import { WhatsappService } from './whatsapp.service';
+} from '@backend/models/order.model';
+import { WhatsappService } from '@backend/services/whatsapp.service';
 
 @Injectable()
 export class OrderService {

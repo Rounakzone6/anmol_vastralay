@@ -4,8 +4,8 @@ import { use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, MapPin, Receipt, Truck } from 'lucide-react';
-import { trpc } from '../../../lib/trpc';
-import { useAuth } from '../../../lib/useAuth';
+import { trpc } from '@/lib/trpc';
+import { useAuth } from '@/lib/useAuth';
 
 export default function OrderDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);

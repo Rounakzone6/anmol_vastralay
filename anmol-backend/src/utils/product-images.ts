@@ -1,4 +1,4 @@
-import { badRequest } from '../config/trpc.config';
+import { badRequest } from '@backend/config/trpc.config';
 
 export const MAX_PRODUCT_IMAGES = 4;
 

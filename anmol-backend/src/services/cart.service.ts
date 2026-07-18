@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
+import { PrismaService } from '@backend/services/prisma.service';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import {
   AddToCartSchema,
   UpdateCartQuantitySchema,
   RemoveFromCartSchema,
-} from '../models/cart.model';
+} from '@backend/models/cart.model';
 
 @Injectable()
 export class CartService {

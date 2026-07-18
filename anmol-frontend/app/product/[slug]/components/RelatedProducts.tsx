@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import ProductCard from '../../../../components/ProductCard';
+import ProductCard from '@/components/ProductCard';
 
 export function RelatedProducts({ suggestedProducts }: { suggestedProducts: any[] }) {
   if (!suggestedProducts || suggestedProducts.length === 0) return null;

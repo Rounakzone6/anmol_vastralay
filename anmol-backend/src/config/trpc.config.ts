@@ -1,16 +1,16 @@
 import { initTRPC, TRPCError } from '@trpc/server';
 import type { PrismaClient } from '@prisma/client';
-import type { AuthService, AuthUser } from '../services/auth.service';
-import type { CloudinaryService } from '../services/cloudinary.service';
-import type { CategoryService } from '../services/category.service';
-import type { ProductService } from '../services/product.service';
-import type { CartService } from '../services/cart.service';
-import type { OrderService } from '../services/order.service';
-import type { PaymentService } from '../services/payment.service';
-import type { UserService } from '../services/user.service';
-import type { CustomerService } from '../services/customer.service';
-import type { BannerService } from '../services/banner.service';
-import type { ReviewService } from '../services/review.service';
+import type { AuthService, AuthUser } from '@backend/services/auth.service';
+import type { CloudinaryService } from '@backend/services/cloudinary.service';
+import type { CategoryService } from '@backend/services/category.service';
+import type { ProductService } from '@backend/services/product.service';
+import type { CartService } from '@backend/services/cart.service';
+import type { OrderService } from '@backend/services/order.service';
+import type { PaymentService } from '@backend/services/payment.service';
+import type { UserService } from '@backend/services/user.service';
+import type { CustomerService } from '@backend/services/customer.service';
+import type { BannerService } from '@backend/services/banner.service';
+import type { ReviewService } from '@backend/services/review.service';
 
 export interface TRPCContext {
   prisma: PrismaClient;

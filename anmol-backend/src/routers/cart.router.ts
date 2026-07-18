@@ -1,9 +1,9 @@
-import { protectedProcedure, router } from '../config/trpc.config';
+import { protectedProcedure, router } from '@backend/config/trpc.config';
 import {
   AddToCartSchema,
   UpdateCartQuantitySchema,
   RemoveFromCartSchema,
-} from '../models/cart.model';
+} from '@backend/models/cart.model';
 
 export const cartRouter = router({
   getCart: protectedProcedure.query(async ({ ctx }) => {

@@ -1,7 +1,7 @@
 import { Card, Label, Select } from '@/components/ui';
 import { Tag } from 'lucide-react';
-import { SubcategorySelector } from './organization/SubcategorySelector';
-import { ItemTypeSelector } from './organization/ItemTypeSelector';
+import { SubcategorySelector } from '@/components/product-form-sections/organization/SubcategorySelector';
+import { ItemTypeSelector } from '@/components/product-form-sections/organization/ItemTypeSelector';
 
 type ProductOrganizationProps = {
   kind: 'SAREE' | 'STANDARD';

@@ -2,7 +2,7 @@ import { Controller, Post, Req, Res, Headers, Logger } from '@nestjs/common';
 import type { RawBodyRequest } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import * as crypto from 'crypto';
-import { PrismaService } from '../services/prisma.service';
+import { PrismaService } from '@backend/services/prisma.service';
 
 @Controller('api/webhooks')
 export class WebhookController {

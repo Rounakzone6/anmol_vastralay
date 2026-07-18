@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Form from 'next/form';
 import { GoogleLogin } from '@react-oauth/google';
-import { trpc } from '../../lib/trpc';
-import { useAuth } from '../../lib/useAuth';
+import { trpc } from '@/lib/trpc';
+import { useAuth } from '@/lib/useAuth';
 import { Eye, EyeOff, Mail, Phone, User, Lock, ArrowRight, ShieldCheck, Truck, Gift, Sparkles } from 'lucide-react';
 
 export default function RegisterPage() {

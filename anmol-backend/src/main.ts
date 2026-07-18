@@ -3,21 +3,21 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import type { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
-import { AppModule } from './modules/app.module';
-import { AuthService } from './services/auth.service';
-import { CloudinaryService } from './services/cloudinary.service';
-import { PrismaService } from './services/prisma.service';
-import { CategoryService } from './services/category.service';
-import { ProductService } from './services/product.service';
-import { CartService } from './services/cart.service';
-import { OrderService } from './services/order.service';
-import { PaymentService } from './services/payment.service';
-import { UserService } from './services/user.service';
-import { CustomerService } from './services/customer.service';
-import { BannerService } from './services/banner.service';
-import { ReviewService } from './services/review.service';
+import { AppModule } from '@backend/modules/app.module';
+import { AuthService } from '@backend/services/auth.service';
+import { CloudinaryService } from '@backend/services/cloudinary.service';
+import { PrismaService } from '@backend/services/prisma.service';
+import { CategoryService } from '@backend/services/category.service';
+import { ProductService } from '@backend/services/product.service';
+import { CartService } from '@backend/services/cart.service';
+import { OrderService } from '@backend/services/order.service';
+import { PaymentService } from '@backend/services/payment.service';
+import { UserService } from '@backend/services/user.service';
+import { CustomerService } from '@backend/services/customer.service';
+import { BannerService } from '@backend/services/banner.service';
+import { ReviewService } from '@backend/services/review.service';
 
-import { createAppRouter } from './routers';
+import { createAppRouter } from '@backend/routers';
 
 const logger = new Logger('Bootstrap');
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { trpc } from '../../../lib/trpc';
+import { trpc } from '@/lib/trpc';
 import { Trash2, AlertCircle, CheckCircle2, EyeOff, Eye } from 'lucide-react';
 
 export function SecurityTab({ profile, logout }: { profile: any; logout: () => void }) {

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
-import { CloudinaryService } from './cloudinary.service';
-import { ProductQueries } from './product/product.queries';
-import { ProductMutations } from './product/product.mutations';
+import { PrismaService } from '@backend/services/prisma.service';
+import { CloudinaryService } from '@backend/services/cloudinary.service';
+import { ProductQueries } from '@backend/services/product/product.queries';
+import { ProductMutations } from '@backend/services/product/product.mutations';
 import { z } from 'zod';
 import {
   ListProductSchema,
@@ -16,7 +16,7 @@ import {
   UploadImageSchema,
   AddImageSchema,
   RemoveImageSchema,
-} from '../models/product.model';
+} from '@backend/models/product.model';
 
 @Injectable()
 export class ProductService {

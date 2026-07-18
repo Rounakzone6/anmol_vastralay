@@ -4,12 +4,12 @@ import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronRight, Package, ArrowLeft } from 'lucide-react';
-import { trpc } from '../../../lib/trpc';
-import { useAuth } from '../../../lib/useAuth';
-import { ProductGallery } from './components/ProductGallery';
-import { ProductInfo } from './components/ProductInfo';
-import { ProductReviews } from './components/ProductReviews';
-import { RelatedProducts } from './components/RelatedProducts';
+import { trpc } from '@/lib/trpc';
+import { useAuth } from '@/lib/useAuth';
+import { ProductGallery } from '@/app/product/[slug]/components/ProductGallery';
+import { ProductInfo } from '@/app/product/[slug]/components/ProductInfo';
+import { ProductReviews } from '@/app/product/[slug]/components/ProductReviews';
+import { RelatedProducts } from '@/app/product/[slug]/components/RelatedProducts';
 
 /* ──────────────────────────────────────────────────────
    Skeleton loader while product fetches

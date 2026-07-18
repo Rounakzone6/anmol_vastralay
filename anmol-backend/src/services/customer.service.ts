@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
-import { CloudinaryService } from './cloudinary.service';
-import { AuthService } from './auth.service';
-import { OtpService } from './otp.service';
+import { PrismaService } from '@backend/services/prisma.service';
+import { CloudinaryService } from '@backend/services/cloudinary.service';
+import { AuthService } from '@backend/services/auth.service';
+import { OtpService } from '@backend/services/otp.service';
 import { z } from 'zod';
-import { CustomerQueries } from './customer/customer.queries';
-import { CustomerMutations } from './customer/customer.mutations';
+import { CustomerQueries } from '@backend/services/customer/customer.queries';
+import { CustomerMutations } from '@backend/services/customer/customer.mutations';
 import {
   UpdateProfileSchema,
   AddAddressSchema,
@@ -14,7 +14,7 @@ import {
   VerifyOtpSchema,
   ChangePasswordSchema,
   DeleteAccountSchema,
-} from '../models/customer.model';
+} from '@backend/models/customer.model';
 
 @Injectable()
 export class CustomerService {

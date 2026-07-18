@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { trpc } from '../../../lib/trpc';
+import { trpc } from '@/lib/trpc';
 import { MapPin, Plus, Star, X } from 'lucide-react';
 
 export function AddressesTab() {

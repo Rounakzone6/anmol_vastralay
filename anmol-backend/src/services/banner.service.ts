@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
-import { CloudinaryService } from './cloudinary.service';
-import { notFound } from '../config/trpc.config';
+import { PrismaService } from '@backend/services/prisma.service';
+import { CloudinaryService } from '@backend/services/cloudinary.service';
+import { notFound } from '@backend/config/trpc.config';
 import { z } from 'zod';
-import { CreateBannerSchema, UpdateBannerSchema } from '../models/banner.model';
+import { CreateBannerSchema, UpdateBannerSchema } from '@backend/models/banner.model';
 
 @Injectable()
 export class BannerService {

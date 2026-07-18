@@ -1,5 +1,5 @@
-import { PrismaService } from '../prisma.service';
-import { notFound } from '../../config/trpc.config';
+import { PrismaService } from '@backend/services/prisma.service';
+import { notFound } from '@backend/config/trpc.config';
 
 export class CustomerQueries {
   constructor(private readonly prisma: PrismaService) {}

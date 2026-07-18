@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
+import { PrismaService } from '@backend/services/prisma.service';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import crypto from 'crypto';
-import { VerifyRazorpayPaymentSchema } from '../models/payment.model';
+import { VerifyRazorpayPaymentSchema } from '@backend/models/payment.model';
 
 @Injectable()
 export class PaymentService {

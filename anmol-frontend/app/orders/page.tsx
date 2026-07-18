@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Package, ChevronRight, MapPin, Loader2 } from 'lucide-react';
-import { trpc } from '../../lib/trpc';
-import { useAuth } from '../../lib/useAuth';
+import { trpc } from '@/lib/trpc';
+import { useAuth } from '@/lib/useAuth';
 
 export default function OrdersPage() {
   const { isAuthenticated, isHydrated } = useAuth();

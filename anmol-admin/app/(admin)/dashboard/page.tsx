@@ -3,9 +3,9 @@
 import { trpc } from '@/lib/trpc';
 import { SareeBanner } from '@/components/dashboard/saree-banner';
 import { DashboardCharts } from '@/components/dashboard/dashboard-charts';
-import { DashboardStats } from './components/DashboardStats';
-import { RecentProductsList } from './components/RecentProductsList';
-import { RecentPaymentsList } from './components/RecentPaymentsList';
+import { DashboardStats } from '@/app/(admin)/dashboard/components/DashboardStats';
+import { RecentProductsList } from '@/app/(admin)/dashboard/components/RecentProductsList';
+import { RecentPaymentsList } from '@/app/(admin)/dashboard/components/RecentPaymentsList';
 
 export default function DashboardPage() {
   const { data: categories } = trpc.category.list.useQuery({});

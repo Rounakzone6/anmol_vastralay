@@ -1,5 +1,5 @@
-import { adminProcedure, router, staffProcedure } from '../config/trpc.config';
-import { CreateUserSchema, UserIdSchema } from '../models/user.model';
+import { adminProcedure, router, staffProcedure } from '@backend/config/trpc.config';
+import { CreateUserSchema, UserIdSchema } from '@backend/models/user.model';
 
 export const userRouter = router({
   getUsers: staffProcedure.query(async ({ ctx }) => {

@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { trpc } from '../../lib/trpc';
+import { trpc } from '@/lib/trpc';
 import { Search, FilterX, Loader2, SlidersHorizontal, ChevronDown, X } from 'lucide-react';
-import ProductCard from '../../components/ProductCard';
+import ProductCard from '@/components/ProductCard';
 
 export default function CollectionsPage() {
   const [searchTerm, setSearchTerm] = useState('');

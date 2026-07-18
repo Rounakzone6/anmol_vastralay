@@ -1,15 +1,15 @@
-import type { AuthService } from '../services/auth.service';
-import { router } from '../config/trpc.config';
-import { createAuthRouter } from './auth.router';
-import { categoryRouter } from './category.router';
-import { productRouter } from './product.router';
-import { userRouter } from './user.router';
-import { customerRouter } from './customer.router';
-import { cartRouter } from './cart.router';
-import { orderRouter } from './order.router';
-import { paymentRouter } from './payment.router';
-import { bannerRouter } from './banner.router';
-import { reviewRouter } from './review.router';
+import type { AuthService } from '@backend/services/auth.service';
+import { router } from '@backend/config/trpc.config';
+import { createAuthRouter } from '@backend/routers/auth.router';
+import { categoryRouter } from '@backend/routers/category.router';
+import { productRouter } from '@backend/routers/product.router';
+import { userRouter } from '@backend/routers/user.router';
+import { customerRouter } from '@backend/routers/customer.router';
+import { cartRouter } from '@backend/routers/cart.router';
+import { orderRouter } from '@backend/routers/order.router';
+import { paymentRouter } from '@backend/routers/payment.router';
+import { bannerRouter } from '@backend/routers/banner.router';
+import { reviewRouter } from '@backend/routers/review.router';
 
 export function createAppRouter(auth: AuthService) {
   return router({

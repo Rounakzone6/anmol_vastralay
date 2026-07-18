@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
-import { AuthService } from './auth.service';
-import { notFound } from '../config/trpc.config';
+import { PrismaService } from '@backend/services/prisma.service';
+import { AuthService } from '@backend/services/auth.service';
+import { notFound } from '@backend/config/trpc.config';
 import { z } from 'zod';
-import { CreateUserSchema } from '../models/user.model';
+import { CreateUserSchema } from '@backend/models/user.model';
 
 @Injectable()
 export class UserService {

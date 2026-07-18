@@ -6,7 +6,7 @@ import {
   ProductKind,
 } from '@prisma/client';
 import { z } from 'zod';
-import { withProductPricing } from '../utils/pricing';
+import { withProductPricing } from '@backend/utils/pricing';
 
 export const variantInputSchema = z.object({
   color: z.string().min(1),

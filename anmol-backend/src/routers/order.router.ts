@@ -2,12 +2,12 @@ import {
   protectedProcedure,
   router,
   staffProcedure,
-} from '../config/trpc.config';
+} from '@backend/config/trpc.config';
 import {
   CreateOrderSchema,
   OrderIdSchema,
   UpdateOrderStatusSchema,
-} from '../models/order.model';
+} from '@backend/models/order.model';
 
 export const orderRouter = router({
   createOrder: protectedProcedure

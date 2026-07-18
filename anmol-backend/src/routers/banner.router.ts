@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { adminProcedure, publicProcedure, router } from '../config/trpc.config';
+import { adminProcedure, publicProcedure, router } from '@backend/config/trpc.config';
 import {
   BannerPlacementEnum,
   CreateBannerSchema,
   UpdateBannerSchema,
-} from '../models/banner.model';
+} from '@backend/models/banner.model';
 
 export const bannerRouter = router({
   getBanners: publicProcedure

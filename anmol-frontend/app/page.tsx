@@ -1,10 +1,10 @@
 'use client';
 
-import CategoryNav from '../components/CategoryNav';
-import HeroSlider from '../components/HeroSlider';
-import LatestArrivals from '../components/LatestArrivals';
-import CategorySection from '../components/CategorySection';
-import CategoryBanner from '../components/CategoryBanner';
+import CategoryNav from '@/components/CategoryNav';
+import HeroSlider from '@/components/HeroSlider';
+import LatestArrivals from '@/components/LatestArrivals';
+import CategorySection from '@/components/CategorySection';
+import CategoryBanner from '@/components/CategoryBanner';
 
 
 export default function Home() {

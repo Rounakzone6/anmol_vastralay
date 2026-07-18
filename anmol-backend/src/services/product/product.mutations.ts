@@ -1,7 +1,7 @@
-import { PrismaService } from '../prisma.service';
-import { CloudinaryService } from '../cloudinary.service';
-import { badRequest, notFound } from '../../config/trpc.config';
-import { uniqueSlug } from '../../utils/slug';
+import { PrismaService } from '@backend/services/prisma.service';
+import { CloudinaryService } from '@backend/services/cloudinary.service';
+import { badRequest, notFound } from '@backend/config/trpc.config';
+import { uniqueSlug } from '@backend/utils/slug';
 import { ProductKind } from '@prisma/client';
 import { z } from 'zod';
 import {
@@ -19,11 +19,11 @@ import {
   productInclude,
   variantSizeKey,
   variantInputSchema,
-} from '../../models/product.model';
+} from '@backend/models/product.model';
 import {
   MAX_PRODUCT_IMAGES,
   validateProductImages,
-} from '../../utils/product-images';
+} from '@backend/utils/product-images';
 
 export class ProductMutations {
   constructor(

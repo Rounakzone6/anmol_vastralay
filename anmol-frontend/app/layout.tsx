@@ -1,9 +1,9 @@
-import './globals.css';
+import '@/app/globals.css';
 import type { Metadata } from 'next';
-import { Providers } from './providers';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import ChatbotWidget from '../components/ChatbotWidget';
+import { Providers } from '@/app/providers';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import ChatbotWidget from '@/components/ChatbotWidget';
 
 
 export const metadata: Metadata = {

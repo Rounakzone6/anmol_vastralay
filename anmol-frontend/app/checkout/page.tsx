@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Script from 'next/script';
-import { trpc } from '../../lib/trpc';
-import { useAuth } from '../../lib/useAuth';
+import { trpc } from '@/lib/trpc';
+import { useAuth } from '@/lib/useAuth';
 import { ShieldCheck, Truck, ArrowLeft, Loader2 } from 'lucide-react';
-import { ShippingForm } from './components/ShippingForm';
-import { PaymentOptions } from './components/PaymentOptions';
-import { OrderSummary } from './components/OrderSummary';
+import { ShippingForm } from '@/app/checkout/components/ShippingForm';
+import { PaymentOptions } from '@/app/checkout/components/PaymentOptions';
+import { OrderSummary } from '@/app/checkout/components/OrderSummary';
 
 export default function CheckoutPage() {
   const router = useRouter();

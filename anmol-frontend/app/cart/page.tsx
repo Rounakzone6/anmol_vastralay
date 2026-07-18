@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Trash2, Plus, Minus } from 'lucide-react';
-import { trpc } from '../../lib/trpc';
-import { useAuth } from '../../lib/useAuth';
+import { trpc } from '@/lib/trpc';
+import { useAuth } from '@/lib/useAuth';
 
 export default function CartPage() {
   const router = useRouter();

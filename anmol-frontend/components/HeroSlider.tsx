@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
-import { trpc } from '../lib/trpc';
+import { trpc } from '@/lib/trpc';
 
 export default function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);

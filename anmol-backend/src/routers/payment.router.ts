@@ -1,5 +1,5 @@
-import { protectedProcedure, router, staffProcedure } from '../config/trpc.config';
-import { VerifyRazorpayPaymentSchema } from '../models/payment.model';
+import { protectedProcedure, router, staffProcedure } from '@backend/config/trpc.config';
+import { VerifyRazorpayPaymentSchema } from '@backend/models/payment.model';
 
 export const paymentRouter = router({
   getPaymentHistory: protectedProcedure.query(async ({ ctx }) => {

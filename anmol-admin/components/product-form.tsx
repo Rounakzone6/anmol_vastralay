@@ -8,10 +8,10 @@ import { trpc } from '@/lib/trpc';
 import { Save, X, Package, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { ProductBasicInfo } from './product-form-sections/product-basic-info';
-import { ProductPricing } from './product-form-sections/product-pricing';
-import { ProductVariants, type VariantGroupRow } from './product-form-sections/product-variants';
-import { ProductOrganization } from './product-form-sections/product-organization';
+import { ProductBasicInfo } from '@/components/product-form-sections/product-basic-info';
+import { ProductPricing } from '@/components/product-form-sections/product-pricing';
+import { ProductVariants, type VariantGroupRow } from '@/components/product-form-sections/product-variants';
+import { ProductOrganization } from '@/components/product-form-sections/product-organization';
 
 type ProductFormProps = {
   productId?: string;

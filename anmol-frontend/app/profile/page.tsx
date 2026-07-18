@@ -4,16 +4,16 @@ import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useAuth } from '../../lib/useAuth';
-import { trpc } from '../../lib/trpc';
+import { useAuth } from '@/lib/useAuth';
+import { trpc } from '@/lib/trpc';
 import {
   User, MapPin, Shield, Package, LogOut, Camera, Trash2, X, Plus, Star,
   CheckCircle2, AlertCircle, Pencil, Eye, EyeOff, Lock, Mail, Phone, Calendar
 } from 'lucide-react';
 
-import { OverviewTab } from './components/OverviewTab';
-import { AddressesTab } from './components/AddressesTab';
-import { SecurityTab } from './components/SecurityTab';
+import { OverviewTab } from '@/app/profile/components/OverviewTab';
+import { AddressesTab } from '@/app/profile/components/AddressesTab';
+import { SecurityTab } from '@/app/profile/components/SecurityTab';
 
 type TabKey = 'overview' | 'addresses' | 'security';
 

@@ -1,7 +1,7 @@
-import { PrismaService } from '../prisma.service';
-import { CloudinaryService } from '../cloudinary.service';
-import { AuthService } from '../auth.service';
-import { OtpService } from '../otp.service';
+import { PrismaService } from '@backend/services/prisma.service';
+import { CloudinaryService } from '@backend/services/cloudinary.service';
+import { AuthService } from '@backend/services/auth.service';
+import { OtpService } from '@backend/services/otp.service';
 import { z } from 'zod';
 import * as bcrypt from 'bcryptjs';
 import {
@@ -12,8 +12,8 @@ import {
   VerifyOtpSchema,
   ChangePasswordSchema,
   DeleteAccountSchema,
-} from '../../models/customer.model';
-import { badRequest, notFound } from '../../config/trpc.config';
+} from '@backend/models/customer.model';
+import { badRequest, notFound } from '@backend/config/trpc.config';
 
 export class CustomerMutations {
   constructor(

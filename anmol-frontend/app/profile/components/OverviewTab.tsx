@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { trpc } from '../../../lib/trpc';
+import { trpc } from '@/lib/trpc';
 import { Camera, Pencil, CheckCircle2, Package, MapPin, X, AlertCircle } from 'lucide-react';
 
 export function OverviewTab({ profile, refetch, updateUser }: { profile: any; refetch: () => void; updateUser: (u: any) => void }) {

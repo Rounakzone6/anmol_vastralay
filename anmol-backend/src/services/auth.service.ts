@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UserRole } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
-import { PrismaService } from './prisma.service';
+import { PrismaService } from '@backend/services/prisma.service';
 
 export type AuthUser = {
   id: string;

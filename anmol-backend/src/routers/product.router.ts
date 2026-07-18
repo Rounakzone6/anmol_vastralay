@@ -1,4 +1,4 @@
-import { router, staffProcedure, publicProcedure } from '../config/trpc.config';
+import { router, staffProcedure, publicProcedure } from '@backend/config/trpc.config';
 import {
   ListProductSchema,
   productBaseSchema,
@@ -13,7 +13,7 @@ import {
   RemoveImageSchema,
   ProductIdSchema,
   ProductSlugSchema,
-} from '../models/product.model';
+} from '@backend/models/product.model';
 
 export const productRouter = router({
   list: publicProcedure

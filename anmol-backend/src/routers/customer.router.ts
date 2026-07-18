@@ -1,4 +1,4 @@
-import { protectedProcedure, router } from '../config/trpc.config';
+import { protectedProcedure, router } from '@backend/config/trpc.config';
 import {
   UpdateProfileSchema,
   UploadProfileImageSchema,
@@ -10,7 +10,7 @@ import {
   VerifyOtpSchema,
   ChangePasswordSchema,
   DeleteAccountSchema,
-} from '../models/customer.model';
+} from '@backend/models/customer.model';
 
 export const customerRouter = router({
   // ─── Profile ──────────────────────────────────────────────

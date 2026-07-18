@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
-import { trpc } from '../lib/trpc';
+import { trpc } from '@/lib/trpc';
 
 interface CategoryBannerProps {
   title: string;

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Star } from 'lucide-react';
-import { trpc } from '../../../../lib/trpc';
+import { trpc } from '@/lib/trpc';
 
 export function ProductReviews({
   displayProduct,

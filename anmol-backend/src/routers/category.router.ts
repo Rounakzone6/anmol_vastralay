@@ -1,4 +1,4 @@
-import { router, staffProcedure, publicProcedure } from '../config/trpc.config';
+import { router, staffProcedure, publicProcedure } from '@backend/config/trpc.config';
 import {
   ListCategorySchema,
   CategoryIdSchema,
@@ -11,7 +11,7 @@ import {
   CreateItemTypeSchema,
   UpdateItemTypeSchema,
   ReorderCategorySchema,
-} from '../models/category.model';
+} from '@backend/models/category.model';
 import { z } from 'zod';
 
 export const categoryRouter = router({

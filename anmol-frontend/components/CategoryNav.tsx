@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { trpc } from '../lib/trpc';
+import { trpc } from '@/lib/trpc';
 import { ShoppingBag } from 'lucide-react';
 
 export default function CategoryNav() {

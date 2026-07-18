@@ -1,15 +1,15 @@
 import { TRPCError } from '@trpc/server';
-import type { AuthService } from '../services/auth.service';
+import type { AuthService } from '@backend/services/auth.service';
 import {
   publicProcedure,
   router,
   protectedProcedure,
-} from '../config/trpc.config';
+} from '@backend/config/trpc.config';
 import {
   LoginSchema,
   RegisterSchema,
   GoogleAuthSchema,
-} from '../models/auth.model';
+} from '@backend/models/auth.model';
 
 export const createAuthRouter = (auth: AuthService) =>
   router({

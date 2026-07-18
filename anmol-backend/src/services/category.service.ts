@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
-import { badRequest, notFound } from '../config/trpc.config';
-import { slugify, uniqueSlug } from '../utils/slug';
-import { DEFAULT_CATEGORIES } from '../utils/default-categories';
+import { PrismaService } from '@backend/services/prisma.service';
+import { badRequest, notFound } from '@backend/config/trpc.config';
+import { slugify, uniqueSlug } from '@backend/utils/slug';
+import { DEFAULT_CATEGORIES } from '@backend/utils/default-categories';
 import { z } from 'zod';
 import {
   CreateCategorySchema,
   UpdateCategorySchema,
   DeleteCategorySchema,
   ListCategorySchema,
-} from '../models/category.model';
+} from '@backend/models/category.model';
 
 @Injectable()
 export class CategoryService {
