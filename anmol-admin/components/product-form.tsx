@@ -59,7 +59,7 @@ export function ProductForm({ productId }: ProductFormProps) {
     setAllowsExtraSaya(product.allowsExtraSaya);
     setExtraSayaPrice(product.extraSayaPrice != null ? String(product.extraSayaPrice) : '');
     if (product.kind === 'SAREE') {
-      const mapped = product.variants.map((v) => ({
+      const mapped = product.variants.map((v: any) => ({
         color: v.color,
         sizes: '',
         stockQtys: String(v.stockQty),
@@ -67,7 +67,7 @@ export function ProductForm({ productId }: ProductFormProps) {
       setVariants(mapped.length > 0 ? mapped : [{ color: '', sizes: '', stockQtys: '' }]);
     } else {
       const grouped = new Map<string, { sizes: string[]; stockQtys: number[] }>();
-      product.variants.forEach((v) => {
+      product.variants.forEach((v: any) => {
         if (!grouped.has(v.color)) {
           grouped.set(v.color, { sizes: [], stockQtys: [] });
         }
@@ -83,7 +83,7 @@ export function ProductForm({ productId }: ProductFormProps) {
       setVariants(mapped.length > 0 ? mapped : [{ color: '', sizes: '', stockQtys: '' }]);
     }
     const slots: (ProductImageSlot | null)[] = [null, null, null, null];
-    product.images.forEach((img, i) => {
+    product.images.forEach((img: any, i: number) => {
       if (i < 4) {
         slots[i] = {
           url: img.url,

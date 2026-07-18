@@ -19,6 +19,15 @@ export class PaymentService {
     });
   }
 
+  async adminGetPayments() {
+    return this.prisma.payment.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { name: true, email: true, phone: true } },
+      },
+    });
+  }
+
   async verifyRazorpayPayment(
     userId: string,
     input: z.infer<typeof VerifyRazorpayPaymentSchema>,

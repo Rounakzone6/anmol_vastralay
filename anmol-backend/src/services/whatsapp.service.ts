@@ -19,7 +19,7 @@ export class WhatsappService {
 
     if (sid && token && !sid.startsWith('your_')) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-require-imports
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports
         const twilio = require('twilio');
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
         this.twilioClient = twilio(sid, token);

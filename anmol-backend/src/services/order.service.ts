@@ -5,7 +5,6 @@ import { z } from 'zod';
 import Razorpay from 'razorpay';
 import {
   CreateOrderSchema,
-  OrderIdSchema,
   UpdateOrderStatusSchema,
 } from '../models/order.model';
 import { WhatsappService } from './whatsapp.service';
