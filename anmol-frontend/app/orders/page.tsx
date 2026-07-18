@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Package, ChevronRight, MapPin } from 'lucide-react';
+import { Package, ChevronRight, MapPin, Loader2 } from 'lucide-react';
 import { trpc } from '../../lib/trpc';
 import { useAuth } from '../../lib/useAuth';
 
@@ -14,7 +14,12 @@ export default function OrdersPage() {
   });
 
   if (!isHydrated) {
-    return <div className="p-8 text-center text-gray-500">Checking authentication...</div>;
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center">
+        <Loader2 className="w-10 h-10 text-[#85142b] animate-spin mb-4" />
+        <p className="text-gray-500 font-medium">Checking authentication...</p>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
@@ -29,7 +34,12 @@ export default function OrdersPage() {
   }
 
   if (isLoading) {
-    return <div className="p-8 text-center text-gray-500">Loading your orders...</div>;
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center">
+        <Loader2 className="w-10 h-10 text-[#85142b] animate-spin mb-4" />
+        <p className="text-gray-500 font-medium">Loading your orders...</p>
+      </div>
+    );
   }
 
   if (!orders || orders.length === 0) {
