@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Trash2, Plus, Minus } from 'lucide-react';
 import { trpc } from '../../lib/trpc';
 import { useAuth } from '../../lib/useAuth';
@@ -73,9 +74,18 @@ export default function CartPage() {
             {cart.items.map((item) => (
               <li key={item.id} className="flex py-6 sm:py-10">
                 <div className="flex-shrink-0">
-                  <div className="h-24 w-24 rounded-md object-cover object-center sm:h-32 sm:w-32 bg-gray-100 flex items-center justify-center">
-                    {/* Placeholder for product image */}
-                    <span className="text-xs text-gray-400">No Image</span>
+                  <div className="h-24 w-24 rounded-md object-cover object-center sm:h-32 sm:w-32 bg-gray-100 flex items-center justify-center overflow-hidden">
+                    {item.product.images && item.product.images.length > 0 ? (
+                      <Image
+                        src={item.product.images[0].url}
+                        alt={item.product.name}
+                        width={128}
+                        height={128}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-xs text-gray-400">No Image</span>
+                    )}
                   </div>
                 </div>
 

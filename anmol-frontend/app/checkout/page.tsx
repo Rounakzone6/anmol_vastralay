@@ -80,6 +80,22 @@ export default function CheckoutPage() {
           theme: {
             color: '#85142b',
           },
+          config: {
+            display: {
+              blocks: {
+                upi: {
+                  name: 'Pay via UPI',
+                  instruments: [
+                    { method: 'upi' },
+                  ],
+                },
+              },
+              sequence: ['block.upi'],
+              preferences: {
+                show_default_blocks: false,
+              },
+            },
+          },
         };
         const rzp = new (window as any).Razorpay(options);
         rzp.on('payment.failed', function (response: any) {
@@ -293,7 +309,7 @@ export default function CheckoutPage() {
                               Pay Online
                             </span>
                             <span className="block text-xs text-gray-500 mt-0.5">
-                              UPI, Google Pay, PhonePe, Cards, NetBanking
+                              UPI, Google Pay, PhonePe, Paytm
                             </span>
                           </div>
                         </div>

@@ -7,6 +7,26 @@ import { Menu, X, Search, ShoppingCart, Heart, LogOut, User, MapPin, Package, Ch
 import { useAuth } from "../lib/useAuth";
 import { trpc } from "../lib/trpc";
 
+const ProfileAvatar = ({ size = 36, profileImg, displayName, initials }: { size?: number, profileImg?: string | null, displayName: string, initials: string }) => (
+  profileImg ? (
+    <Image
+      src={profileImg}
+      alt={displayName}
+      width={size}
+      height={size}
+      className="rounded-full object-cover border-2 border-[#85142b]/20"
+      style={{ width: size, height: size }}
+    />
+  ) : (
+    <div
+      className="rounded-full bg-gradient-to-br from-[#85142b] to-[#b01e3f] flex items-center justify-center text-white font-bold"
+      style={{ width: size, height: size, fontSize: size * 0.38 }}
+    >
+      {initials}
+    </div>
+  )
+);
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,26 +77,6 @@ const Navbar = () => {
     .toUpperCase()
     .slice(0, 2);
   const profileImg = meData?.profileImage || user?.profileImage;
-
-  const ProfileAvatar = ({ size = 36 }: { size?: number }) => (
-    profileImg ? (
-      <Image
-        src={profileImg}
-        alt={displayName}
-        width={size}
-        height={size}
-        className="rounded-full object-cover border-2 border-[#85142b]/20"
-        style={{ width: size, height: size }}
-      />
-    ) : (
-      <div
-        className="rounded-full bg-gradient-to-br from-[#85142b] to-[#b01e3f] flex items-center justify-center text-white font-bold"
-        style={{ width: size, height: size, fontSize: size * 0.38 }}
-      >
-        {initials}
-      </div>
-    )
-  );
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white shadow-sm">
@@ -151,7 +151,7 @@ const Navbar = () => {
                     onClick={() => setShowProfileDropdown(!showProfileDropdown)}
                     className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 hover:bg-gray-50 transition-colors"
                   >
-                    <ProfileAvatar size={34} />
+                    <ProfileAvatar size={34} profileImg={profileImg} displayName={displayName} initials={initials} />
                     <span className="text-xs font-semibold text-gray-700 max-w-[80px] truncate hidden lg:block">
                       {displayName.split(" ")[0]}
                     </span>
@@ -245,7 +245,7 @@ const Navbar = () => {
           <div className="flex items-center gap-4 md:hidden">
             {isClient && isAuthenticated && (
               <Link href="/profile" className="text-gray-600">
-                <ProfileAvatar size={30} />
+                <ProfileAvatar size={30} profileImg={profileImg} displayName={displayName} initials={initials} />
               </Link>
             )}
             <Link href="/cart" className="relative text-gray-600">

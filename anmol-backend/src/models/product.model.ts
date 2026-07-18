@@ -102,6 +102,7 @@ type ProductWithRelations = Product & {
   category?: { id: string; name: string; slug: string };
   subcategory?: { id: string; name: string; slug: string } | null;
   itemType?: { id: string; name: string; slug: string } | null;
+  reviews?: { rating: number }[];
 };
 
 export function mapVariant(variant: ProductVariant) {
@@ -116,6 +117,12 @@ export function mapProduct(product: ProductWithRelations) {
   const extraSayaPrice =
     product.extraSayaPrice != null ? Number(product.extraSayaPrice) : null;
 
+  const reviews = product.reviews || [];
+  const reviewCount = reviews.length;
+  const averageRating = reviewCount > 0 
+    ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviewCount 
+    : 0;
+
   return {
     ...priced,
     extraSayaPrice,
@@ -125,6 +132,8 @@ export function mapProduct(product: ProductWithRelations) {
     category: product.category,
     subcategory: product.subcategory,
     itemType: product.itemType,
+    averageRating,
+    reviewCount,
   };
 }
 
@@ -142,4 +151,5 @@ export const productInclude = {
   category: { select: { id: true, name: true, slug: true } },
   subcategory: { select: { id: true, name: true, slug: true } },
   itemType: { select: { id: true, name: true, slug: true } },
+  reviews: { select: { rating: true } },
 } satisfies Prisma.ProductInclude;

@@ -16,6 +16,8 @@ interface Product {
   brand?: string;
   category?: { name: string };
   variants?: { color?: string; size?: string; stockQty?: number }[];
+  averageRating?: number;
+  reviewCount?: number;
 }
 
 interface ProductCardProps {
@@ -157,12 +159,23 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
 
         {/* Ratings (Mock) & Colors */}
         <div className="flex items-center justify-between mt-1 border-t border-gray-50 pt-3">
-           {/* Mock Rating */}
-           <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
-             <Star size={12} className="fill-yellow-400 text-yellow-400" />
-             <span className="text-xs font-bold text-gray-700">4.2</span>
-             <span className="text-[10px] text-gray-400 border-l border-gray-300 pl-1.5 ml-0.5">128</span>
-           </div>
+           {/* Dynamic Rating */}
+           {product.reviewCount && product.reviewCount > 0 ? (
+             <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
+               <Star size={12} className="fill-yellow-400 text-yellow-400" />
+               <span className="text-xs font-bold text-gray-700">
+                 {product.averageRating ? product.averageRating.toFixed(1) : "0.0"}
+               </span>
+               <span className="text-[10px] text-gray-400 border-l border-gray-300 pl-1.5 ml-0.5">
+                 {product.reviewCount}
+               </span>
+             </div>
+           ) : (
+             <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
+               <Star size={12} className="text-gray-300" />
+               <span className="text-xs font-medium text-gray-500">No reviews</span>
+             </div>
+           )}
 
            {/* Color Dots */}
            {colors.length > 0 && (

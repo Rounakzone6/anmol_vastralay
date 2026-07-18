@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Package, ChevronRight, MapPin } from 'lucide-react';
 import { trpc } from '../../lib/trpc';
 import { useAuth } from '../../lib/useAuth';
@@ -101,8 +102,17 @@ export default function OrdersPage() {
                   <div className="flex -space-x-2 overflow-hidden">
                     {order.items.slice(0, 5).map((item) => (
                       <div key={item.id} className="inline-block h-12 w-12 rounded-full ring-2 ring-white bg-gray-100 flex items-center justify-center text-[10px] text-gray-500 overflow-hidden" title={item.product.name}>
-                         {/* Placeholder for item image */}
-                         <Package size={16} />
+                        {item.product.images && item.product.images.length > 0 ? (
+                          <Image
+                            src={item.product.images[0].url}
+                            alt={item.product.name}
+                            width={48}
+                            height={48}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <Package size={16} />
+                        )}
                       </div>
                     ))}
                     {order.items.length > 5 && (

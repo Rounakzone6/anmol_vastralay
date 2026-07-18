@@ -6,6 +6,7 @@ import { ProductImageUpload, type ProductImageSlot } from '@/components/product-
 import { Button, Card } from '@/components/ui';
 import { trpc } from '@/lib/trpc';
 import { Save, X, Package, Image as ImageIcon } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { ProductBasicInfo } from './product-form-sections/product-basic-info';
 import { ProductPricing } from './product-form-sections/product-pricing';
@@ -95,15 +96,33 @@ export function ProductForm({ productId }: ProductFormProps) {
   }, [product]);
 
   const create = trpc.product.create.useMutation({
-    onSuccess: (p) => {
+    onSuccess: () => {
       utils.product.list.invalidate();
-      router.push(`/products/${p.id}`);
+      toast.success('Product added successfully!');
+      
+      // Reset form fields
+      setName('');
+      setBrand('');
+      setCategoryId('');
+      setSubcategoryId('');
+      setItemTypeId('');
+      setKind('STANDARD');
+      setNetPrice('');
+      setDiscountPercent('0');
+      setAllowsExtraSaya(false);
+      setExtraSayaPrice('');
+      setVariants([{ color: '', sizes: '', stockQtys: '' }]);
+      setImages([null, null, null, null]);
+      setImageError(null);
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     },
   });
   const update = trpc.product.update.useMutation({
     onSuccess: () => {
       utils.product.list.invalidate();
       utils.product.getById.invalidate({ id: productId! });
+      toast.success('Product updated successfully!');
       router.push('/products');
     },
   });

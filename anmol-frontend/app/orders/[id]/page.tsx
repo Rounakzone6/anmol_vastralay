@@ -2,6 +2,7 @@
 
 import { use } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowLeft, MapPin, Receipt, Truck } from 'lucide-react';
 import { trpc } from '../../../lib/trpc';
 import { useAuth } from '../../../lib/useAuth';
@@ -91,8 +92,18 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
               {order.items.map((item) => (
                 <li key={item.id} className="flex px-4 py-6 sm:px-6">
                   <div className="flex-shrink-0">
-                    <div className="h-20 w-20 rounded-md bg-gray-100 flex items-center justify-center">
-                      <span className="text-xs text-gray-400">No Image</span>
+                    <div className="h-20 w-20 rounded-md bg-gray-100 flex items-center justify-center overflow-hidden">
+                      {item.product.images && item.product.images.length > 0 ? (
+                        <Image
+                          src={item.product.images[0].url}
+                          alt={item.product.name}
+                          width={80}
+                          height={80}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-xs text-gray-400">No Image</span>
+                      )}
                     </div>
                   </div>
 
