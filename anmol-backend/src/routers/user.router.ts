@@ -1,4 +1,8 @@
-import { adminProcedure, router, staffProcedure } from '@backend/config/trpc.config';
+import {
+  adminProcedure,
+  router,
+  staffProcedure,
+} from '@backend/config/trpc.config';
 import { CreateUserSchema, UserIdSchema } from '@backend/models/user.model';
 
 export const userRouter = router({

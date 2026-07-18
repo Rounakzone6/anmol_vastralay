@@ -15,6 +15,8 @@ import { OtpService } from '@backend/services/otp.service';
 import { ReviewService } from '@backend/services/review.service';
 import { WhatsappService } from '@backend/services/whatsapp.service';
 import { WebhookController } from '@backend/controllers/webhook.controller';
+import { WhatsappController } from '@backend/controllers/whatsapp.controller';
+import { ChatbotService } from '@backend/services/chatbot.service';
 
 @Module({
   imports: [
@@ -23,7 +25,7 @@ import { WebhookController } from '@backend/controllers/webhook.controller';
     CloudinaryModule,
     AuthModule,
   ],
-  controllers: [WebhookController],
+  controllers: [WebhookController, WhatsappController],
   providers: [
     CategoryService,
     ProductService,
@@ -36,6 +38,7 @@ import { WebhookController } from '@backend/controllers/webhook.controller';
     OtpService,
     ReviewService,
     WhatsappService,
+    ChatbotService,
   ],
 })
 export class AppModule {}

@@ -1,4 +1,8 @@
-import { protectedProcedure, router, staffProcedure } from '@backend/config/trpc.config';
+import {
+  protectedProcedure,
+  router,
+  staffProcedure,
+} from '@backend/config/trpc.config';
 import { VerifyRazorpayPaymentSchema } from '@backend/models/payment.model';
 
 export const paymentRouter = router({

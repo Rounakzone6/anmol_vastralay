@@ -3,7 +3,10 @@ import { PrismaService } from '@backend/services/prisma.service';
 import { CloudinaryService } from '@backend/services/cloudinary.service';
 import { notFound } from '@backend/config/trpc.config';
 import { z } from 'zod';
-import { CreateBannerSchema, UpdateBannerSchema } from '@backend/models/banner.model';
+import {
+  CreateBannerSchema,
+  UpdateBannerSchema,
+} from '@backend/models/banner.model';
 
 @Injectable()
 export class BannerService {

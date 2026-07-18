@@ -1,7 +1,11 @@
 import { PrismaService } from '@backend/services/prisma.service';
 import { notFound } from '@backend/config/trpc.config';
 import { z } from 'zod';
-import { ListProductSchema, mapProduct, productInclude } from '@backend/models/product.model';
+import {
+  ListProductSchema,
+  mapProduct,
+  productInclude,
+} from '@backend/models/product.model';
 
 export class ProductQueries {
   constructor(private readonly prisma: PrismaService) {}

@@ -1,4 +1,8 @@
-import { router, staffProcedure, publicProcedure } from '@backend/config/trpc.config';
+import {
+  router,
+  staffProcedure,
+  publicProcedure,
+} from '@backend/config/trpc.config';
 import {
   ListProductSchema,
   productBaseSchema,

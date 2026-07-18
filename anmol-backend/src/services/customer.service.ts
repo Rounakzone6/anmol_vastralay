@@ -28,7 +28,12 @@ export class CustomerService {
     private readonly otp: OtpService,
   ) {
     this.queries = new CustomerQueries(this.prisma);
-    this.mutations = new CustomerMutations(this.prisma, this.cloudinary, this.auth, this.otp);
+    this.mutations = new CustomerMutations(
+      this.prisma,
+      this.cloudinary,
+      this.auth,
+      this.otp,
+    );
   }
 
   // ─── Profile ────────────────────────────────────────────────────
@@ -36,7 +41,10 @@ export class CustomerService {
     return this.queries.getProfile(userId);
   }
 
-  async updateProfile(userId: string, input: z.infer<typeof UpdateProfileSchema>) {
+  async updateProfile(
+    userId: string,
+    input: z.infer<typeof UpdateProfileSchema>,
+  ) {
     return this.mutations.updateProfile(userId, input);
   }
 
@@ -57,7 +65,10 @@ export class CustomerService {
     return this.mutations.addAddress(userId, input);
   }
 
-  async updateAddress(userId: string, input: z.infer<typeof UpdateAddressSchema>) {
+  async updateAddress(
+    userId: string,
+    input: z.infer<typeof UpdateAddressSchema>,
+  ) {
     return this.mutations.updateAddress(userId, input);
   }
 
@@ -79,11 +90,17 @@ export class CustomerService {
   }
 
   // ─── Security ───────────────────────────────────────────────────
-  async changePassword(userId: string, input: z.infer<typeof ChangePasswordSchema>) {
+  async changePassword(
+    userId: string,
+    input: z.infer<typeof ChangePasswordSchema>,
+  ) {
     return this.mutations.changePassword(userId, input);
   }
 
-  async deleteAccount(userId: string, input: z.infer<typeof DeleteAccountSchema>) {
+  async deleteAccount(
+    userId: string,
+    input: z.infer<typeof DeleteAccountSchema>,
+  ) {
     return this.mutations.deleteAccount(userId, input);
   }
 }

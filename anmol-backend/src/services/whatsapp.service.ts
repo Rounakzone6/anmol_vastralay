@@ -5,10 +5,11 @@ import { ConfigService } from '@nestjs/config';
 export class WhatsappService {
   private readonly logger = new Logger(WhatsappService.name);
   private twilioClient: any = null;
-  private twilioPhone: string = 'whatsapp:+14155238886'; // Sandbox default
+  private twilioPhone: string;
   private isConfigured = false;
 
   constructor(private readonly config: ConfigService) {
+    this.twilioPhone = `whatsapp:${this.config.get<string>('TWILIO_PHONE_NUMBER') || '+14155238886'}`;
     this.initTwilio();
   }
 
@@ -76,6 +77,36 @@ export class WhatsappService {
       return true;
     } catch (err) {
       this.logger.error(`Failed to send WhatsApp to ${to}:`, err);
+      return false;
+    }
+  }
+
+  /**
+   * Send a generic text message to a WhatsApp user
+   */
+  async sendMessage(phone: string, text: string): Promise<boolean> {
+    if (!this.isConfigured || !this.twilioClient) {
+      this.logger.log(`[DEV WHATSAPP] To ${phone}: ${text}`);
+      return true;
+    }
+
+    let formattedPhone = phone;
+    if (!formattedPhone.startsWith('+')) {
+      formattedPhone = '+91' + formattedPhone; // default to India
+    }
+    const to = `whatsapp:${formattedPhone}`;
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      await this.twilioClient.messages.create({
+        from: this.twilioPhone,
+        body: text,
+        to: to,
+      });
+      this.logger.log(`WhatsApp text message sent to ${to}`);
+      return true;
+    } catch (err) {
+      this.logger.error(`Failed to send WhatsApp text to ${to}:`, err);
       return false;
     }
   }

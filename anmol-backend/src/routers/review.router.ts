@@ -4,7 +4,10 @@ import {
   protectedProcedure,
 } from '@backend/config/trpc.config';
 import { z } from 'zod';
-import { AddReviewSchema, ListReviewsSchema } from '@backend/models/review.model';
+import {
+  AddReviewSchema,
+  ListReviewsSchema,
+} from '@backend/models/review.model';
 
 export const reviewRouter = router({
   add: protectedProcedure
