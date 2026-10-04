@@ -4,6 +4,7 @@ import { UserRole } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
 import { PrismaService } from '@backend/services/prisma.service';
+import { EmailService } from '@backend/services/email.service';
 
 export type AuthUser = {
   id: string;
@@ -29,6 +30,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
+    private readonly email: EmailService,
   ) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     this.googleClient = new OAuth2Client(clientId);
@@ -120,6 +122,10 @@ export class AuthService {
         select: { id: true, email: true, phone: true, name: true, role: true },
       });
 
+      this.email.sendWelcomeEmail(user.email, user.name).catch((error) =>
+        console.error('Failed to send welcome email', error),
+      );
+
       // Log them in using whichever identifier they provided
       const loginIdentifier = input.email || input.phone!;
       return await this.login(loginIdentifier, input.password);
@@ -198,6 +204,9 @@ export class AuthService {
           cart: { create: {} },
         },
       });
+      this.email.sendWelcomeEmail(record.email, record.name).catch((error) =>
+        console.error('Failed to send Google welcome email', error),
+      );
     }
 
     const user = this.sanitize(record);

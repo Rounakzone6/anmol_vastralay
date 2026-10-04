@@ -8,6 +8,7 @@ import {
   UpdateOrderStatusSchema,
 } from '@backend/models/order.model';
 import { WhatsappService } from '@backend/services/whatsapp.service';
+import { InvoiceService } from '@backend/services/invoice.service';
 
 @Injectable()
 export class OrderService {
@@ -16,6 +17,7 @@ export class OrderService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly whatsappService: WhatsappService,
+    private readonly invoiceService: InvoiceService,
   ) {
     this.razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID || 'dummy_key_id',
@@ -61,6 +63,12 @@ export class OrderService {
               quantity: item.quantity,
               price: item.product.netPrice,
             })),
+          },
+          statusHistory: {
+            create: {
+              status: input.paymentMethod === 'COD' ? 'PROCESSING' : 'PENDING',
+              note: 'Order placed successfully',
+            },
           },
         },
       });
@@ -130,6 +138,11 @@ export class OrderService {
           console.error('Failed to send WA order confirmation', err),
         );
     }
+    if (input.paymentMethod === 'COD') {
+      this.invoiceService.emailOrderInvoice(result.orderId).catch((error) =>
+        console.error('Failed to send order invoice email', error),
+      );
+    }
 
     return result;
   }
@@ -147,6 +160,7 @@ export class OrderService {
             variant: true,
           },
         },
+        statusHistory: { orderBy: { createdAt: 'asc' } },
       },
     });
   }
@@ -164,14 +178,20 @@ export class OrderService {
           },
         },
         payments: true,
+        user: { select: { name: true, email: true, phone: true } },
+        statusHistory: { orderBy: { createdAt: 'asc' } },
       },
     });
 
-    if (!order || order.userId !== userId) {
+    if (!order || (userId && order.userId !== userId)) {
       throw new TRPCError({ code: 'NOT_FOUND', message: 'Order not found' });
     }
 
     return order;
+  }
+
+  async generateInvoice(userId: string | undefined, orderId: string) {
+    return this.invoiceService.generateInvoice(userId, orderId);
   }
 
   async adminGetOrders() {
@@ -180,14 +200,37 @@ export class OrderService {
       include: {
         user: { select: { name: true, email: true, phone: true } },
         items: true,
+        statusHistory: { orderBy: { createdAt: 'asc' } },
       },
     });
   }
 
   async adminUpdateOrderStatus(input: z.infer<typeof UpdateOrderStatusSchema>) {
-    return this.prisma.order.update({
-      where: { id: input.orderId },
-      data: { status: input.status },
+    return this.prisma.$transaction(async (tx) => {
+      const current = await tx.order.findUnique({
+        where: { id: input.orderId },
+        select: { status: true },
+      });
+      if (!current) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Order not found' });
+      }
+
+      if (current.status === input.status) {
+        return tx.order.findUnique({ where: { id: input.orderId } });
+      }
+
+      return tx.order.update({
+        where: { id: input.orderId },
+        data: {
+          status: input.status,
+          statusHistory: {
+            create: {
+              status: input.status,
+              note: `Order marked ${input.status.toLowerCase()}`,
+            },
+          },
+        },
+      });
     });
   }
 }

@@ -5,6 +5,7 @@ import {
 } from '@backend/config/trpc.config';
 import {
   CreateOrderSchema,
+  GenerateInvoiceSchema,
   OrderIdSchema,
   UpdateOrderStatusSchema,
 } from '@backend/models/order.model';
@@ -24,6 +25,18 @@ export const orderRouter = router({
     .input(OrderIdSchema)
     .query(async ({ ctx, input }) => {
       return ctx.services.order.getOrderDetails(ctx.user.id, input.orderId);
+    }),
+
+  generateInvoice: protectedProcedure
+    .input(GenerateInvoiceSchema)
+    .mutation(async ({ ctx, input }) => {
+      return ctx.services.order.generateInvoice(ctx.user.id, input.orderId);
+    }),
+
+  adminGenerateInvoice: staffProcedure
+    .input(GenerateInvoiceSchema)
+    .mutation(async ({ ctx, input }) => {
+      return ctx.services.order.generateInvoice(undefined, input.orderId);
     }),
 
   adminGetOrders: staffProcedure.query(async ({ ctx }) => {

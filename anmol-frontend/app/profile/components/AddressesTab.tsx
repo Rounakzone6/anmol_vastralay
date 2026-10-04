@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { trpc } from '@/lib/trpc';
-import { MapPin, Plus, Star, X } from 'lucide-react';
+import { LocateFixed, MapPin, Plus, Star, X } from 'lucide-react';
 
 export function AddressesTab() {
   const [showForm, setShowForm] = useState(false);
@@ -118,6 +118,8 @@ function AddressForm({ editId, onClose, onSaved }: { editId: string | null; onCl
   const [country, setCountry] = useState('India');
   const [zipCode, setZipCode] = useState('');
   const [isDefault, setIsDefault] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [locationMessage, setLocationMessage] = useState('');
 
   const addressesQuery = trpc.customer.getAddresses.useQuery();
 
@@ -153,14 +155,140 @@ function AddressForm({ editId, onClose, onSaved }: { editId: string | null; onCl
 
   const isPending = addMutation.isPending || updateMutation.isPending;
 
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus('error');
+      setLocationMessage('Location is not supported by this browser.');
+      return;
+    }
+
+    setLocationStatus('loading');
+    setLocationMessage('');
+
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        try {
+          const params = new URLSearchParams({
+            format: 'jsonv2',
+            lat: String(coords.latitude),
+            lon: String(coords.longitude),
+            zoom: '18',
+            addressdetails: '1',
+            'accept-language': 'en',
+          });
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?${params.toString()}`,
+            {
+              headers: {
+                Accept: 'application/json',
+                'Accept-Language': 'en',
+              },
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error('Address lookup failed');
+          }
+
+          const result = (await response.json()) as {
+            display_name?: string;
+            address?: {
+              house_number?: string;
+              road?: string;
+              neighbourhood?: string;
+              suburb?: string;
+              residential?: string;
+              quarter?: string;
+              village?: string;
+              town?: string;
+              city?: string;
+              municipality?: string;
+              state?: string;
+              postcode?: string;
+              country?: string;
+            };
+          };
+          const address = result.address;
+
+          if (!address) {
+            throw new Error('No address details were found');
+          }
+
+          const locality =
+            address.neighbourhood ||
+            address.suburb ||
+            address.residential ||
+            address.quarter ||
+            address.village ||
+            address.town ||
+            address.municipality;
+          const streetParts = [
+            address.house_number,
+            address.road,
+            locality,
+          ].filter(Boolean);
+          const hasHouseNumber = Boolean(address.house_number);
+
+          setStreet(streetParts.join(', ') || result.display_name || '');
+          setCity(address.city || address.town || address.village || address.municipality || '');
+          setState(address.state || '');
+          setZipCode(address.postcode || '');
+          setCountry(address.country || 'India');
+          setLocationStatus('idle');
+          setLocationMessage(
+            hasHouseNumber
+              ? 'Location found, including the house number. Please review the address before saving.'
+              : 'Location found. The house number was not available from the map data, so please add it manually before saving.',
+          );
+        } catch {
+          setLocationStatus('error');
+          setLocationMessage('Could not find the address. Please fill it in manually.');
+        }
+      },
+      (error) => {
+        setLocationStatus('error');
+        setLocationMessage(
+          error.code === error.PERMISSION_DENIED
+            ? 'Location permission was denied. Please allow it or enter the address manually.'
+            : 'Could not access your location. Please try again or enter the address manually.',
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
+    );
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-5">
         <h4 className="font-semibold text-gray-900">{editId ? 'Edit Address' : 'Add New Address'}</h4>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-          <X size={18} />
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={useCurrentLocation}
+            disabled={locationStatus === 'loading'}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#85142b]/25 px-3 py-2 text-xs font-semibold text-[#85142b] transition-colors hover:bg-[#85142b]/5 disabled:cursor-wait disabled:opacity-60"
+          >
+            <LocateFixed size={14} />
+            {locationStatus === 'loading' ? 'Finding...' : 'Use my current location'}
+          </button>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X size={18} />
+          </button>
+        </div>
       </div>
+
+      {locationMessage && (
+        <p
+          className={`mb-4 rounded-lg px-3 py-2 text-xs ${
+            locationStatus === 'error'
+              ? 'bg-red-50 text-red-600'
+              : 'bg-green-50 text-green-700'
+          }`}
+          role="status"
+        >
+          {locationMessage}
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

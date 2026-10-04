@@ -10,14 +10,11 @@ export class PrismaService
 {
   constructor() {
     const connectionString = process.env.DATABASE_URL;
-    // Render and Supabase require SSL for external connections
-    const isRemote =
-      connectionString?.includes('render.com') ||
-      connectionString?.includes('supabase.co');
+    const useSsl = process.env.DATABASE_SSL === 'true';
 
     const pool = new Pool({
       connectionString,
-      ...(isRemote ? { ssl: { rejectUnauthorized: false } } : {}),
+      ...(useSsl ? { ssl: { rejectUnauthorized: false } } : {}),
     });
 
     const adapter = new PrismaPg(pool);

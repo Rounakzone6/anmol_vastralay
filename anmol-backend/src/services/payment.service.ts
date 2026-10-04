@@ -4,10 +4,14 @@ import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { VerifyRazorpayPaymentSchema } from '@backend/models/payment.model';
+import { InvoiceService } from '@backend/services/invoice.service';
 
 @Injectable()
 export class PaymentService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly invoiceService: InvoiceService,
+  ) {}
 
   async getPaymentHistory(userId: string) {
     return this.prisma.payment.findMany({
@@ -57,9 +61,12 @@ export class PaymentService {
         message: 'Payment record not found',
       });
     }
+    if (payment.status === 'COMPLETED') {
+      return payment;
+    }
 
     // Update payment and order in transaction
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const updatedPayment = await tx.payment.update({
         where: { id: payment.id },
         data: { status: 'COMPLETED' },
@@ -73,7 +80,15 @@ export class PaymentService {
       if (order && order.status === 'PENDING') {
         await tx.order.update({
           where: { id: order.id },
-          data: { status: 'PROCESSING' },
+          data: {
+            status: 'PROCESSING',
+            statusHistory: {
+              create: {
+                status: 'PROCESSING',
+                note: 'Payment confirmed and order is being prepared',
+              },
+            },
+          },
         });
 
         // Deduct inventory for online payments exactly once
@@ -89,5 +104,9 @@ export class PaymentService {
 
       return updatedPayment;
     });
+    this.invoiceService.emailOrderInvoice(payment.orderId).catch((error) =>
+      console.error('Failed to send paid order invoice email', error),
+    );
+    return result;
   }
 }

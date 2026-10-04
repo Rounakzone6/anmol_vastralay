@@ -1,6 +1,7 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import { Bot, Send, User, Loader2, Info, ShoppingBag } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 
@@ -8,6 +9,15 @@ export default function ChatbotPage() {
   const [input, setInput] = useState('');
 
   const { messages, sendMessage, status, setMessages } = useChat({
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      headers: () => {
+        const token = localStorage.getItem('anmol_token');
+        const headers: Record<string, string> = {};
+        if (token) headers.Authorization = `Bearer ${token}`;
+        return headers;
+      },
+    }),
     onError: (err) => alert("AI Error: " + err.message + "\n(Did you add a valid Gemini API Key?)")
   });
 

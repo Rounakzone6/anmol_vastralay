@@ -80,7 +80,7 @@ export class CustomerService {
     return this.mutations.setDefaultAddress(userId, addressId);
   }
 
-  // ─── OTP Verification (Twilio SMS + SendGrid Email) ─────────────
+  // ─── OTP Verification (Twilio SMS + SMTP Email) ─────────────────
   async sendOtp(userId: string, input: z.infer<typeof SendOtpSchema>) {
     return this.mutations.sendOtp(userId, input);
   }

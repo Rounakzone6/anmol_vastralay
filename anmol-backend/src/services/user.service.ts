@@ -81,4 +81,63 @@ export class UserService {
     if (!user) notFound('User');
     return user;
   }
+
+  async getCustomerDetails(id: string) {
+    const customer = await this.prisma.user.findFirst({
+      // The customer list already scopes this link to customers. Resolving by
+      // id alone also keeps historical customer records viewable if their role
+      // was changed later by an administrator.
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        name: true,
+        profileImage: true,
+        gender: true,
+        dateOfBirth: true,
+        emailVerified: true,
+        phoneVerified: true,
+        createdAt: true,
+        updatedAt: true,
+        addresses: {
+          orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
+        },
+        orders: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            items: {
+              include: {
+                product: { select: { name: true, slug: true } },
+                variant: { select: { color: true, size: true, sku: true } },
+              },
+            },
+            payments: true,
+          },
+        },
+        payments: {
+          orderBy: { createdAt: 'desc' },
+        },
+        cart: {
+          include: {
+            items: {
+              include: {
+                product: { select: { name: true, slug: true, netPrice: true } },
+                variant: { select: { color: true, size: true, sku: true } },
+              },
+            },
+          },
+        },
+        reviews: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            product: { select: { name: true, slug: true } },
+          },
+        },
+      },
+    });
+
+    if (!customer) notFound('Customer');
+    return customer;
+  }
 }

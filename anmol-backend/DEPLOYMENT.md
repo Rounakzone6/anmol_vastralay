@@ -57,7 +57,7 @@ docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/anmol-backend:latest
 
 ## Vercel/Netlify
 
-NestJS applications can be deployed as serverless functions, but Vercel/Netlify is better suited for frontend apps. For backend, use **Railway**, **Render**, or **AWS**.
+NestJS applications can be deployed as serverless functions, but Vercel/Netlify is better suited for frontend apps. For backend, use **Railway** or **AWS**.
 
 ### Alternative: Deploy to Railway (Recommended for NestJS)
 

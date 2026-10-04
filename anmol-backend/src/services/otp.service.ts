@@ -1,17 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import nodemailer, { Transporter } from 'nodemailer';
+import Twilio from 'twilio';
 
 @Injectable()
 export class OtpService {
   private readonly logger = new Logger(OtpService.name);
-  private twilioClient: any = null;
+  private twilioClient: Twilio.Twilio | null = null;
   private twilioPhone: string = '';
-  private sendgridConfigured = false;
-  private sendgridFromEmail = '';
+  private smtpTransport: Transporter | null = null;
+  private smtpFromEmail = '';
 
   constructor(private readonly config: ConfigService) {
     this.initTwilio();
-    this.initSendGrid();
+    this.initSmtp();
   }
 
   private initTwilio() {
@@ -21,9 +23,7 @@ export class OtpService {
 
     if (sid && token && !sid.startsWith('your_')) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const twilio = require('twilio');
-        this.twilioClient = twilio(sid, token);
+        this.twilioClient = Twilio(sid, token);
         this.logger.log('✓ Twilio SMS configured');
       } catch (err) {
         this.logger.warn('Twilio initialization failed:', err);
@@ -35,26 +35,32 @@ export class OtpService {
     }
   }
 
-  private initSendGrid() {
-    const apiKey = this.config.get<string>('SENDGRID_API_KEY');
-    this.sendgridFromEmail =
-      this.config.get<string>('SENDGRID_FROM_EMAIL') ||
-      'noreply@anmolvastralay.com';
+  private initSmtp() {
+    const host = this.config.get<string>('SMTP_HOST');
+    const port = this.config.get<number>('SMTP_PORT') || 587;
+    const user = this.config.get<string>('SMTP_USER');
+    const pass = this.config.get<string>('SMTP_PASS');
+    this.smtpFromEmail =
+      this.config.get<string>('SMTP_FROM_EMAIL') || user || '';
 
-    if (apiKey && !apiKey.startsWith('your_')) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const sgMail = require('@sendgrid/mail');
-        sgMail.setApiKey(apiKey);
-        this.sendgridConfigured = true;
-        this.logger.log('✓ SendGrid email configured');
-      } catch (err) {
-        this.logger.warn('SendGrid initialization failed:', err);
-      }
-    } else {
+    if (!host || !user || !pass) {
       this.logger.warn(
-        '⚠ SendGrid not configured — Email OTP will use console logging',
+        '⚠ SMTP not configured — Email OTP will use console logging',
       );
+      return;
+    }
+
+    try {
+      this.smtpTransport = nodemailer.createTransport({
+        host,
+        port,
+        secure:
+          this.config.get<string>('SMTP_SECURE') === 'true' || port === 465,
+        auth: { user, pass },
+      });
+      this.logger.log('✓ SMTP email configured');
+    } catch (err) {
+      this.logger.warn('SMTP initialization failed:', err);
     }
   }
 
@@ -82,23 +88,18 @@ export class OtpService {
   }
 
   /**
-   * Send OTP via Email using SendGrid
+   * Send OTP via Email using SMTP
    */
   async sendEmailOtp(email: string, code: string): Promise<boolean> {
-    if (!this.sendgridConfigured) {
+    if (!this.smtpTransport) {
       this.logger.log(`[DEV EMAIL OTP] To ${email}: ${code}`);
       return true; // Silently succeed in dev
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const sgMail = require('@sendgrid/mail');
-      await sgMail.send({
+      await this.smtpTransport.sendMail({
         to: email,
-        from: {
-          email: this.sendgridFromEmail,
-          name: 'Anmol Vastralay',
-        },
+        from: `"Anmol Vastralay" <${this.smtpFromEmail}>`,
         subject: 'Your Verification Code — Anmol Vastralay',
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px;">

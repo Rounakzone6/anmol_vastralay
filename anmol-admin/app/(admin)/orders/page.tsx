@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/page-header';
 import { Card, Select, Badge, Spinner } from '@/components/ui';
 import { trpc } from '@/lib/trpc';
 import Link from 'next/link';
+import { Download, Loader2 } from 'lucide-react';
 
 const STATUS_STYLES = {
   PENDING: 'bg-amber-100/50 text-amber-700 border-amber-200/50',
@@ -17,6 +18,9 @@ export default function OrdersPage() {
   const { data: orders, isLoading, refetch } = trpc.order.adminGetOrders.useQuery();
   const updateStatus = trpc.order.adminUpdateOrderStatus.useMutation({
     onSuccess: () => refetch(),
+  });
+  const generateInvoice = trpc.order.adminGenerateInvoice.useMutation({
+    onSuccess: ({ invoiceUrl }) => window.open(invoiceUrl, '_blank', 'noopener,noreferrer'),
   });
 
   return (
@@ -41,7 +45,7 @@ export default function OrdersPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm min-w-[800px]">
+            <table className="w-full min-w-200 text-left text-sm">
               <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
                 <tr>
                   <th className="px-6 py-4">Order ID</th>
@@ -49,6 +53,7 @@ export default function OrdersPage() {
                   <th className="px-6 py-4">Items</th>
                   <th className="px-6 py-4">Total Amount</th>
                   <th className="px-6 py-4">Date</th>
+                  <th className="px-6 py-4 text-right">Invoice</th>
                   <th className="px-6 py-4 text-right">Status</th>
                 </tr>
               </thead>
@@ -76,8 +81,19 @@ export default function OrdersPage() {
                       {new Date(o.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">
+                      <button
+                        type="button"
+                        onClick={() => generateInvoice.mutate({ orderId: o.id })}
+                        disabled={generateInvoice.isPending}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-violet-300 hover:text-violet-700 disabled:opacity-50"
+                      >
+                        {generateInvoice.isPending ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                        {o.invoiceUrl ? 'Download' : 'Generate'}
+                      </button>
+                    </td>
+                    <td className="px-6 py-4 text-right whitespace-nowrap">
                       <Select
-                        className={`inline-block w-auto !py-1.5 !pl-3 !pr-8 !text-xs font-semibold border ${STATUS_STYLES[o.status as keyof typeof STATUS_STYLES] || 'bg-slate-50 text-slate-700'} rounded-full cursor-pointer transition-colors focus:ring-2 focus:ring-offset-1 focus:ring-slate-200`}
+                        className={`inline-block w-auto py-1.5! pl-3! pr-8! text-xs! font-semibold border ${STATUS_STYLES[o.status as keyof typeof STATUS_STYLES] || 'bg-slate-50 text-slate-700'} rounded-full cursor-pointer transition-colors focus:ring-2 focus:ring-offset-1 focus:ring-slate-200`}
                         value={o.status}
                         onChange={(e) => {
                           updateStatus.mutate({ orderId: o.id, status: e.target.value as any });

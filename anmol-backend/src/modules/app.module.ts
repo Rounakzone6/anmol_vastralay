@@ -17,12 +17,15 @@ import { WhatsappService } from '@backend/services/whatsapp.service';
 import { WebhookController } from '@backend/controllers/webhook.controller';
 import { WhatsappController } from '@backend/controllers/whatsapp.controller';
 import { ChatbotService } from '@backend/services/chatbot.service';
+import { InvoiceService } from '@backend/services/invoice.service';
+import { EmailModule } from '@backend/modules/email.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     CloudinaryModule,
+    EmailModule,
     AuthModule,
   ],
   controllers: [WebhookController, WhatsappController],
@@ -39,6 +42,7 @@ import { ChatbotService } from '@backend/services/chatbot.service';
     ReviewService,
     WhatsappService,
     ChatbotService,
+    InvoiceService,
   ],
 })
 export class AppModule {}

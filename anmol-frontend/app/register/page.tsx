@@ -9,6 +9,8 @@ import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/lib/useAuth';
 import { Eye, EyeOff, Mail, Phone, User, Lock, ArrowRight, ShieldCheck, Truck, Gift, Sparkles } from 'lucide-react';
 
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
 export default function RegisterPage() {
   const router = useRouter();
   const { login: setAuth } = useAuth();
@@ -63,7 +65,7 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-[calc(100vh-64px)]">
       {/* Left — Branding Panel */}
-      <div className="hidden lg:flex lg:w-[480px] xl:w-[520px] flex-shrink-0 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-120 xl:w-130 shrink-0 relative overflow-hidden">
         {/* Gradient background */}
         <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #1a0a10 0%, #2d0b18 25%, #85142b 65%, #b01e3f 100%)' }} />
         
@@ -93,8 +95,8 @@ export default function RegisterPage() {
               { icon: Truck, title: 'Free Delivery', desc: 'On orders above ₹999' },
               { icon: Gift, title: 'Member Benefits', desc: 'Exclusive deals & early access' },
             ].map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="flex items-center gap-3.5 bg-white/[0.07] backdrop-blur-sm rounded-xl px-4 py-3 transition-all hover:bg-white/[0.12]">
-                <div className="flex-shrink-0 h-9 w-9 rounded-lg bg-white/15 flex items-center justify-center">
+              <div key={title} className="flex items-center gap-3.5 bg-white/[0.07] backdrop-blur-sm rounded-xl px-4 py-3 transition-all hover:bg-white/12">
+                <div className="shrink-0 h-9 w-9 rounded-lg bg-white/15 flex items-center justify-center">
                   <Icon className="h-4 w-4" />
                 </div>
                 <div>
@@ -111,7 +113,7 @@ export default function RegisterPage() {
 
       {/* Right — Form */}
       <div className="flex-1 flex items-start lg:items-center justify-center bg-white px-5 py-8 sm:px-8 overflow-y-auto">
-        <div className="w-full max-w-[420px]">
+        <div className="w-full max-w-105">
           {/* Mobile heading */}
           <div className="lg:hidden mb-8">
             <h2 className="text-2xl font-bold text-gray-900">Create your account</h2>
@@ -130,7 +132,7 @@ export default function RegisterPage() {
           </div>
 
           {/* Google */}
-          <div className="flex justify-center">
+          {GOOGLE_CLIENT_ID ? <div className="flex justify-center">
             <GoogleLogin
               onSuccess={(credentialResponse) => {
                 if (credentialResponse.credential) {
@@ -145,7 +147,11 @@ export default function RegisterPage() {
               width={420}
               theme="outline"
             />
-          </div>
+          </div> : (
+            <p className="rounded-xl bg-amber-50 px-4 py-3 text-center text-sm text-amber-700">
+              Google sign-up is not configured. Please use email/password.
+            </p>
+          )}
 
           {/* Divider */}
           <div className="relative my-6">
@@ -159,7 +165,7 @@ export default function RegisterPage() {
 
           {error && (
             <div className="mb-4 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600 flex items-start gap-2.5 animate-in fade-in slide-in-from-top-1">
-              <span className="flex-shrink-0 h-5 w-5 rounded-full bg-red-100 flex items-center justify-center text-red-500 text-xs font-bold mt-0.5">!</span>
+              <span className="shrink-0 h-5 w-5 rounded-full bg-red-100 flex items-center justify-center text-red-500 text-xs font-bold mt-0.5">!</span>
               <span>{error}</span>
             </div>
           )}
@@ -172,7 +178,7 @@ export default function RegisterPage() {
               </label>
               <div className="relative group">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <User className={`h-[18px] w-[18px] transition-colors ${focusedField === 'name' ? 'text-[#85142b]' : 'text-gray-300'}`} />
+                  <User className={`h-4.5 w-4.5 transition-colors ${focusedField === 'name' ? 'text-[#85142b]' : 'text-gray-300'}`} />
                 </div>
                 <input
                   id="name"
@@ -197,7 +203,7 @@ export default function RegisterPage() {
                 </label>
                 <div className="relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Phone className={`h-[18px] w-[18px] transition-colors ${focusedField === 'phone' ? 'text-[#85142b]' : 'text-gray-300'}`} />
+                    <Phone className={`h-4.5 w-4.5 transition-colors ${focusedField === 'phone' ? 'text-[#85142b]' : 'text-gray-300'}`} />
                   </div>
                   <input
                     id="phone"
@@ -219,7 +225,7 @@ export default function RegisterPage() {
                 </label>
                 <div className="relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Mail className={`h-[18px] w-[18px] transition-colors ${focusedField === 'email' ? 'text-[#85142b]' : 'text-gray-300'}`} />
+                    <Mail className={`h-4.5 w-4.5 transition-colors ${focusedField === 'email' ? 'text-[#85142b]' : 'text-gray-300'}`} />
                   </div>
                   <input
                     id="email-address"
@@ -243,7 +249,7 @@ export default function RegisterPage() {
               </label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Lock className={`h-[18px] w-[18px] transition-colors ${focusedField === 'password' ? 'text-[#85142b]' : 'text-gray-300'}`} />
+                  <Lock className={`h-4.5 w-4.5 transition-colors ${focusedField === 'password' ? 'text-[#85142b]' : 'text-gray-300'}`} />
                 </div>
                 <input
                   id="password"

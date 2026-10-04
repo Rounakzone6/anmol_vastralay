@@ -25,4 +25,10 @@ export const userRouter = router({
     .query(async ({ ctx, input }) => {
       return ctx.services.user.getUserById(input.id);
     }),
+
+  getCustomerDetails: staffProcedure
+    .input(UserIdSchema)
+    .query(async ({ ctx, input }) => {
+      return ctx.services.user.getCustomerDetails(input.id);
+    }),
 });

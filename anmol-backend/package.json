@@ -6,7 +6,6 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "prebuild": "prisma migrate resolve --rolled-back 20260620085838_add_review_table || true",
     "build": "prisma generate && nest build && tsc-alias",
     "start": "node dist/src/main",
     "start:dev": "nest start --watch",
@@ -38,7 +37,6 @@
     "@nestjs/throttler": "^6.5.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
-    "@sendgrid/mail": "^8.1.6",
     "@trpc/server": "^11.17.0",
     "bcryptjs": "^3.0.3",
     "class-transformer": "^0.5.1",
@@ -46,8 +44,10 @@
     "cloudinary": "^2.9.0",
     "google-auth-library": "^10.7.0",
     "helmet": "^8.1.0",
+    "nodemailer": "^7.0.13",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "pdfkit": "^0.20.2",
     "pg": "^8.22.0",
     "razorpay": "^2.9.6",
     "reflect-metadata": "^0.2.2",
@@ -65,7 +65,9 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.0",
+    "@types/nodemailer": "^6.4.24",
     "@types/passport-jwt": "^4.0.1",
+    "@types/pdfkit": "^0.17.6",
     "@types/supertest": "^7.0.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
@@ -100,6 +102,9 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@backend/(.*)$": "<rootDir>/$1"
+    }
   }
 }

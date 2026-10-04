@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Package, ChevronRight, MapPin, Loader2 } from 'lucide-react';
+import { Package, ChevronRight, MapPin, Loader2, Download } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/lib/useAuth';
 
@@ -11,6 +11,9 @@ export default function OrdersPage() {
   
   const { data: orders, isLoading } = trpc.order.getOrderHistory.useQuery(undefined, {
     enabled: isAuthenticated,
+  });
+  const generateInvoice = trpc.order.generateInvoice.useMutation({
+    onSuccess: ({ invoiceUrl }) => window.open(invoiceUrl, '_blank', 'noopener,noreferrer'),
   });
 
   if (!isHydrated) {
@@ -95,6 +98,15 @@ export default function OrdersPage() {
               </dl>
               
               <div className="mt-4 flex items-center justify-end sm:mt-0">
+                <button
+                  type="button"
+                  onClick={() => generateInvoice.mutate({ orderId: order.id })}
+                  disabled={generateInvoice.isPending}
+                  className="mr-4 inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-[#85142b] disabled:opacity-50"
+                >
+                  <Download className="h-4 w-4" />
+                  {order.invoiceUrl ? 'Invoice' : 'Generate invoice'}
+                </button>
                 <Link
                   href={`/orders/${order.id}`}
                   className="flex items-center text-sm font-medium text-[#85142b] hover:text-[#6c1023]"
@@ -111,7 +123,7 @@ export default function OrdersPage() {
                   <h4 className="sr-only">Items</h4>
                   <div className="flex -space-x-2 overflow-hidden">
                     {order.items.slice(0, 5).map((item) => (
-                      <div key={item.id} className="inline-block h-12 w-12 rounded-full ring-2 ring-white bg-gray-100 flex items-center justify-center text-[10px] text-gray-500 overflow-hidden" title={item.product.name}>
+                      <div key={item.id} className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 text-[10px] text-gray-500 ring-2 ring-white" title={item.product.name}>
                         {item.product.images && item.product.images.length > 0 ? (
                           <Image
                             src={item.product.images[0].url}
@@ -137,7 +149,7 @@ export default function OrdersPage() {
                 </div>
                 
                 <div className="flex items-start text-sm text-gray-500 max-w-xs">
-                  <MapPin className="mr-2 h-5 w-5 flex-shrink-0 text-gray-400" />
+                  <MapPin className="mr-2 h-5 w-5 shrink-0 text-gray-400" />
                   <p className="truncate">{order.shippingAddress}</p>
                 </div>
               </div>

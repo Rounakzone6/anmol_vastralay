@@ -1,9 +1,9 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, Receipt, Truck } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Download, Loader2, MapPin, PackageCheck, Receipt, Truck } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/lib/useAuth';
 
@@ -15,6 +15,9 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
     { orderId: id },
     { enabled: isAuthenticated && !!id }
   );
+  const generateInvoice = trpc.order.generateInvoice.useMutation({
+    onSuccess: ({ invoiceUrl }) => window.open(invoiceUrl, '_blank', 'noopener,noreferrer'),
+  });
 
   if (!isHydrated) {
     return <div className="p-8 text-center text-gray-500">Checking authentication...</div>;
@@ -70,7 +73,17 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
           </p>
         </div>
         <div className="mt-4 lg:mt-0">
-          <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium capitalize
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => generateInvoice.mutate({ orderId: order.id })}
+              disabled={generateInvoice.isPending}
+              className="inline-flex items-center gap-2 rounded-md border border-[#85142b] px-4 py-2 text-sm font-semibold text-[#85142b] transition hover:bg-[#fff6f7] disabled:cursor-wait disabled:opacity-60"
+            >
+              {generateInvoice.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {order.invoiceUrl ? 'Download invoice' : 'Generate invoice'}
+            </button>
+            <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium capitalize
             ${order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : ''}
             ${order.status === 'PROCESSING' ? 'bg-blue-100 text-blue-800' : ''}
             ${order.status === 'SHIPPED' ? 'bg-purple-100 text-purple-800' : ''}
@@ -78,12 +91,18 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
             ${order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' : ''}
           `}>
             {order.status.toLowerCase()}
-          </span>
+            </span>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-8">
+          <DeliveryTracker
+            status={order.status}
+            createdAt={order.createdAt}
+            statusHistory={order.statusHistory}
+          />
           <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
             <div className="border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
               <h2 className="text-lg font-medium text-gray-900">Items Ordered</h2>
@@ -91,7 +110,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
             <ul role="list" className="divide-y divide-gray-200">
               {order.items.map((item) => (
                 <li key={item.id} className="flex px-4 py-6 sm:px-6">
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     <div className="h-20 w-20 rounded-md bg-gray-100 flex items-center justify-center overflow-hidden">
                       {item.product.images && item.product.images.length > 0 ? (
                         <Image
@@ -159,7 +178,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
             </div>
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-start">
-                <MapPin className="mr-2 h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                <MapPin className="mr-2 h-5 w-5 shrink-0 text-gray-400 mt-0.5" />
                 <address className="not-italic text-sm text-gray-600 whitespace-pre-wrap">
                   {order.shippingAddress}
                 </address>
@@ -169,5 +188,90 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
     </div>
+  );
+}
+
+const DELIVERY_STEPS = [
+  { status: 'PENDING', label: 'Order placed', description: 'We have received your order.' },
+  { status: 'PROCESSING', label: 'Preparing order', description: 'Your order is being packed with care.' },
+  { status: 'SHIPPED', label: 'On the way', description: 'Your package has left our store.' },
+  { status: 'DELIVERED', label: 'Delivered', description: 'Your order was delivered successfully.' },
+] as const;
+
+function DeliveryTracker({
+  status,
+  createdAt,
+  statusHistory,
+}: {
+  status: string;
+  createdAt: Date | string;
+  statusHistory: Array<{ id: string; status: string; note: string | null; createdAt: Date | string }>;
+}) {
+  const [selectedStatus, setSelectedStatus] = useState(status);
+  const cancelled = status === 'CANCELLED';
+  const currentIndex = DELIVERY_STEPS.findIndex((step) => step.status === status);
+  const selectedStep = DELIVERY_STEPS.find((step) => step.status === selectedStatus) || DELIVERY_STEPS[0];
+  const selectedHistory = [...statusHistory].reverse().find((entry) => entry.status === selectedStatus);
+  const estimatedDate = new Date(createdAt);
+  estimatedDate.setDate(estimatedDate.getDate() + (status === 'SHIPPED' ? 4 : 7));
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-[#eadadd] bg-white shadow-sm">
+      <div className="border-b border-[#eadadd] bg-[#fff8f8] px-4 py-4 sm:px-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="flex items-center text-lg font-semibold text-gray-900">
+              <Truck className="mr-2 h-5 w-5 text-[#85142b]" /> Track your delivery
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              {cancelled ? 'This order has been cancelled.' : `Estimated delivery by ${estimatedDate.toLocaleDateString()}`}
+            </p>
+          </div>
+          {!cancelled && <span className="rounded-full bg-[#85142b]/10 px-3 py-1 text-xs font-semibold text-[#85142b]">Live order status</span>}
+        </div>
+      </div>
+
+      {cancelled ? (
+        <div className="flex items-center gap-3 px-4 py-6 text-sm text-red-700 sm:px-6">
+          <PackageCheck className="h-5 w-5" /> {statusHistory.at(-1)?.note || 'Order cancelled'}
+        </div>
+      ) : (
+        <div className="px-4 py-6 sm:px-6">
+          <div className="grid grid-cols-4 gap-1">
+            {DELIVERY_STEPS.map((step, index) => {
+              const complete = index <= currentIndex;
+              const active = step.status === selectedStatus;
+              return (
+                <button
+                  key={step.status}
+                  type="button"
+                  onClick={() => setSelectedStatus(step.status)}
+                  className="group text-left"
+                  aria-label={`View ${step.label} status`}
+                >
+                  <div className="flex items-center">
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition ${complete ? 'border-[#85142b] bg-[#85142b] text-white' : 'border-gray-200 bg-white text-gray-300'} ${active ? 'ring-4 ring-[#85142b]/10' : ''}`}>
+                      {complete ? <Check className="h-4 w-4" /> : <span className="h-2 w-2 rounded-full bg-current" />}
+                    </span>
+                    {index < DELIVERY_STEPS.length - 1 && <span className={`h-0.5 w-full ${index < currentIndex ? 'bg-[#85142b]' : 'bg-gray-200'}`} />}
+                  </div>
+                  <span className={`mt-2 block text-[11px] font-semibold sm:text-xs ${active ? 'text-[#85142b]' : 'text-gray-500'}`}>{step.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-6 rounded-xl bg-gray-50 p-4 transition-all">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">{selectedStep.label}</p>
+                <p className="mt-1 text-sm text-gray-600">{selectedHistory?.note || selectedStep.description}</p>
+              </div>
+              <ChevronDown className="h-4 w-4 text-gray-400" />
+            </div>
+            {selectedHistory && <p className="mt-3 text-xs font-medium text-gray-400">{new Date(selectedHistory.createdAt).toLocaleString()}</p>}
+          </div>
+        </div>
+      )}
+    </section>
   );
 }

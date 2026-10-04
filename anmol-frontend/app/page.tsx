@@ -1,18 +1,17 @@
-'use client';
+"use client";
 
-import CategoryNav from '@/components/CategoryNav';
-import HeroSlider from '@/components/HeroSlider';
-import LatestArrivals from '@/components/LatestArrivals';
-import CategorySection from '@/components/CategorySection';
-import CategoryBanner from '@/components/CategoryBanner';
-
+import CategoryNav from "@/components/CategoryNav";
+import HeroSlider from "@/components/HeroSlider";
+import LatestArrivals from "@/components/LatestArrivals";
+import CategorySection from "@/components/CategorySection";
+import CategoryBanner from "@/components/CategoryBanner";
 
 export default function Home() {
   return (
     <div className="bg-gray-50 min-h-screen pb-12">
       {/* Top Categories Navigation */}
       <CategoryNav />
-
+      
       {/* Dynamic Hero Slider */}
       <HeroSlider />
 
@@ -34,8 +33,6 @@ export default function Home() {
 
       <CategoryBanner title="Innerwear Essentials" slug="innerwear" />
       <CategorySection title="Comfortable Innerwear" slug="innerwear" />
-
-
     </div>
   );
 }

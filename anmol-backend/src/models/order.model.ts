@@ -7,6 +7,8 @@ export const CreateOrderSchema = z.object({
 
 export const OrderIdSchema = z.object({ orderId: z.string() });
 
+export const GenerateInvoiceSchema = OrderIdSchema;
+
 export const UpdateOrderStatusSchema = z.object({
   orderId: z.string(),
   status: z.enum([

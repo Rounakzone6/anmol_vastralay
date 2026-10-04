@@ -55,6 +55,7 @@ ADMIN_PASSWORD=securepassword
 **`anmol-frontend/.env`**
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001/trpc
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
 GOOGLE_GENERATIVE_AI_API_KEY=your_gemini_api_key
 ```
 
@@ -80,6 +81,28 @@ npm install
 npm run dev
 ```
 
+### Google Sign-In / Sign-Up Setup
+
+Google authentication is available on `/login` and `/register`. Create a
+**Web application** OAuth client in the
+[Google Cloud Console](https://console.cloud.google.com/apis/credentials), then
+configure the same client ID in both environments:
+
+**`anmol-frontend/.env`**
+```env
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+```
+
+**`anmol-backend/.env`**
+```env
+GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+```
+
+For local development, add `http://localhost:3000` to the OAuth client's
+**Authorized JavaScript origins**. Add the deployed storefront origin as well
+when deploying. Restart both the frontend and backend after changing
+environment variables.
+
 ### 5. Running the Admin Dashboard
 Open a third terminal and run:
 ```bash
@@ -103,4 +126,6 @@ npm run dev
 ## 🌍 Deployment
 This codebase is completely deployment-ready.
 - **Frontend & Admin:** Deploy directly to [Vercel](https://vercel.com).
-- **Backend & Database:** Deploy the NestJS server and provision a PostgreSQL database on [Railway.app](https://railway.app) or [Render](https://render.com). Ensure you configure the CORS environment variables (`FRONTEND_URL` and `ADMIN_URL`) on the backend to accept traffic from your Vercel domains!
+- **Backend:** Deploy the NestJS server on [Railway.app](https://railway.app) or another Node.js host.
+- **Database:** Use a persistent hosted PostgreSQL provider such as [Neon](https://neon.tech). Copy its pooled connection URI into `DATABASE_URL`, optionally copy Neon’s direct (non-pooler) URI into `DIRECT_DATABASE_URL` for migrations, and set `DATABASE_SSL=true` in the backend environment. A local `localhost` URI only works on the same machine and cannot be used by a public deployment.
+- Configure `FRONTEND_URL` and `ADMIN_URL` on the backend to accept traffic from your Vercel domains.

@@ -49,6 +49,30 @@ services:
       retries: 3
       start_period: 60s
 
+  # Gemini/RAG AI service
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: anmol-ai-service
+    environment:
+      NODE_ENV: production
+      PORT: 3010
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      BACKEND_API_URL: http://backend:3001
+      AI_SERVICE_INTERNAL_TOKEN: ${AI_SERVICE_INTERNAL_TOKEN}
+      KNOWLEDGE_BASE_PATH: ./knowledgeBase.json
+    ports:
+      - "3010:3010"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3010/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
   # Admin Panel
   admin:
     build:

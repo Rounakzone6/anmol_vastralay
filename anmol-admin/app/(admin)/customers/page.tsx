@@ -4,9 +4,14 @@ import { PageHeader } from '@/components/page-header';
 import { Card, Badge, Spinner } from '@/components/ui';
 import { trpc } from '@/lib/trpc';
 import { Users } from 'lucide-react';
+import Link from 'next/link';
 
 export default function CustomersPage() {
-  const { data: customers, isLoading } = trpc.user.getCustomers.useQuery();
+  const { data: customers, isLoading } = trpc.user.getCustomers.useQuery(undefined, {
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    retry: false,
+  });
 
   return (
     <div className="pb-12">
@@ -33,7 +38,7 @@ export default function CustomersPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm min-w-[600px]">
+            <table className="w-full min-w-150 text-left text-sm">
               <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
                 <tr>
                   <th className="px-6 py-4">Customer</th>
@@ -46,12 +51,12 @@ export default function CustomersPage() {
                 {customers.map((c: any) => (
                   <tr key={c.id} className="hover:bg-slate-50/50 transition-colors group">
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
+                      <Link href={`/customers/${c.id}`} className="flex items-center gap-3">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700 font-bold text-sm">
                           {c.name ? c.name.charAt(0).toUpperCase() : '?'}
                         </div>
-                        <span className="font-semibold text-slate-900 whitespace-nowrap">{c.name || 'Unnamed'}</span>
-                      </div>
+                        <span className="font-semibold text-slate-900 whitespace-nowrap group-hover:text-violet-700">{c.name || 'Unnamed'}</span>
+                      </Link>
                     </td>
                     <td className="px-6 py-4 text-slate-600 whitespace-nowrap">{c.phone || '-'}</td>
                     <td className="px-6 py-4 text-center whitespace-nowrap">
