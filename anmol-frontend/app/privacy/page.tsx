@@ -1,10 +1,10 @@
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: 'Privacy Policy',
   description: 'Read the Privacy Policy of Anmol Vastralay. Learn how we securely collect, use, and protect your personal information and payment data.',
-  keywords: ['privacy policy', 'Anmol Vastralay privacy', 'data security', 'user data', 'safe payments'],
-};
+  path: '/privacy',
+});
 
 export default function PrivacyPolicyPage() {
   return (

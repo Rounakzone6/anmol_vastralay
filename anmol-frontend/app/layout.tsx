@@ -3,7 +3,11 @@ import type { Metadata } from 'next';
 import { Providers } from '@/app/providers';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import ChatbotWidget from '@/components/ChatbotWidget';
+import ChatbotWidgetWrapper from '@/components/ChatbotWidgetWrapper';
+import { Inter } from 'next/font/google';
+
+const inter = Inter({ subsets: ['latin'], display: 'swap' });
+import { fetchPublicTrpc } from '@/lib/server-data';
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_NAME, SITE_URL, jsonLd, organizationJsonLd } from '@/lib/seo';
 
 
@@ -14,7 +18,6 @@ export const metadata: Metadata = {
     default: DEFAULT_TITLE,
   },
   description: DEFAULT_DESCRIPTION,
-  alternates: { canonical: '/' },
   openGraph: {
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
@@ -46,25 +49,33 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  let categories: { name: string; slug: string }[] = [];
+  try {
+    const categoriesData = await fetchPublicTrpc<any[]>('category.list', {});
+    categories = categoriesData || [];
+  } catch (e) {
+    console.error('Failed to fetch categories for layout', e);
+  }
+
   return (
-    <html lang="en">
+    <html lang="en-IN" className={inter.className}>
       <body>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLd(organizationJsonLd) }}
         />
         <Providers>
-          <Navbar />
+          <Navbar categories={categories} />
           <main className="min-h-screen">
             {children}
           </main>
-          <Footer />
-          <ChatbotWidget />
+          <Footer categories={categories} />
+          <ChatbotWidgetWrapper />
 
         </Providers>
       </body>

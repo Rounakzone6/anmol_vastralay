@@ -27,7 +27,7 @@ const ProfileAvatar = ({ size = 36, profileImg, displayName, initials }: { size?
   )
 );
 
-const Navbar = () => {
+const Navbar = ({ categories = [] }: { categories?: { name: string; slug: string }[] }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { isAuthenticated, user, logout } = useAuth();
@@ -65,7 +65,9 @@ const Navbar = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Searching for:", searchQuery);
+    if (searchQuery.trim()) {
+      window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
+    }
   };
 
   // Get display name and initials
@@ -92,13 +94,13 @@ const Navbar = () => {
           <div className="shrink-0 flex items-center">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-full overflow-hidden shadow-sm transition-transform duration-300 group-hover:scale-105 group-hover:shadow-md">
-                <video
-                  src="/logo.mp4"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover"
+                <Image
+                  src="/logo.png"
+                  alt="Anmol Vastralay Logo"
+                  fill
+                  sizes="48px"
+                  className="object-cover"
+                  priority
                 />
               </div>
               <div className="flex flex-col">
@@ -115,8 +117,12 @@ const Navbar = () => {
           {/* Desktop Nav Links */}
           <div className="hidden lg:flex items-center space-x-6 mx-4 font-medium text-sm text-gray-700">
             <Link href="/" className="hover:text-[#85142b] transition-colors">Home</Link>
-            <Link href="/collections" className="hover:text-[#85142b] transition-colors">Collections</Link>
-            <Link href="/about" className="hover:text-[#85142b] transition-colors">About</Link>
+            {categories.slice(0, 4).map((cat) => (
+              <Link key={cat.slug} href={`/collections/${cat.slug}`} className="hover:text-[#85142b] transition-colors">
+                {cat.name}
+              </Link>
+            ))}
+            <Link href="/collections" className="hover:text-[#85142b] transition-colors">All Collections</Link>
           </div>
 
           {/* Desktop Search Bar */}
@@ -288,11 +294,12 @@ const Navbar = () => {
       {isOpen && (
         <div className="border-t border-gray-200 bg-white px-4 py-3 shadow-inner md:hidden">
           <div className="space-y-3 font-medium text-gray-700">
-            <Link href="/collections/saree" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Saree Special</Link>
-            <Link href="/collections/men" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Mens Wear (Jeans-Shirt)</Link>
-            <Link href="/collections/women" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Ladies Wear (Kurti, Frock)</Link>
-            <Link href="/collections/kids" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Kids Wear</Link>
-            <Link href="/collections/suiting-shirting" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Suiting-Shirting</Link>
+            {categories.map((cat) => (
+              <Link key={cat.slug} href={`/collections/${cat.slug}`} className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">
+                {cat.name}
+              </Link>
+            ))}
+            <Link href="/collections" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">All Collections</Link>
             <hr className="border-gray-200" />
             {isClient && isAuthenticated ? (
               <>

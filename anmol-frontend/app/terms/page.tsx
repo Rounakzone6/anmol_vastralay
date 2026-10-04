@@ -1,10 +1,10 @@
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: 'Terms & Conditions',
   description: 'Review the Terms and Conditions for using the Anmol Vastralay website. Find information on user accounts, pricing policies, and intellectual property.',
-  keywords: ['terms and conditions', 'terms of service', 'Anmol Vastralay terms', 'user agreement'],
-};
+  path: '/terms',
+});
 
 export default function TermsConditionsPage() {
   return (

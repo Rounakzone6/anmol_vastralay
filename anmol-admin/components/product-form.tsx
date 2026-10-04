@@ -34,6 +34,8 @@ export function ProductForm({ productId }: ProductFormProps) {
   const [subcategoryId, setSubcategoryId] = useState('');
   const [itemTypeId, setItemTypeId] = useState('');
   const [kind, setKind] = useState<'SAREE' | 'STANDARD'>('STANDARD');
+  const [metaTitle, setMetaTitle] = useState('');
+  const [metaDescription, setMetaDescription] = useState('');
   const [netPrice, setNetPrice] = useState('');
   const [discountPercent, setDiscountPercent] = useState('0');
   const [allowsExtraSaya, setAllowsExtraSaya] = useState(false);
@@ -54,6 +56,8 @@ export function ProductForm({ productId }: ProductFormProps) {
     setSubcategoryId(product.subcategoryId ?? '');
     setItemTypeId(product.itemTypeId ?? '');
     setKind(product.kind);
+    setMetaTitle(product.metaTitle ?? '');
+    setMetaDescription(product.metaDescription ?? '');
     setNetPrice(String(product.netPrice));
     setDiscountPercent(String(product.discountPercent));
     setAllowsExtraSaya(product.allowsExtraSaya);
@@ -89,6 +93,7 @@ export function ProductForm({ productId }: ProductFormProps) {
           url: img.url,
           publicId: img.publicId ?? undefined,
           preview: img.url,
+          altText: img.altText ?? '',
         };
       }
     });
@@ -107,6 +112,8 @@ export function ProductForm({ productId }: ProductFormProps) {
       setSubcategoryId('');
       setItemTypeId('');
       setKind('STANDARD');
+      setMetaTitle('');
+      setMetaDescription('');
       setNetPrice('');
       setDiscountPercent('0');
       setAllowsExtraSaya(false);
@@ -133,6 +140,7 @@ export function ProductForm({ productId }: ProductFormProps) {
       .map((img, i) => ({
         url: img.url,
         publicId: img.publicId,
+        altText: img.altText || undefined,
         sortOrder: i,
       }));
   }
@@ -153,6 +161,8 @@ export function ProductForm({ productId }: ProductFormProps) {
       subcategoryId: subcategoryId || undefined,
       itemTypeId: itemTypeId || undefined,
       kind,
+      metaTitle: metaTitle || undefined,
+      metaDescription: metaDescription || undefined,
       netPrice: Number(netPrice),
       discountPercent: Number(discountPercent),
       allowsExtraSaya: kind === 'SAREE' ? allowsExtraSaya : false,
@@ -230,6 +240,10 @@ export function ProductForm({ productId }: ProductFormProps) {
             setName={setName}
             brand={brand}
             setBrand={setBrand}
+            metaTitle={metaTitle}
+            setMetaTitle={setMetaTitle}
+            metaDescription={metaDescription}
+            setMetaDescription={setMetaDescription}
           />
 
           <Card className="p-8 rounded-3xl border-slate-200/60 shadow-sm">

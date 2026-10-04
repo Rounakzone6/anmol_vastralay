@@ -67,6 +67,8 @@ export default function CategoriesPage() {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [metaTitle, setMetaTitle] = useState('');
+  const [metaDescription, setMetaDescription] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -151,9 +153,11 @@ export default function CategoriesPage() {
             className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 p-2"
             onSubmit={(e) => {
               e.preventDefault();
-              create.mutate({ name, description: description || undefined, imageUrl: imageUrl || undefined });
+              create.mutate({ name, description: description || undefined, imageUrl: imageUrl || undefined, metaTitle: metaTitle || undefined, metaDescription: metaDescription || undefined });
               setName('');
               setDescription('');
+              setMetaTitle('');
+              setMetaDescription('');
               setImageUrl(null);
             }}
           >
@@ -181,6 +185,33 @@ export default function CategoriesPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   rows={2}
                   placeholder="Brief description of this category"
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2 mt-4 border-t pt-4">
+                  <Label className="text-sm font-semibold text-slate-700 block">SEO Title</Label>
+                  <span className={`text-xs ${metaTitle.length > 60 ? 'text-red-500 font-bold' : 'text-slate-400'}`}>
+                    {metaTitle.length}/60
+                  </span>
+                </div>
+                <Input 
+                  value={metaTitle} 
+                  onChange={(e) => setMetaTitle(e.target.value)} 
+                  placeholder={name ? `${name} Collection` : "Auto-generated fallback"}
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-sm font-semibold text-slate-700 block">SEO Description</Label>
+                  <span className={`text-xs ${metaDescription.length > 160 ? 'text-red-500 font-bold' : 'text-slate-400'}`}>
+                    {metaDescription.length}/160
+                  </span>
+                </div>
+                <Textarea
+                  value={metaDescription}
+                  onChange={(e) => setMetaDescription(e.target.value)}
+                  rows={2}
+                  placeholder={name ? `Explore the latest ${name} styles at Anmol Vastralay.` : "Auto-generated fallback"}
                 />
               </div>
               <div className="flex justify-end pt-2">

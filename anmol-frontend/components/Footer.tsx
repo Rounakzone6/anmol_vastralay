@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Phone, MapPin } from 'lucide-react';
 
-export default function Footer() {
+export default function Footer({ categories = [] }: { categories?: { name: string; slug: string }[] }) {
   return (
     <footer className="bg-white border-t border-gray-200 mt-16 pt-12 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -13,13 +13,13 @@ export default function Footer() {
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-3 group mb-4">
               <div className="relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden shadow-sm transition-transform duration-300 group-hover:scale-105 group-hover:shadow-md">
-                <video
-                  src="/logo.mp4"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover"
+                <Image
+                  src="/logo.png"
+                  alt="Anmol Vastralay Logo"
+                  fill
+                  sizes="48px"
+                  className="object-cover"
+                  loading="lazy"
                 />
               </div>
               <div className="flex flex-col">
@@ -59,7 +59,22 @@ export default function Footer() {
               <li><Link href="/collections" className="text-sm text-gray-600 hover:text-[#85142b]">All Collections</Link></li>
               <li><Link href="/about" className="text-sm text-gray-600 hover:text-[#85142b]">About Us</Link></li>
               <li><Link href="/profile" className="text-sm text-gray-600 hover:text-[#85142b]">My Account</Link></li>
-              <li><Link href="/cart" className="text-sm text-gray-600 hover:text-[#85142b]">Shopping Cart</Link></li>
+            </ul>
+          </div>
+
+          {/* Shop by Category */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase mb-4">
+              Shop by Category
+            </h3>
+            <ul className="space-y-3">
+              {categories.map((cat) => (
+                <li key={cat.slug}>
+                  <Link href={`/collections/${cat.slug}`} className="text-sm text-gray-600 hover:text-[#85142b]">
+                    {cat.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 

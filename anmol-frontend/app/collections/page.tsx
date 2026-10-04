@@ -1,4 +1,5 @@
 import { pageMetadata } from '@/lib/seo';
+import { fetchPublicTrpc } from '@/lib/server-data';
 import CollectionsClient from './CollectionsClient';
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
@@ -13,6 +14,22 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   });
 }
 
-export default function CollectionsPage() {
-  return <CollectionsClient />;
+export default async function CollectionsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+  const params = await searchParams;
+  const initialSearchTerm = typeof params.q === 'string' ? params.q : '';
+  
+  let initialData: any = null;
+  let categories: any[] = [];
+  try {
+    const [products, cats] = await Promise.all([
+      fetchPublicTrpc('product.list', { pageSize: 30, includeInactive: false, search: initialSearchTerm || undefined }),
+      fetchPublicTrpc('category.list', { includeInactive: false })
+    ]);
+    initialData = { pages: [products], pageParams: [undefined] };
+    categories = (cats as any[]) || [];
+  } catch (e) {
+    console.error('Failed to fetch initial collections data', e);
+  }
+
+  return <CollectionsClient initialSearchTerm={initialSearchTerm} initialData={initialData} initialCategories={categories} />;
 }

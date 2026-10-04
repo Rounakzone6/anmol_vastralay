@@ -5,9 +5,17 @@ import { trpc } from '@/lib/trpc';
 import { Search, FilterX, Loader2, SlidersHorizontal, ChevronDown, X } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 
-export default function CollectionsClient() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+export default function CollectionsClient({ 
+  initialSearchTerm = '',
+  initialData = null,
+  initialCategories = [],
+}: { 
+  initialSearchTerm?: string;
+  initialData?: any;
+  initialCategories?: any[];
+}) {
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearchTerm);
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | undefined>(undefined);
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | undefined>(undefined);
   const [selectedItemTypeId, setSelectedItemTypeId] = useState<string | undefined>(undefined);
@@ -19,8 +27,8 @@ export default function CollectionsClient() {
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  const { data: categoriesData } = trpc.category.list.useQuery({ includeInactive: false });
-  const categories: any[] = categoriesData || [];
+  const { data: categoriesData } = trpc.category.list.useQuery({ includeInactive: false }, { initialData: initialCategories });
+  const categories: any[] = categoriesData || initialCategories || [];
 
   const {
     data,
@@ -39,7 +47,8 @@ export default function CollectionsClient() {
       itemTypeId: selectedItemTypeId || undefined,
     },
     {
-      getNextPageParam: (lastPage) =>
+      initialData: (!selectedCategorySlug && !selectedSubcategoryId && !selectedItemTypeId && debouncedSearch === initialSearchTerm) ? initialData : undefined,
+      getNextPageParam: (lastPage: any) =>
         lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
     }
   );

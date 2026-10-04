@@ -1,9 +1,29 @@
-import React from 'react';
 import Image from 'next/image';
+import { pageMetadata, jsonLd, absoluteUrl } from '@/lib/seo';
+
+export const metadata = pageMetadata({
+  title: 'About Us',
+  description: 'Learn about Anmol Vastralay, our journey, and our commitment to premium ethnic and modern wear.',
+  path: '/about',
+});
 
 export default function AboutPage() {
+  const aboutPageJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    url: absoluteUrl('/about'),
+    name: 'About Anmol Vastralay',
+    description: 'Learn about Anmol Vastralay, our journey, and our commitment to premium ethnic and modern wear.',
+    mainEntity: {
+      '@type': 'Organization',
+      name: 'Anmol Vastralay',
+      foundingDate: '2010', // Just an example
+    }
+  };
+
   return (
     <div className="bg-white min-h-screen py-16">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(aboutPageJsonLd) }} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="text-center max-w-3xl mx-auto mb-16">

@@ -20,6 +20,8 @@ export default function CategoryDetailsPage({ params }: { params: Promise<{ id: 
       setShowSubForm(false);
       setSubName('');
       setSubDesc('');
+      setSubMetaTitle('');
+      setSubMetaDesc('');
     }
   });
 
@@ -43,6 +45,8 @@ export default function CategoryDetailsPage({ params }: { params: Promise<{ id: 
   const [showSubForm, setShowSubForm] = useState(false);
   const [subName, setSubName] = useState('');
   const [subDesc, setSubDesc] = useState('');
+  const [subMetaTitle, setSubMetaTitle] = useState('');
+  const [subMetaDesc, setSubMetaDesc] = useState('');
 
   const [newItemTypeSubId, setNewItemTypeSubId] = useState<string | null>(null);
   const [itemName, setItemName] = useState('');
@@ -79,7 +83,13 @@ export default function CategoryDetailsPage({ params }: { params: Promise<{ id: 
             className="grid gap-6 md:grid-cols-2"
             onSubmit={(e) => {
               e.preventDefault();
-              createSubcategory.mutate({ name: subName, description: subDesc, categoryId: category.id });
+              createSubcategory.mutate({ 
+                name: subName, 
+                description: subDesc || undefined, 
+                categoryId: category.id,
+                metaTitle: subMetaTitle || undefined,
+                metaDescription: subMetaDesc || undefined
+              });
             }}
           >
             <div>
@@ -89,6 +99,24 @@ export default function CategoryDetailsPage({ params }: { params: Promise<{ id: 
             <div>
               <Label>Description</Label>
               <Input value={subDesc} onChange={(e) => setSubDesc(e.target.value)} placeholder="Optional" />
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-sm">SEO Title</Label>
+                <span className={`text-xs ${subMetaTitle.length > 60 ? 'text-red-500 font-bold' : 'text-slate-400'}`}>
+                  {subMetaTitle.length}/60
+                </span>
+              </div>
+              <Input value={subMetaTitle} onChange={(e) => setSubMetaTitle(e.target.value)} placeholder={subName ? `${subName} in ${category.name} | Anmol Vastralay` : "Auto-generated fallback"} />
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-sm">SEO Description</Label>
+                <span className={`text-xs ${subMetaDesc.length > 160 ? 'text-red-500 font-bold' : 'text-slate-400'}`}>
+                  {subMetaDesc.length}/160
+                </span>
+              </div>
+              <Input value={subMetaDesc} onChange={(e) => setSubMetaDesc(e.target.value)} placeholder={subName ? `Shop the latest ${subName} in ${category.name} at Anmol Vastralay.` : "Auto-generated fallback"} />
             </div>
             <div className="md:col-span-2 flex justify-end">
               <Button type="submit" disabled={createSubcategory.isPending}>Save Subcategory</Button>

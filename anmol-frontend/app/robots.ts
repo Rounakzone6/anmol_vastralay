@@ -7,6 +7,8 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
       disallow: [
+        '/api/',
+        '/search',
         '/cart',
         '/checkout',
         '/profile',
@@ -15,7 +17,6 @@ export default function robots(): MetadataRoute.Robots {
         '/login',
         '/register',
         '/chatbot',
-        '/*?search=',
         '/*?*category=', // Keep this if we have query filters
       ],
     },

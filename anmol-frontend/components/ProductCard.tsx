@@ -12,12 +12,13 @@ interface Product {
   netPrice: number | string;
   mrp?: number | string;
   discountPercent?: number | string;
-  images: { url: string }[];
+  images: { url: string; altText?: string }[];
   brand?: string;
   category?: { name: string };
   variants?: { color?: string; size?: string; stockQty?: number }[];
   averageRating?: number;
   reviewCount?: number;
+  createdAt?: Date | string;
 }
 
 interface ProductCardProps {
@@ -35,7 +36,9 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
     ? Number(product.mrp || netPrice * (1 + discountPct / 100))
     : null;
 
-  const isNew = index < 4; // Mocking "New" badge for first 4
+  const isNew = product.createdAt 
+    ? (new Date().getTime() - new Date(product.createdAt).getTime()) < 14 * 24 * 60 * 60 * 1000
+    : false;
   const colors = product.variants
     ? Array.from(new Set(product.variants.map((v) => v.color).filter(Boolean)))
     : [];
@@ -47,13 +50,15 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
 
   const href = `/product/${product.slug || product.id}`;
   
-  // E-commerce standard: show second image on hover if available
-  const currentImage = isHovered && product.images?.length > 1 
-    ? product.images[1].url 
-    : (product.images?.[0]?.url || '');
+  const currentImageObj = isHovered && product.images?.length > 1 
+    ? product.images[1]
+    : product.images?.[0];
+    
+  const currentImage = currentImageObj?.url || '';
+  const currentAlt = currentImageObj?.altText || `${product.name} - ${product.category?.name || 'Anmol Vastralay'}`;
 
   return (
-    <div
+    <article
       className="group relative flex flex-col w-full bg-white rounded-2xl p-3 transition-all duration-300 hover:shadow-2xl border border-transparent hover:border-gray-100"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -64,7 +69,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           {currentImage ? (
             <Image
               src={currentImage}
-              alt={product.name}
+              alt={currentAlt}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-contain p-4 transition-transform duration-700 ease-in-out group-hover:scale-110"
@@ -132,13 +137,13 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
       <div className="flex flex-col px-1 flex-1">
         <Link href={href} className="group-hover:opacity-80 transition-opacity">
           {product.brand && (
-            <h3 className="text-xs sm:text-sm font-extrabold uppercase tracking-widest text-[#85142b] mb-1 line-clamp-1">
+            <p className="text-xs sm:text-sm font-extrabold uppercase tracking-widest text-[#85142b] mb-1 line-clamp-1">
               {product.brand}
-            </h3>
+            </p>
           )}
-          <p className="text-sm sm:text-base text-gray-800 font-semibold line-clamp-2 mb-2" title={product.name}>
+          <h3 className="text-sm sm:text-base text-gray-800 font-semibold line-clamp-2 mb-2" title={product.name}>
             {product.name}
-          </p>
+          </h3>
         </Link>
         
         <div className="flex items-baseline gap-2 mb-3 mt-auto pt-2">
@@ -195,7 +200,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
            )}
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 

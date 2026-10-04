@@ -10,6 +10,7 @@ export type ProductImageSlot = {
   url: string;
   publicId?: string;
   preview: string;
+  altText?: string;
 };
 
 const SLOT_LABELS = [
@@ -47,6 +48,7 @@ export function ProductImageUpload({
         url: result.url,
         publicId: result.publicId,
         preview: result.url,
+        altText: '',
       };
       onChange(next.slice(0, 4));
     } catch (e) {
@@ -61,6 +63,14 @@ export function ProductImageUpload({
     while (next.length < 4) next.push(null);
     next[slot] = null;
     onChange(next.slice(0, 4));
+  }
+
+  function updateAltText(slot: number, text: string) {
+    const next = [...value];
+    if (next[slot]) {
+      next[slot] = { ...next[slot]!, altText: text };
+      onChange(next.slice(0, 4));
+    }
   }
 
   const slots = Array.from({ length: 4 }, (_, i) => value[i] ?? null);
@@ -119,20 +129,29 @@ export function ProductImageUpload({
               </label>
             )}
             {slot ? (
-              <label className="mt-2 block cursor-pointer text-center text-xs text-violet-700 hover:underline">
-                Replace
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/jpg"
-                  className="hidden"
-                  disabled={uploadingSlot !== null}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) void handleFile(i, file);
-                    e.target.value = '';
-                  }}
+              <div className="mt-2 text-center text-xs">
+                <label className="block cursor-pointer text-violet-700 hover:underline mb-2">
+                  Replace
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/jpg"
+                    className="hidden"
+                    disabled={uploadingSlot !== null}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void handleFile(i, file);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="Alt text (SEO)" 
+                  value={slot.altText || ''} 
+                  onChange={(e) => updateAltText(i, e.target.value)}
+                  className="w-full text-xs p-1.5 border border-zinc-200 rounded"
                 />
-              </label>
+              </div>
             ) : null}
           </div>
         ))}

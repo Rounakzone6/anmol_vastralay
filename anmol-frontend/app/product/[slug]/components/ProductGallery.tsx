@@ -32,7 +32,7 @@ export function ProductGallery({
           {images.length > 0 ? (
             <Image
               src={images[activeImageIdx]?.url || images[0].url}
-              alt={displayProduct.name}
+              alt={images[activeImageIdx]?.altText || displayProduct.name}
               fill
               priority
               sizes="(max-width: 1024px) 100vw, 50vw"
@@ -93,7 +93,7 @@ export function ProductGallery({
               >
                 <Image
                   src={img.url}
-                  alt={`${displayProduct.name} ${i + 1}`}
+                  alt={img.altText || `${displayProduct.name} ${i + 1}`}
                   fill
                   sizes="80px"
                   className="object-cover object-top"
@@ -133,7 +133,7 @@ export function ProductGallery({
           <div className="relative w-[90vw] max-w-lg" style={{ paddingBottom: '120%' }}>
             <Image
               src={images[activeImageIdx]?.url || images[0].url}
-              alt={displayProduct.name}
+              alt={images[activeImageIdx]?.altText || displayProduct.name}
               fill
               className="object-contain object-center"
               sizes="90vw"

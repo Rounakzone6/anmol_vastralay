@@ -5,8 +5,8 @@ import Image from 'next/image';
 import { trpc } from '@/lib/trpc';
 import { ShoppingBag } from 'lucide-react';
 
-export default function CategoryNav() {
-  const { data: categories, isLoading, error } = trpc.category.list.useQuery(undefined);
+export default function CategoryNav({ initialCategories = [] }: { initialCategories?: any[] }) {
+  const { data: categories, isLoading, error } = trpc.category.list.useQuery(undefined, { initialData: initialCategories.length ? initialCategories : undefined });
 
   if (error) {
     return (

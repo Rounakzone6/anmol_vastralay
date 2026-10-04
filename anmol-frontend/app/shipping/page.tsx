@@ -1,10 +1,10 @@
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: 'Shipping & Returns Policy',
   description: 'Learn about Anmol Vastralay\'s fast delivery across India, free shipping on eligible orders, and our 7-day hassle-free return and refund policy.',
-  keywords: ['shipping policy', 'return policy', 'Anmol Vastralay returns', 'clothing returns', 'fast delivery in India', 'free shipping'],
-};
+  path: '/shipping',
+});
 
 export default function ShippingReturnsPage() {
   return (

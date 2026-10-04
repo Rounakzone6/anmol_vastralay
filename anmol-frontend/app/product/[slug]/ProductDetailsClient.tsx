@@ -39,7 +39,15 @@ function ProductDetailSkeleton() {
 /* ──────────────────────────────────────────────────────
    Main Page
 ────────────────────────────────────────────────────── */
-export default function ProductDetailsPage({ initialProduct }: { initialProduct: any }) {
+export default function ProductDetailsPage({ 
+  initialProduct,
+  initialReviewStats,
+  initialSuggestedProducts = []
+}: { 
+  initialProduct: any;
+  initialReviewStats?: any;
+  initialSuggestedProducts?: any[];
+}) {
   const slug = initialProduct.slug;
   const { isAuthenticated } = useAuth();
   const router = useRouter();
@@ -70,19 +78,20 @@ export default function ProductDetailsPage({ initialProduct }: { initialProduct:
   
   const { data: reviewStats, refetch: refetchStats } = trpc.review.stats.useQuery(
     { productId: displayProduct?.id || '' },
-    { enabled: !!displayProduct?.id }
+    { enabled: !!displayProduct?.id, initialData: initialReviewStats }
   );
 
-  // Suggested products (same category)
   const { data: suggestedData } = trpc.product.list.useQuery(
     {
       pageSize: 6,
       includeInactive: false,
       categorySlug: displayProduct?.category?.slug || undefined,
     },
-    { enabled: !!displayProduct?.category?.slug }
+    { 
+      enabled: !!displayProduct?.category?.slug && initialSuggestedProducts.length === 0,
+    }
   );
-  const suggestedProducts = (suggestedData?.items || []).filter(
+  const suggestedProducts = initialSuggestedProducts.length > 0 ? initialSuggestedProducts : (suggestedData?.items || []).filter(
     (p) => p.id !== displayProduct?.id
   ).slice(0, 4);
 

@@ -67,6 +67,7 @@ export default function HeroSlider({ initialBanners = [] }: { initialBanners?: a
               src={banner.imageUrl}
               alt={banner.title}
               fill
+              sizes="100vw"
               loading={index === 0 ? 'eager' : 'lazy'}
               fetchPriority={index === 0 ? 'high' : 'auto'}
               className="absolute inset-0 h-full w-full object-cover object-center"
@@ -74,9 +75,15 @@ export default function HeroSlider({ initialBanners = [] }: { initialBanners?: a
             <div className="absolute inset-0 z-10 bg-linear-to-r from-black/65 via-black/20 to-transparent"></div>
             <div className="relative z-20 flex h-full items-end px-5 pb-14 sm:items-center sm:px-10 sm:pb-0 lg:px-20">
               <div className="w-full max-w-xl rounded-xl border border-white/20 bg-black/35 p-5 shadow-xl backdrop-blur-md sm:rounded-2xl sm:p-8">
-                <h2 className="mb-2 text-2xl font-bold leading-tight tracking-tight text-white drop-shadow-md sm:mb-4 sm:text-4xl lg:text-5xl">
-                  {banner.title}
-                </h2>
+                {index === 0 ? (
+                  <h1 className="mb-2 text-2xl font-bold leading-tight tracking-tight text-white drop-shadow-md sm:mb-4 sm:text-4xl lg:text-5xl">
+                    {banner.title}
+                  </h1>
+                ) : (
+                  <h2 className="mb-2 text-2xl font-bold leading-tight tracking-tight text-white drop-shadow-md sm:mb-4 sm:text-4xl lg:text-5xl">
+                    {banner.title}
+                  </h2>
+                )}
                 <p className="mb-5 max-w-lg text-sm leading-relaxed text-gray-100 drop-shadow-md sm:mb-8 sm:text-lg lg:text-xl">
                   {banner.subtitle}
                 </p>
