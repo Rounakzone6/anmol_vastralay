@@ -1,32 +1,28 @@
 import { NextResponse } from 'next/server';
+import { SITE_URL } from '@/lib/seo';
 
 const STATIC_ROUTES = [
   '/',
   '/about',
   '/collections',
-  '/cart',
   '/contact',
   '/faq',
   '/privacy',
   '/terms',
-  '/login',
-  '/register',
-  '/checkout',
-  '/profile',
   '/shipping',
 ];
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const baseUrl = SITE_URL;
 
   let productUrls: string[] = [];
   try {
     const api = process.env.NEXT_PUBLIC_API_URL;
     if (api) {
-      const res = await fetch(`${api}/product.list?input=${encodeURIComponent(JSON.stringify({ pageSize: 1000 }))}`);
+      const res = await fetch(`${api}/product.list?input=${encodeURIComponent(JSON.stringify({ json: { pageSize: 100 } }))}`);
       if (res.ok) {
         const data = await res.json();
-        const products = data?.result?.data?.items || [];
+        const products = data?.result?.data?.json?.items || data?.result?.data?.items || [];
         productUrls = products.map((p: any) => `/product/${p.slug || p.id}`);
       }
     }

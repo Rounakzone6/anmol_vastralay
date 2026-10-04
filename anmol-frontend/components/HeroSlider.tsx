@@ -5,12 +5,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import { trpc } from '@/lib/trpc';
 
-export default function HeroSlider() {
+export default function HeroSlider({ initialBanners = [] }: { initialBanners?: any[] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const { data: banners, isLoading } = trpc.banner.getBanners.useQuery({
     placement: 'HERO',
-  });
+  }, { initialData: initialBanners.length ? initialBanners : undefined });
 
   useEffect(() => {
     if (!banners || banners.length === 0) return;

@@ -5,7 +5,7 @@ import { trpc } from '@/lib/trpc';
 import { ShoppingBag, ChevronRight } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 
-export default function LatestArrivals() {
+export default function LatestArrivals({ initialProducts = [] }: { initialProducts?: any[] }) {
   const {
     data: productsData,
     isLoading,
@@ -13,7 +13,7 @@ export default function LatestArrivals() {
   } = trpc.product.list.useQuery({
     pageSize: 8,
     includeInactive: false,
-  });
+  }, { initialData: initialProducts.length ? { items: initialProducts, total: initialProducts.length, page: 1, pageSize: 8, totalPages: 1 } : undefined });
 
   const products = productsData?.items || [];
 

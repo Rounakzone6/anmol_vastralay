@@ -22,14 +22,15 @@ interface CategorySectionProps {
   title: string;
   slug: string;
   viewAllLink?: string;
+  initialProducts?: any[];
 }
 
-export default function CategorySection({ title, slug, viewAllLink }: CategorySectionProps) {
+export default function CategorySection({ title, slug, viewAllLink, initialProducts = [] }: CategorySectionProps) {
   const { data: productsData, isLoading, error } = trpc.product.list.useQuery({
     categorySlug: slug,
     pageSize: 4, // Show top 4 items
     includeInactive: false
-  });
+  }, { initialData: initialProducts.length ? { items: initialProducts, total: initialProducts.length, page: 1, pageSize: 4, totalPages: 1 } : undefined });
 
   const products = productsData?.items || [];
 

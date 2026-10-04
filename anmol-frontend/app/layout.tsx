@@ -4,21 +4,22 @@ import { Providers } from '@/app/providers';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ChatbotWidget from '@/components/ChatbotWidget';
+import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_NAME, SITE_URL, jsonLd, organizationJsonLd } from '@/lib/seo';
 
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(SITE_URL),
   title: {
-    template: '%s | Anmol Vastralay',
-    default: 'Anmol Vastralay - Premium Ethnic & Western Fashion',
+    template: `%s | ${SITE_NAME}`,
+    default: DEFAULT_TITLE,
   },
-  description: 'Your one-stop destination for premium ethnic wear, western fashion, and authentic traditional clothing in India.',
-  keywords: ['Anmol Vastralay', 'ethnic wear', 'sarees', 'kurtis', 'jeans', 'mens shirts', 'fashion', 'Gopalganj clothing store'],
+  description: DEFAULT_DESCRIPTION,
+  alternates: { canonical: SITE_URL },
   openGraph: {
-    title: 'Anmol Vastralay',
-    description: 'Premium ethnic wear and modern fashion for everyone.',
-    url: 'https://anmolvastralay.com',
-    siteName: 'Anmol Vastralay',
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    url: SITE_URL,
+    siteName: SITE_NAME,
     images: [
       {
         url: '/category-icons/cat_saree_1781796874870.png',
@@ -53,17 +54,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          "name": "Anmol Vastralay",
-          "url": process.env.NEXT_PUBLIC_SITE_URL || 'https://anmolvastralay.com',
-          "logo": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://anmolvastralay.com'}/vercel.svg`,
-          "sameAs": [
-            "https://www.facebook.com/",
-            "https://www.instagram.com/"
-          ]
-        }) }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLd(organizationJsonLd) }}
+        />
         <Providers>
           <Navbar />
           <main className="min-h-screen">

@@ -1,6 +1,7 @@
+import { SITE_URL } from '@/lib/seo';
+
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  const content = `User-agent: *\nAllow: /\nSitemap: ${baseUrl}/sitemap.xml\n`;
+  const content = `User-agent: *\nAllow: /\nDisallow: /cart\nDisallow: /checkout\nDisallow: /profile\nDisallow: /orders\nDisallow: /wishlist\nDisallow: /login\nDisallow: /register\nDisallow: /chatbot\nDisallow: /*?search=\nDisallow: /*?*category=\nSitemap: ${SITE_URL}/sitemap.xml\n`;
   return new Response(content, {
     status: 200,
     headers: { 'Content-Type': 'text/plain' },
