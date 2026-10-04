@@ -42,7 +42,7 @@ export default function CategorySection({ title, slug, viewAllLink, initialProdu
           <span className="absolute -bottom-2 left-0 w-1/2 h-1 bg-[#85142b] rounded-full"></span>
         </h2>
         <Link 
-          href={viewAllLink || `/collections?category=${slug}`} 
+          href={viewAllLink || `/collections/${slug}`} 
           className="text-sm font-medium text-[#85142b] hover:text-[#6c1023] hover:underline"
         >
           View All {title} &rarr;

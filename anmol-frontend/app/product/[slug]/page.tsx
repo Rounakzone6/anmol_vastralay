@@ -8,10 +8,14 @@ type Product = {
   name: string;
   slug: string;
   brand?: string | null;
+  description?: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
   netPrice: number | string;
   discountPercent?: number | string;
   images?: { url: string }[];
   category?: { name: string; slug: string } | null;
+  subcategory?: { name: string; slug: string } | null;
   variants?: unknown[];
 };
 
@@ -20,8 +24,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const product = await fetchPublicTrpc<Product>('product.getBySlug', { slug });
   if (!product) return { title: 'Product not found', robots: { index: false, follow: false } };
   return pageMetadata({
-    title: `${product.name}${product.brand ? ` by ${product.brand}` : ''}`,
-    description: `Shop ${product.name} from Anmol Vastralay. Explore quality fashion with delivery across India.`,
+    title: product.metaTitle || `${product.name}${product.brand ? ` by ${product.brand}` : ''}`,
+    description: product.metaDescription || product.description || `Shop ${product.name} from Anmol Vastralay. Explore quality fashion with delivery across India.`,
     path: `/product/${product.slug}`,
     image: product.images?.[0]?.url,
   });
@@ -49,9 +53,26 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     },
   };
 
+  const breadcrumbs = [
+    { name: 'Home', item: '/' },
+  ];
+  if (product.category) breadcrumbs.push({ name: product.category.name, item: `/collections/${product.category.slug}` });
+  if (product.category && product.subcategory) breadcrumbs.push({ name: product.subcategory.name, item: `/collections/${product.category.slug}/${product.subcategory.slug}` });
+  breadcrumbs.push({ name: product.name, item: `/product/${product.slug}` });
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(productJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd({
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: breadcrumbs.map((crumb, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: crumb.name,
+          item: absoluteUrl(crumb.item),
+        })),
+      }) }} />
       <ProductDetailsClient initialProduct={product} />
     </>
   );

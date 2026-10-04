@@ -48,7 +48,7 @@ export default function CategoryNav() {
           {categories.map((cat: any) => (
             <Link 
               key={cat.id} 
-              href={`/collections?category=${cat.slug}`}
+              href={`/collections/${cat.slug}`}
               className="flex flex-col items-center flex-shrink-0 group w-16 sm:w-20"
             >
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#f8f8f8] flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg relative">

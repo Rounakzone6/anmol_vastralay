@@ -4,8 +4,15 @@ import LatestArrivals from '@/components/LatestArrivals';
 import CategorySection from '@/components/CategorySection';
 import CategoryBanner from '@/components/CategoryBanner';
 import { fetchPublicTrpc } from '@/lib/server-data';
+import { pageMetadata } from '@/lib/seo';
 
 type ProductList = { items: any[] };
+
+export const metadata = pageMetadata({
+  title: 'Anmol Vastralay | Premium Ethnic & Western Fashion in India',
+  description: 'Shop premium ethnic wear, western fashion and everyday styles from Anmol Vastralay, Gopalganj, Bihar. Discover sarees, kurtis, jeans, and more.',
+  path: '/',
+});
 
 export default async function Home() {
   const [banners, latest, sarees, women, men, kids, innerwear] = await Promise.all([
@@ -25,7 +32,9 @@ export default async function Home() {
         <HeroSlider initialBanners={banners || []} />
       </header>
       <main>
-        <h1 className="sr-only">Premium ethnic and western fashion in India</h1>
+        <div className="sr-only">
+          <h1>Anmol Vastralay - Premium Ethnic & Western Fashion for Every Occasion</h1>
+        </div>
         <LatestArrivals initialProducts={latest?.items || []} />
         <CategoryBanner title="Premium Sarees" slug="saree" />
         <CategorySection title="Top Picks for Sarees" slug="saree" initialProducts={sarees?.items || []} />

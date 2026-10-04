@@ -8,13 +8,13 @@ import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_NAME, SITE_URL, jsonLd, organi
 
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || SITE_URL),
   title: {
     template: `%s | ${SITE_NAME}`,
     default: DEFAULT_TITLE,
   },
   description: DEFAULT_DESCRIPTION,
-  alternates: { canonical: SITE_URL },
+  alternates: { canonical: '/' },
   openGraph: {
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
+    apple: '/logo.png',
   },
   robots: {
     index: true,

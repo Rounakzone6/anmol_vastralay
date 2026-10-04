@@ -50,7 +50,7 @@ export default function CategoryBanner({ title, slug }: CategoryBannerProps) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-20 mb-4">
-      <Link href={`/collections?category=${slug}`} className="group block relative overflow-hidden rounded-3xl h-[250px] sm:h-[300px] shadow-lg hover:shadow-2xl transition-all duration-300">
+      <Link href={`/collections/${slug}`} className="group block relative overflow-hidden rounded-3xl h-[250px] sm:h-[300px] shadow-lg hover:shadow-2xl transition-all duration-300">
         
         {/* Full Image Background (if available) */}
         {details.bgImage ? (

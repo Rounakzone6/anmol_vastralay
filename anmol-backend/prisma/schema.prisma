@@ -72,6 +72,8 @@ model Category {
   name        String
   slug        String    @unique
   description String?
+  metaTitle   String?
+  metaDescription String?
   imageUrl    String?
   isActive    Boolean   @default(true)
   sortOrder   Int       @default(0)
@@ -86,6 +88,8 @@ model Subcategory {
   name        String
   slug        String     @unique
   description String?
+  metaTitle   String?
+  metaDescription String?
   isActive    Boolean    @default(true)
   categoryId  String
   category    Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
@@ -101,6 +105,8 @@ model ItemType {
   name          String
   slug          String      @unique
   description   String?
+  metaTitle     String?
+  metaDescription String?
   isActive      Boolean     @default(true)
   subcategoryId String
   subcategory   Subcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
@@ -114,6 +120,9 @@ model Product {
   id              String           @id @default(cuid())
   name            String
   slug            String           @unique
+  description     String?          @db.Text
+  metaTitle       String?
+  metaDescription String?
   brand           String?
   categoryId      String
   category        Category         @relation(fields: [categoryId], references: [id])
@@ -143,6 +152,7 @@ model ProductImage {
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   url       String
   publicId  String?
+  altText   String?
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
 }

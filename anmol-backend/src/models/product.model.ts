@@ -22,6 +22,9 @@ export const productBaseSchema = z.object({
   categoryId: z.string(),
   subcategoryId: z.string().optional().nullable(),
   itemTypeId: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  metaTitle: z.string().optional().nullable(),
+  metaDescription: z.string().optional().nullable(),
   kind: z.nativeEnum(ProductKind),
   netPrice: z.number().positive(),
   discountPercent: z.number().min(0).max(100).default(0),
@@ -33,6 +36,7 @@ export const productBaseSchema = z.object({
       z.object({
         url: z.string().url(),
         publicId: z.string().optional(),
+        altText: z.string().optional().nullable(),
         sortOrder: z.number().int().optional(),
       }),
     )
@@ -93,6 +97,7 @@ export const AddImageSchema = z.object({
   productId: z.string(),
   url: z.string().url(),
   publicId: z.string().optional(),
+  altText: z.string().optional().nullable(),
   sortOrder: z.number().int().optional(),
 });
 
@@ -133,6 +138,9 @@ export function mapProduct(product: ProductWithRelations) {
     ...priced,
     extraSayaPrice,
     allowsExtraSaya: product.allowsExtraSaya,
+    description: product.description,
+    metaTitle: product.metaTitle,
+    metaDescription: product.metaDescription,
     images: product.images.sort((a, b) => a.sortOrder - b.sortOrder),
     variants: product.variants.map(mapVariant),
     category: product.category,

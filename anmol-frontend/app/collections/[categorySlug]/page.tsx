@@ -7,22 +7,22 @@ import { pageMetadata } from '@/lib/seo';
 type Category = { name: string; slug: string; description?: string | null };
 type ProductList = { items: any[]; total: number };
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const category = await fetchPublicTrpc<Category>('category.getBySlug', { slug });
+export async function generateMetadata({ params }: { params: Promise<{ categorySlug: string }> }) {
+  const { categorySlug } = await params;
+  const category = await fetchPublicTrpc<Category>('category.getBySlug', { slug: categorySlug });
   if (!category) return { title: 'Category not found', robots: { index: false, follow: false } };
   return pageMetadata({
-    title: `${category.name} Collection`,
-    description: category.description || `Explore the latest ${category.name.toLowerCase()} styles at Anmol Vastralay.`,
-    path: `/category/${category.slug}`,
+    title: category.metaTitle || `${category.name} Collection`,
+    description: category.metaDescription || category.description || `Explore the latest ${category.name.toLowerCase()} styles at Anmol Vastralay.`,
+    path: `/collections/${category.slug}`,
   });
 }
 
-export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const category = await fetchPublicTrpc<Category>('category.getBySlug', { slug });
+export default async function CategoryPage({ params }: { params: Promise<{ categorySlug: string }> }) {
+  const { categorySlug } = await params;
+  const category = await fetchPublicTrpc<Category>('category.getBySlug', { slug: categorySlug });
   if (!category) notFound();
-  const products = await fetchPublicTrpc<ProductList>('product.list', { categorySlug: slug, pageSize: 30, includeInactive: false });
+  const products = await fetchPublicTrpc<ProductList>('product.list', { categorySlug, pageSize: 30, includeInactive: false });
   return (
     <main className="min-h-screen bg-[#faf9f7] py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

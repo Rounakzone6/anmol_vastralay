@@ -7,6 +7,7 @@ export const DEFAULT_DESCRIPTION =
   'Shop premium ethnic wear, western fashion and everyday styles from Anmol Vastralay, Gopalganj, Bihar.';
 
 export function absoluteUrl(path = '/') {
+  if (path.startsWith('http')) return path;
   return new URL(path, `${SITE_URL}/`).toString();
 }
 
@@ -15,6 +16,7 @@ export function pageMetadata(input: {
   description: string;
   path: string;
   image?: string;
+  noindex?: boolean;
 }): Metadata {
   const image = input.image ? absoluteUrl(input.image) : absoluteUrl('/og-image.png');
   return {
@@ -31,27 +33,47 @@ export function pageMetadata(input: {
       images: [{ url: image, width: 1200, height: 630, alt: input.title }],
     },
     twitter: { card: 'summary_large_image', title: input.title, description: input.description, images: [image] },
+    ...(input.noindex ? { robots: { index: false, follow: false } } : {}),
   };
 }
 
 export const organizationJsonLd = {
   '@context': 'https://schema.org',
-  '@type': ['ClothingStore', 'LocalBusiness'],
+  '@type': ['ClothingStore', 'LocalBusiness', 'Organization'],
   name: SITE_NAME,
   url: SITE_URL,
   logo: absoluteUrl('/logo.png'),
   image: absoluteUrl('/og-image.png'),
-  telephone: '+91-9430490696',
-  email: 'anmolvastralay@gmail.com',
+  telephone: '+91-9102171696',
+  email: 'anmolvastralayofficial@gmail.com',
   address: {
     '@type': 'PostalAddress',
+    streetAddress: 'Baliwan Sagar, Kuchaikote',
     addressLocality: 'Gopalganj',
     addressRegion: 'Bihar',
-    postalCode: '841428',
+    postalCode: '841501',
     addressCountry: 'IN',
   },
+  sameAs: [
+    'https://www.facebook.com/share/18k6EaEqDK/',
+    'https://www.instagram.com/anmol_vastralay',
+    'https://www.youtube.com/@anmol_vastralay'
+  ]
 };
 
 export function jsonLd(value: unknown) {
   return JSON.stringify(value).replace(/</g, '\\u003c');
+}
+
+export function breadcrumbJsonLd(items: { name: string; item: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((breadcrumb, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: breadcrumb.name,
+      item: absoluteUrl(breadcrumb.item),
+    })),
+  };
 }

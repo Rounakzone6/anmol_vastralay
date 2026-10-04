@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { trpc } from '@/lib/trpc';
 
 export default function HeroSlider({ initialBanners = [] }: { initialBanners?: any[] }) {
@@ -79,9 +80,15 @@ export default function HeroSlider({ initialBanners = [] }: { initialBanners?: a
                 <p className="mb-5 max-w-lg text-sm leading-relaxed text-gray-100 drop-shadow-md sm:mb-8 sm:text-lg lg:text-xl">
                   {banner.subtitle}
                 </p>
-                <button className="rounded-md bg-[#85142b] px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#6c1023] sm:px-8 sm:py-3 sm:text-base">
-                  {banner.buttonText || 'Shop Now'}
-                </button>
+                {banner.linkUrl ? (
+                  <Link href={banner.linkUrl} className="inline-block rounded-md bg-[#85142b] px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#6c1023] sm:px-8 sm:py-3 sm:text-base">
+                    {banner.buttonText || 'Shop Now'}
+                  </Link>
+                ) : (
+                  <span className="inline-block rounded-md bg-[#85142b] px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#6c1023] sm:px-8 sm:py-3 sm:text-base">
+                    {banner.buttonText || 'Shop Now'}
+                  </span>
+                )}
               </div>
             </div>
           </div>
