@@ -70,10 +70,10 @@ export default function ChatbotWidget() {
   return (
     <>
       {/* Floating Button */}
-      <div className="fixed bottom-6 right-6 z-[100]">
+      <div className="fixed bottom-6 right-6 z-100">
         {/* Tooltip Attract Mode */}
         {!isOpen && showTooltip && (
-          <div className="absolute bottom-[4.5rem] right-0 mr-2 mb-2 animate-bounce">
+          <div className="absolute bottom-18 right-0 mr-2 mb-2 animate-bounce">
             <div className="bg-white text-gray-800 text-sm font-medium py-2 px-4 rounded-xl shadow-lg border border-gray-100 flex items-center gap-2 relative whitespace-nowrap">
               <span>👋 Need help? Chat with us!</span>
               <button 
@@ -113,7 +113,7 @@ export default function ChatbotWidget() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-[350px] sm:w-[400px] h-[500px] max-h-[calc(100vh-120px)] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.15)] border border-gray-200 flex flex-col z-[100] overflow-hidden transform transition-all duration-300 origin-bottom-right">
+        <div className="fixed bottom-24 right-6 w-87.5 sm:w-100 h-125 max-h-[calc(100vh-120px)] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.15)] border border-gray-200 flex flex-col z-100 overflow-hidden transform transition-all duration-300 origin-bottom-right">
           
           {/* Header */}
           <div className="bg-[#85142b] p-4 flex items-center shadow-md">

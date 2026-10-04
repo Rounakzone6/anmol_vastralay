@@ -73,7 +73,7 @@ export default function ChatbotPage() {
         </div>
 
         {/* Chat Interface */}
-        <div className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden flex flex-col h-[600px] max-h-[70vh]">
+        <div className="bg-white rounded-4xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden flex flex-col h-150 max-h-[70vh]">
           
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">

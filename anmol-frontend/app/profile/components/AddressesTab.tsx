@@ -62,7 +62,7 @@ export function AddressesTab() {
                 </span>
               )}
               <div className="flex items-start gap-3 mb-3">
-                <div className="h-8 w-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="h-8 w-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 mt-0.5">
                   <MapPin size={14} className="text-gray-500" />
                 </div>
                 <div>
