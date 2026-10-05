@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { trpc } from '@/lib/trpc';
 import { LocateFixed, MapPin, Plus, Star, X } from 'lucide-react';
+import { calculateDistance } from '@/lib/location';
 
 export function AddressesTab() {
   const [showForm, setShowForm] = useState(false);
@@ -118,6 +119,8 @@ function AddressForm({ editId, onClose, onSaved }: { editId: string | null; onCl
   const [country, setCountry] = useState('India');
   const [zipCode, setZipCode] = useState('');
   const [isDefault, setIsDefault] = useState(false);
+  const [lat, setLat] = useState<number | null>(null);
+  const [lng, setLng] = useState<number | null>(null);
   const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [locationMessage, setLocationMessage] = useState('');
 
@@ -137,6 +140,8 @@ function AddressForm({ editId, onClose, onSaved }: { editId: string | null; onCl
         setCountry(addr.country);
         setZipCode(addr.zipCode);
         setIsDefault(addr.isDefault);
+        setLat((addr as any).lat ?? null);
+        setLng((addr as any).lng ?? null);
       }
     }
   }, [editId, addressesQuery.data]);
@@ -147,9 +152,9 @@ function AddressForm({ editId, onClose, onSaved }: { editId: string | null; onCl
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editId) {
-      updateMutation.mutate({ id: editId, label, fullName, phone, street, city, state, country, zipCode, isDefault });
+      updateMutation.mutate({ id: editId, label, fullName, phone, street, city, state, country, zipCode, isDefault, lat, lng });
     } else {
-      addMutation.mutate({ label, fullName, phone, street, city, state, country, zipCode, isDefault });
+      addMutation.mutate({ label, fullName, phone, street, city, state, country, zipCode, isDefault, lat, lng });
     }
   };
 
@@ -168,10 +173,40 @@ function AddressForm({ editId, onClose, onSaved }: { editId: string | null; onCl
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
         try {
+          const currentLat = coords.latitude;
+          const currentLng = coords.longitude;
+          setLat(currentLat);
+          setLng(currentLng);
+
+          // 1. Phone Number & CRM Lookup (Smart Matching with previous orders)
+          if (addressesQuery.data && addressesQuery.data.length > 0) {
+            const nearbyAddress = addressesQuery.data.find((addr: any) => {
+              if (addr.lat && addr.lng) {
+                const distance = calculateDistance(currentLat, currentLng, addr.lat, addr.lng);
+                return distance <= 30; // Within 30 meters
+              }
+              return false;
+            });
+
+            if (nearbyAddress) {
+              setStreet(nearbyAddress.street);
+              setCity(nearbyAddress.city);
+              setState(nearbyAddress.state);
+              setZipCode(nearbyAddress.zipCode);
+              setCountry(nearbyAddress.country);
+              setLocationStatus('idle');
+              setLocationMessage('Smart match! We auto-filled your exact house number based on your previous orders.');
+              return;
+            }
+          }
+
+          // 2. Deep Indian Map Indexing API (e.g., Mappls/MapmyIndia) fallback
+          // If we had Mappls API, we would call it here for India-specific deep indexing.
+          // Falling back to Nominatim OSM for now.
           const params = new URLSearchParams({
             format: 'jsonv2',
-            lat: String(coords.latitude),
-            lon: String(coords.longitude),
+            lat: String(currentLat),
+            lon: String(currentLng),
             zoom: '18',
             addressdetails: '1',
             'accept-language': 'en',

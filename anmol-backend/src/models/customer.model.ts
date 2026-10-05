@@ -19,6 +19,8 @@ export const AddAddressSchema = z.object({
   state: z.string().min(1),
   country: z.string().min(1),
   zipCode: z.string().min(1),
+  lat: z.number().optional().nullable(),
+  lng: z.number().optional().nullable(),
   isDefault: z.boolean().optional(),
 });
 
@@ -32,6 +34,8 @@ export const UpdateAddressSchema = z.object({
   state: z.string().optional(),
   country: z.string().optional(),
   zipCode: z.string().optional(),
+  lat: z.number().optional().nullable(),
+  lng: z.number().optional().nullable(),
   isDefault: z.boolean().optional(),
 });
 
