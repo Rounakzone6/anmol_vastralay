@@ -42,7 +42,7 @@ function toModelMessages(messages: unknown): ModelMessage[] {
     throw new Error('messages must be an array');
   }
 
-  return messages.map((message) => {
+  const modelMessages: ModelMessage[] = messages.map((message) => {
     if (!message || typeof message !== 'object') {
       throw new Error('Invalid message');
     }
@@ -68,6 +68,11 @@ function toModelMessages(messages: unknown): ModelMessage[] {
     }
     throw new Error('Message content is required');
   });
+
+  // The UI starts with a local welcome message. Gemini conversations must
+  // begin with a user turn, so omit only assistant/system messages before it.
+  const firstUserIndex = modelMessages.findIndex((message) => message.role === 'user');
+  return firstUserIndex > 0 ? modelMessages.slice(firstUserIndex) : modelMessages;
 }
 
 export async function createChatResponse(

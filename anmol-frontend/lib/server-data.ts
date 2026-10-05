@@ -2,7 +2,7 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/trpc';
 
 export async function fetchPublicTrpc<T>(procedure: string, input?: unknown): Promise<T | null> {
   try {
-    const query = input === undefined ? '' : `?input=${encodeURIComponent(JSON.stringify({ json: input }))}`;
+    const query = input === undefined ? '' : `?input=${encodeURIComponent(JSON.stringify(input))}`;
     const response = await fetch(`${apiUrl}/${procedure}${query}`, {
       next: { revalidate: 300 },
     });

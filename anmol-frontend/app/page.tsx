@@ -15,16 +15,21 @@ export const metadata = pageMetadata({
 });
 
 export default async function Home() {
-  const [banners, latest, sarees, women, men, kids, innerwear, categories] = await Promise.all([
+  const [banners, latest, allProducts, categories] = await Promise.all([
     fetchPublicTrpc<any[]>('banner.getBanners', { placement: 'HERO' }),
     fetchPublicTrpc<ProductList>('product.list', { pageSize: 8, includeInactive: false }),
-    fetchPublicTrpc<ProductList>('product.list', { pageSize: 4, categorySlug: 'saree', includeInactive: false }),
-    fetchPublicTrpc<ProductList>('product.list', { pageSize: 4, categorySlug: 'women', includeInactive: false }),
-    fetchPublicTrpc<ProductList>('product.list', { pageSize: 4, categorySlug: 'men', includeInactive: false }),
-    fetchPublicTrpc<ProductList>('product.list', { pageSize: 4, categorySlug: 'kids', includeInactive: false }),
-    fetchPublicTrpc<ProductList>('product.list', { pageSize: 4, categorySlug: 'innerwear', includeInactive: false }),
+    fetchPublicTrpc<ProductList>('product.list', { pageSize: 100, includeInactive: false }),
     fetchPublicTrpc<any[]>('category.list', { includeInactive: false }),
   ]);
+
+  const productsByCategory = new Map<string, any[]>();
+  for (const product of allProducts?.items || []) {
+    const categoryId = product.category?.id || product.categoryId;
+    if (!categoryId) continue;
+    const products = productsByCategory.get(categoryId) || [];
+    if (products.length < 4) products.push(product);
+    productsByCategory.set(categoryId, products);
+  }
 
   const websiteJsonLd = {
     '@context': 'https://schema.org',
@@ -45,16 +50,21 @@ export default async function Home() {
         <HeroSlider initialBanners={banners || []} />
       </header>
       <LatestArrivals initialProducts={latest?.items || []} />
-      <CategoryBanner title="Premium Sarees" slug="saree" />
-      <CategorySection title="Top Picks for Sarees" slug="saree" initialProducts={sarees?.items || []} />
-      <CategoryBanner title="Women's Collection" slug="women" />
-      <CategorySection title="Latest in Women's Fashion" slug="women" initialProducts={women?.items || []} />
-      <CategoryBanner title="Men's Collection" slug="men" />
-      <CategorySection title="Trending in Men's Wear" slug="men" initialProducts={men?.items || []} />
-      <CategoryBanner title="Kidswear" slug="kids" />
-      <CategorySection title="Adorable Kids Fashion" slug="kids" initialProducts={kids?.items || []} />
-      <CategoryBanner title="Innerwear Essentials" slug="innerwear" />
-      <CategorySection title="Comfortable Innerwear" slug="innerwear" initialProducts={innerwear?.items || []} />
+      {(categories || []).map((category: any) => {
+        const categoryProducts = productsByCategory.get(category.id) || [];
+        if (categoryProducts.length === 0) return null;
+
+        return (
+          <section key={category.id}>
+            <CategoryBanner title={category.name} slug={category.slug} />
+            <CategorySection
+              title={`Latest ${category.name}`}
+              slug={category.slug}
+              initialProducts={categoryProducts}
+            />
+          </section>
+        );
+      })}
     </div>
   );
 }

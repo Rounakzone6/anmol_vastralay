@@ -19,6 +19,9 @@ export default function DashboardPage() {
   const { data: payments } = trpc.payment.adminGetPayments.useQuery(undefined, {
     retry: false,
   });
+  const { data: orders } = trpc.order.adminGetOrders.useQuery(undefined, {
+    retry: false,
+  });
 
   const activeProducts = products?.items.filter((p: { isActive: boolean }) => p.isActive).length ?? 0;
   const lowStock =
@@ -42,7 +45,13 @@ export default function DashboardPage() {
         totalOnlineAmount={totalOnlineAmount}
       />
 
-      <DashboardCharts />
+      <DashboardCharts
+        orders={orders}
+        payments={payments}
+        categories={categories}
+        products={products?.items}
+        customers={customers}
+      />
 
       <RecentProductsList products={products} />
 

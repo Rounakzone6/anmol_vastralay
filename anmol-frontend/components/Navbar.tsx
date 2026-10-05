@@ -27,7 +27,7 @@ const ProfileAvatar = ({ size = 36, profileImg, displayName, initials }: { size?
   )
 );
 
-const Navbar = ({ categories = [] }: { categories?: { name: string; slug: string }[] }) => {
+const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { isAuthenticated, user, logout } = useAuth();
@@ -83,11 +83,9 @@ const Navbar = ({ categories = [] }: { categories?: { name: string; slug: string
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white shadow-sm">
       {/* Top Banner */}
-      <div className="bg-[#0f172a] py-1.5 text-center text-xs font-medium text-white">
-        ✨ अनमोल वस्त्रालय में आपका स्वागत है! Free Delivery on orders above ₹999 ✨
-      </div>
+      <div className="h-2 bg-[#091827]" />
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between gap-4">
           
           {/* Logo Section */}
@@ -117,12 +115,8 @@ const Navbar = ({ categories = [] }: { categories?: { name: string; slug: string
           {/* Desktop Nav Links */}
           <div className="hidden lg:flex items-center space-x-6 mx-4 font-medium text-sm text-gray-700">
             <Link href="/" className="hover:text-[#85142b] transition-colors">Home</Link>
-            {categories.slice(0, 4).map((cat) => (
-              <Link key={cat.slug} href={`/collections/${cat.slug}`} className="hover:text-[#85142b] transition-colors">
-                {cat.name}
-              </Link>
-            ))}
-            <Link href="/collections" className="hover:text-[#85142b] transition-colors">All Collections</Link>
+            <Link href="/collections" className="hover:text-[#85142b] transition-colors">Collections</Link>
+            <Link href="/about" className="hover:text-[#85142b] transition-colors">About</Link>
           </div>
 
           {/* Desktop Search Bar */}
@@ -294,12 +288,9 @@ const Navbar = ({ categories = [] }: { categories?: { name: string; slug: string
       {isOpen && (
         <div className="border-t border-gray-200 bg-white px-4 py-3 shadow-inner md:hidden">
           <div className="space-y-3 font-medium text-gray-700">
-            {categories.map((cat) => (
-              <Link key={cat.slug} href={`/collections/${cat.slug}`} className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">
-                {cat.name}
-              </Link>
-            ))}
-            <Link href="/collections" className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">All Collections</Link>
+            <Link href="/" onClick={() => setIsOpen(false)} className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Home</Link>
+            <Link href="/collections" onClick={() => setIsOpen(false)} className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Collections</Link>
+            <Link href="/about" onClick={() => setIsOpen(false)} className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">About</Link>
             <hr className="border-gray-200" />
             {isClient && isAuthenticated ? (
               <>

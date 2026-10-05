@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import {
   AreaChart,
   Area,
@@ -13,59 +14,102 @@ import {
   Cell,
   BarChart,
   Bar,
-  Legend
+  ScatterChart,
+  Scatter,
+  ZAxis,
 } from 'recharts';
 import { Card } from '@/components/ui';
-import { ArrowRightLeft, RefreshCcw } from 'lucide-react';
+import { ArrowRightLeft, RefreshCcw, Users, TrendingUp } from 'lucide-react';
+import { format, subDays, isSameDay } from 'date-fns';
 
-const mockSalesData = [
-  { name: 'Mon', sales: 4000 },
-  { name: 'Tue', sales: 3000 },
-  { name: 'Wed', sales: 5000 },
-  { name: 'Thu', sales: 2780 },
-  { name: 'Fri', sales: 6890 },
-  { name: 'Sat', sales: 8390 },
-  { name: 'Sun', sales: 7490 },
-];
-
-const mockCategoryData = [
-  { name: 'Silk Sarees', value: 400 },
-  { name: 'Cotton Sarees', value: 300 },
-  { name: 'Banarasi', value: 300 },
-  { name: 'Georgette', value: 200 },
-];
-
-const mockPaymentData = [
-  { name: 'Online', value: 75 },
-  { name: 'COD', value: 25 },
-];
-
-const mockReturnsData = [
-  { reason: 'Size Issue', count: 12 },
-  { reason: 'Defective/Damaged', count: 5 },
-  { reason: 'Did not like product', count: 8 },
-  { reason: 'Wrong item sent', count: 2 },
-];
-
-const mockReplacementsLog = [
-  { id: '1', date: '2026-06-20', original: 'Red Banarasi Silk', replacement: 'Blue Banarasi Silk', user: 'Rounak Singh' },
-  { id: '2', date: '2026-06-18', original: 'Cotton Saree - Yellow', replacement: 'Cotton Saree - Green', user: 'Priya Sharma' },
-];
-
-const COLORS = ['#8b5cf6', '#f59e0b', '#ec4899', '#14b8a6'];
+const COLORS = ['#8b5cf6', '#f59e0b', '#ec4899', '#14b8a6', '#ef4444', '#3b82f6'];
 const PAYMENT_COLORS = ['#3b82f6', '#10b981'];
 
-export function DashboardCharts() {
+interface DashboardChartsProps {
+  orders?: any[];
+  payments?: any[];
+  categories?: any[];
+  products?: any[];
+  customers?: any[];
+}
+
+export function DashboardCharts({ orders = [], payments = [], categories = [], products = [], customers = [] }: DashboardChartsProps) {
+  
+  // 1. Sales Data (Last 7 days)
+  const salesData = useMemo(() => {
+    const last7Days = Array.from({ length: 7 }).map((_, i) => {
+      const d = subDays(new Date(), 6 - i);
+      return { date: d, name: format(d, 'EEE'), sales: 0 };
+    });
+
+    orders.forEach(order => {
+      if (order.status !== 'CANCELLED') {
+        const orderDate = new Date(order.createdAt);
+        const dayData = last7Days.find(d => isSameDay(d.date, orderDate));
+        if (dayData) {
+          dayData.sales += Number(order.totalAmount || 0);
+        }
+      }
+    });
+    return last7Days;
+  }, [orders]);
+
+  // 2. Payment Methods Data
+  const paymentData = useMemo(() => {
+    let onlineValue = 0;
+    let codValue = 0;
+
+    payments.forEach(p => {
+      if (p.paymentMethod === 'COD') codValue += Number(p.amount);
+      else onlineValue += Number(p.amount);
+    });
+
+    return [
+      { name: 'Online', value: onlineValue },
+      { name: 'COD', value: codValue },
+    ].filter(d => d.value > 0);
+  }, [payments]);
+
+  // 3. Order Status Distribution (Replacing Returns Analysis)
+  const orderStatusData = useMemo(() => {
+    const statusCounts: Record<string, number> = {};
+    orders.forEach(o => {
+      statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
+    });
+    return Object.entries(statusCounts)
+      .map(([status, count]) => ({ status, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [orders]);
+
+  // 4. Customer & Orders Graph Data
+  const customerStats = useMemo(() => {
+    const stats = new Map();
+    orders.forEach(order => {
+      if (order.status !== 'CANCELLED') {
+        const userStr = order.user?.name || order.user?.phone || 'Guest';
+        if (!stats.has(userStr)) {
+          stats.set(userStr, { name: userStr, totalSpent: 0, orderCount: 0 });
+        }
+        const s = stats.get(userStr);
+        s.totalSpent += Number(order.totalAmount || 0);
+        s.orderCount += 1;
+      }
+    });
+    return Array.from(stats.values())
+      .sort((a, b) => b.totalSpent - a.totalSpent)
+      .slice(0, 10); // top 10 customers
+  }, [orders]);
+
   return (
     <div className="mt-8 mb-12 flex flex-col gap-6">
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Sales Overview Chart */}
         <Card className="p-6 border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-md">
-          <h3 className="text-lg font-bold text-slate-800 mb-6">Sales Overview</h3>
+          <h3 className="text-lg font-bold text-slate-800 mb-6">Sales Overview (Last 7 Days)</h3>
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height={288}>
               <AreaChart
-                data={mockSalesData}
+                data={salesData}
                 margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
               >
                 <defs>
@@ -97,94 +141,104 @@ export function DashboardCharts() {
 
         {/* Payment Methods Chart */}
         <Card className="p-6 border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-md">
-          <h3 className="text-lg font-bold text-slate-800 mb-6">Payment Methods</h3>
+          <h3 className="text-lg font-bold text-slate-800 mb-6">Payment Methods Received</h3>
           <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height={288}>
-              <PieChart>
-                <Pie
-                  data={mockPaymentData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={65}
-                  outerRadius={90}
-                  paddingAngle={5}
-                  dataKey="value"
-                  stroke="none"
-                  label={({ name, percent = 0 }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={{ stroke: '#94a3b8', strokeWidth: 1 }}
-                >
-                  {mockPaymentData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={PAYMENT_COLORS[index % PAYMENT_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  itemStyle={{ color: '#1e293b', fontWeight: 600 }}
-                  formatter={(value: any) => [`${value}%`, 'Share']}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            {paymentData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={288}>
+                <PieChart>
+                  <Pie
+                    data={paymentData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={65}
+                    outerRadius={90}
+                    paddingAngle={5}
+                    dataKey="value"
+                    stroke="none"
+                    label={({ name, percent = 0 }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={{ stroke: '#94a3b8', strokeWidth: 1 }}
+                  >
+                    {paymentData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={PAYMENT_COLORS[index % PAYMENT_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    itemStyle={{ color: '#1e293b', fontWeight: 600 }}
+                    formatter={(value: any) => [`₹${value}`, 'Amount']}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-slate-400">No payment data available</div>
+            )}
           </div>
         </Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Returns Analysis */}
+        {/* Customer vs Orders Insights (Interactive Report) */}
         <Card className="p-6 border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-md">
           <div className="flex items-center gap-2 mb-6">
-            <RefreshCcw className="h-5 w-5 text-rose-500" />
-            <h3 className="text-lg font-bold text-slate-800">Returns Analysis</h3>
+            <Users className="h-5 w-5 text-indigo-500" />
+            <h3 className="text-lg font-bold text-slate-800">Top Customers & Orders</h3>
           </div>
           <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height={256}>
-              <BarChart
-                data={mockReturnsData}
-                layout="vertical"
-                margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                <XAxis type="number" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis dataKey="reason" type="category" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} width={120} />
-                <Tooltip
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  cursor={{ fill: '#f1f5f9' }}
-                />
-                <Bar dataKey="count" fill="#fb7185" radius={[0, 4, 4, 0]} barSize={24} name="Returned Items" />
-              </BarChart>
-            </ResponsiveContainer>
+             {customerStats.length > 0 ? (
+                <ResponsiveContainer width="100%" height={256}>
+                  <ScatterChart margin={{ top: 10, right: 30, bottom: 20, left: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis type="number" dataKey="orderCount" name="Orders" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis type="number" dataKey="totalSpent" name="Spent" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val}`} />
+                    <ZAxis type="category" dataKey="name" name="Customer" />
+                    <Tooltip
+                      cursor={{ strokeDasharray: '3 3' }}
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      formatter={(value: any, name: any) => {
+                         if (name === 'Spent') return [`₹${value}`, name];
+                         return [value, name];
+                      }}
+                    />
+                    <Scatter name="Customers" data={customerStats} fill="#ec4899">
+                      {customerStats.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Scatter>
+                  </ScatterChart>
+                </ResponsiveContainer>
+             ) : (
+                <div className="h-full flex items-center justify-center text-slate-400">No customer data available</div>
+             )}
           </div>
         </Card>
 
-        {/* Replacements Log */}
-        <Card className="p-6 border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-md overflow-hidden flex flex-col">
+        {/* Order Status Distribution */}
+        <Card className="p-6 border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-md">
           <div className="flex items-center gap-2 mb-6">
-            <ArrowRightLeft className="h-5 w-5 text-indigo-500" />
-            <h3 className="text-lg font-bold text-slate-800">Recent Replacements</h3>
+            <TrendingUp className="h-5 w-5 text-rose-500" />
+            <h3 className="text-lg font-bold text-slate-800">Order Status Distribution</h3>
           </div>
-          <div className="flex-1 overflow-auto pr-2">
-            <div className="space-y-4">
-              {mockReplacementsLog.map((log) => (
-                <div key={log.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{log.date}</span>
-                    <span className="text-xs font-medium text-slate-600 bg-slate-200/50 px-2 py-1 rounded-md">{log.user}</span>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-slate-500 mb-1">Returned</p>
-                      <p className="text-sm font-medium text-slate-700 truncate line-through decoration-rose-300">{log.original}</p>
-                    </div>
-                    <div className="hidden sm:flex text-slate-300">
-                      <ArrowRightLeft className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-slate-500 mb-1">Replaced With</p>
-                      <p className="text-sm font-medium text-indigo-700 truncate">{log.replacement}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="h-64 w-full">
+             {orderStatusData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={256}>
+                  <BarChart
+                    data={orderStatusData}
+                    layout="vertical"
+                    margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+                    <XAxis type="number" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis dataKey="status" type="category" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} width={120} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      cursor={{ fill: '#f1f5f9' }}
+                    />
+                    <Bar dataKey="count" fill="#14b8a6" radius={[0, 4, 4, 0]} barSize={24} name="Orders" />
+                  </BarChart>
+                </ResponsiveContainer>
+             ) : (
+                <div className="h-full flex items-center justify-center text-slate-400">No orders data available</div>
+             )}
           </div>
         </Card>
       </div>

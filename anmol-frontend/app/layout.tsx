@@ -70,7 +70,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: jsonLd(organizationJsonLd) }}
         />
         <Providers>
-          <Navbar categories={categories} />
+          <Navbar />
           <main className="min-h-screen">
             {children}
           </main>
