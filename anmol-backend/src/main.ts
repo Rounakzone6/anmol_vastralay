@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import type { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import { AppModule } from '@backend/modules/app.module';
 import { AuthService } from '@backend/services/auth.service';
@@ -69,6 +70,15 @@ async function bootstrap() {
 
   app.use(helmet());
   app.use(requestLogger);
+
+  // Apply Rate Limiting (to prevent brute-force and IP-based DDoS)
+  app.use(
+    rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 500, // limit each IP to 500 requests per windowMs
+      message: { message: 'Too many requests from this IP, please try again later.' },
+    })
+  );
 
   app.enableCors({
     origin: (origin, callback) => {

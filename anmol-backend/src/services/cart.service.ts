@@ -19,7 +19,17 @@ export class CartService {
         items: {
           include: {
             product: {
-              include: { images: true },
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                netPrice: true,
+                images: {
+                  take: 1,
+                  select: { url: true, altText: true },
+                  orderBy: { sortOrder: 'asc' },
+                },
+              },
             },
             variant: true,
           },
@@ -34,7 +44,17 @@ export class CartService {
           items: {
             include: {
               product: {
-                include: { images: true },
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                  netPrice: true,
+                  images: {
+                    take: 1,
+                    select: { url: true, altText: true },
+                    orderBy: { sortOrder: 'asc' },
+                  },
+                },
               },
               variant: true,
             },
