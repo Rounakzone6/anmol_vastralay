@@ -15,7 +15,9 @@ import {
   ShieldCheck, 
   LogOut,
   Menu,
-  X
+  X,
+  Truck,
+  MessageCircle
 } from 'lucide-react';
 
 const links = [
@@ -25,7 +27,9 @@ const links = [
   { href: '/categories', label: 'Categories', icon: Tags },
   { href: '/products', label: 'Products', icon: Package },
   { href: '/banners', label: 'Banners', icon: ImageIcon },
+  { href: '/delivery-persons', label: 'Delivery', icon: Truck, adminOnly: true },
   { href: '/staff', label: 'Staff', icon: ShieldCheck, adminOnly: true },
+  { href: '/settings/whatsapp', label: 'WhatsApp', icon: MessageCircle, adminOnly: true },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

@@ -23,6 +23,23 @@ enum ProductKind {
   STANDARD
 }
 
+enum DeliveryPersonStatus {
+  AVAILABLE
+  BUSY
+  OFF_DUTY
+}
+
+model DeliveryPerson {
+  id        String               @id @default(cuid())
+  name      String
+  phone     String               @unique
+  status    DeliveryPersonStatus @default(AVAILABLE)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  
+  orders    Order[]
+}
+
 
 model User {
   id              String    @id @default(cuid())
@@ -245,6 +262,9 @@ model Order {
   invoicePublicId String?
   invoiceCreatedAt DateTime?
   statusHistory   OrderStatusHistory[]
+  
+  deliveryPersonId String?
+  deliveryPerson   DeliveryPerson? @relation(fields: [deliveryPersonId], references: [id])
 }
 
 model OrderStatusHistory {
@@ -379,4 +399,9 @@ model Review {
   updatedAt       DateTime @updatedAt
 
   @@unique([productId, userId]) // Limit to 1 review per product per user
+}
+
+model WhatsappSession {
+  id    String @id
+  data  String @db.Text
 }

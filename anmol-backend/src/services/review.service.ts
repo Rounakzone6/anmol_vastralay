@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
 import { PrismaService } from '@backend/services/prisma.service';
 import { TRPCError } from '@trpc/server';
 import { AddReviewInput, ListReviewsInput } from '@backend/models/review.model';

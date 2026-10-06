@@ -11,6 +11,7 @@ import type { UserService } from '@backend/services/user.service';
 import type { CustomerService } from '@backend/services/customer.service';
 import type { BannerService } from '@backend/services/banner.service';
 import type { ReviewService } from '@backend/services/review.service';
+import type { WhatsappWebService } from '@backend/services/whatsapp-web.service';
 
 export interface TRPCContext {
   prisma: PrismaClient;
@@ -27,6 +28,7 @@ export interface TRPCContext {
     customer: CustomerService;
     banner: BannerService;
     review: ReviewService;
+    whatsapp: WhatsappWebService;
   };
 }
 

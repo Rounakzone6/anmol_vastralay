@@ -46,6 +46,6 @@ export const orderRouter = router({
   adminUpdateOrderStatus: staffProcedure
     .input(UpdateOrderStatusSchema)
     .mutation(async ({ ctx, input }) => {
-      return ctx.services.order.adminUpdateOrderStatus(input);
+      return ctx.services.order.adminUpdateOrderStatusWithEvents(input);
     }),
 });

@@ -10,6 +10,8 @@ import { orderRouter } from '@backend/routers/order.router';
 import { paymentRouter } from '@backend/routers/payment.router';
 import { bannerRouter } from '@backend/routers/banner.router';
 import { reviewRouter } from '@backend/routers/review.router';
+import { deliveryPersonRouter } from '@backend/routers/delivery-person.router';
+import { whatsappRouter } from '@backend/routers/whatsapp.router';
 
 export function createAppRouter(auth: AuthService) {
   return router({
@@ -23,6 +25,8 @@ export function createAppRouter(auth: AuthService) {
     payment: paymentRouter,
     banner: bannerRouter,
     review: reviewRouter,
+    deliveryPerson: deliveryPersonRouter,
+    whatsapp: whatsappRouter,
   });
 }
 

@@ -2,3 +2,6 @@
 .env
 .env.*
 .env.example
+
+# WhatsApp Auth Session
+**/baileys_auth_info/

@@ -18,6 +18,8 @@ import { CustomerService } from '@backend/services/customer.service';
 import { BannerService } from '@backend/services/banner.service';
 import { ReviewService } from '@backend/services/review.service';
 
+import { WhatsappWebService } from '@backend/services/whatsapp-web.service';
+
 import { createAppRouter } from '@backend/routers';
 
 const logger = new Logger('Bootstrap');
@@ -64,6 +66,7 @@ async function bootstrap() {
     customer: app.get(CustomerService),
     banner: app.get(BannerService),
     review: app.get(ReviewService),
+    whatsapp: app.get(WhatsappWebService),
   };
 
   const appRouter = createAppRouter(auth);

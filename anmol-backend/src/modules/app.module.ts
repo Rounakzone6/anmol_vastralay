@@ -14,15 +14,20 @@ import { BannerService } from '@backend/services/banner.service';
 import { OtpService } from '@backend/services/otp.service';
 import { ReviewService } from '@backend/services/review.service';
 import { WhatsappService } from '@backend/services/whatsapp.service';
+import { WhatsappWebService } from '@backend/services/whatsapp-web.service';
 import { WebhookController } from '@backend/controllers/webhook.controller';
 import { WhatsappController } from '@backend/controllers/whatsapp.controller';
 import { ChatbotService } from '@backend/services/chatbot.service';
 import { InvoiceService } from '@backend/services/invoice.service';
 import { EmailModule } from '@backend/modules/email.module';
 
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { DeliveryAssignmentService } from '@backend/services/delivery-assignment.service';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    EventEmitterModule.forRoot(),
     PrismaModule,
     CloudinaryModule,
     EmailModule,
@@ -41,8 +46,10 @@ import { EmailModule } from '@backend/modules/email.module';
     OtpService,
     ReviewService,
     WhatsappService,
+    WhatsappWebService,
     ChatbotService,
     InvoiceService,
+    DeliveryAssignmentService,
   ],
 })
 export class AppModule {}

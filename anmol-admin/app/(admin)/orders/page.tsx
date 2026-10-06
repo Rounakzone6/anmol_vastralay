@@ -5,6 +5,7 @@ import { Card, Select, Badge, Spinner } from '@/components/ui';
 import { trpc } from '@/lib/trpc';
 import Link from 'next/link';
 import { Download, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const STATUS_STYLES = {
   PENDING: 'bg-amber-100/50 text-amber-700 border-amber-200/50',
@@ -17,7 +18,13 @@ const STATUS_STYLES = {
 export default function OrdersPage() {
   const { data: orders, isLoading, refetch } = trpc.order.adminGetOrders.useQuery();
   const updateStatus = trpc.order.adminUpdateOrderStatus.useMutation({
-    onSuccess: () => refetch(),
+    onSuccess: (data, variables) => {
+      toast.success(`Order status updated to ${variables.status}`);
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Failed to update status: ${error.message}`);
+    }
   });
   const generateInvoice = trpc.order.adminGenerateInvoice.useMutation({
     onSuccess: ({ invoiceUrl }) => window.open(invoiceUrl, '_blank', 'noopener,noreferrer'),
@@ -70,7 +77,7 @@ export default function OrdersPage() {
                       <div className="text-xs text-slate-500 mt-0.5 whitespace-nowrap">{o.user.phone || '-'}</div>
                     </td>
                     <td className="px-6 py-4 text-slate-700 font-medium whitespace-nowrap">
-                      {o.items.length} item{o.items.length !== 1 ? 's' : ''}
+                      {o._count.items} item{o._count.items !== 1 ? 's' : ''}
                     </td>
                     <td className="px-6 py-4">
                       <span className="font-semibold text-slate-900 whitespace-nowrap">
@@ -100,11 +107,20 @@ export default function OrdersPage() {
                         }}
                         disabled={updateStatus.isPending}
                       >
-                        <option value="PENDING">Pending</option>
-                        <option value="PROCESSING">Processing</option>
-                        <option value="SHIPPED">Shipped</option>
-                        <option value="DELIVERED">Delivered</option>
-                        <option value="CANCELLED">Cancelled</option>
+                        {(() => {
+                          const orderLevels = { PENDING: 0, PROCESSING: 1, SHIPPED: 2, DELIVERED: 3, CANCELLED: 99 };
+                          const currentLevel = orderLevels[o.status as keyof typeof orderLevels] ?? 99;
+                          
+                          return (
+                            <>
+                              <option value="PENDING" disabled={currentLevel > orderLevels.PENDING}>Pending</option>
+                              <option value="PROCESSING" disabled={currentLevel > orderLevels.PROCESSING}>Processing</option>
+                              <option value="SHIPPED" disabled={currentLevel > orderLevels.SHIPPED}>Shipped</option>
+                              <option value="DELIVERED" disabled={currentLevel > orderLevels.DELIVERED}>Delivered</option>
+                              <option value="CANCELLED" disabled={currentLevel > orderLevels.CANCELLED}>Cancelled</option>
+                            </>
+                          );
+                        })()}
                       </Select>
                     </td>
                   </tr>

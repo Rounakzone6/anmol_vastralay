@@ -1,3 +1,4 @@
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@backend/services/prisma.service';
 import { TRPCError } from '@trpc/server';
@@ -18,6 +19,7 @@ export class OrderService {
     private readonly prisma: PrismaService,
     private readonly whatsappService: WhatsappService,
     private readonly invoiceService: InvoiceService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID || 'dummy_key_id',
@@ -127,6 +129,11 @@ export class OrderService {
         amount: totalAmount,
       };
     });
+    
+    // Emit event if order status is PROCESSING
+    if (input.paymentMethod === 'COD') {
+      this.eventEmitter.emit('order.processing', { orderId: result.orderId });
+    }
 
     // 6. Send WhatsApp confirmation if user has phone
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -215,10 +222,14 @@ export class OrderService {
   async adminGetOrders() {
     return this.prisma.order.findMany({
       orderBy: { createdAt: 'desc' },
-      include: {
-        user: { select: { name: true, email: true, phone: true } },
-        items: true,
-        statusHistory: { orderBy: { createdAt: 'asc' } },
+      select: {
+        id: true,
+        status: true,
+        totalAmount: true,
+        createdAt: true,
+        invoiceUrl: true,
+        user: { select: { name: true, phone: true } },
+        _count: { select: { items: true } },
       },
     });
   }
@@ -250,5 +261,20 @@ export class OrderService {
         },
       });
     });
+  }
+
+  // After the transaction completes, emit events based on the new status
+  async adminUpdateOrderStatusWithEvents(input: z.infer<typeof UpdateOrderStatusSchema>) {
+    const order = await this.adminUpdateOrderStatus(input);
+    
+    if (!order) return order;
+
+    if (input.status === 'PROCESSING') {
+      this.eventEmitter.emit('order.processing', { orderId: order.id });
+    } else if (['DELIVERED', 'CANCELLED', 'RETURNED', 'REPLACED'].includes(input.status)) {
+      this.eventEmitter.emit('order.completed', { orderId: order.id });
+    }
+    
+    return order;
   }
 }
