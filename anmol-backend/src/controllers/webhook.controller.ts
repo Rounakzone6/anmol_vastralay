@@ -3,12 +3,20 @@ import type { RawBodyRequest } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import * as crypto from 'crypto';
 import { PrismaService } from '@backend/services/prisma.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { InvoiceService } from '@backend/services/invoice.service';
+import { WhatsappWebService } from '@backend/services/whatsapp-web.service';
 
 @Controller('api/webhooks')
 export class WebhookController {
   private readonly logger = new Logger(WebhookController.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly invoiceService: InvoiceService,
+    private readonly whatsappWebService: WhatsappWebService,
+  ) {}
 
   @Post('razorpay')
   async handleRazorpayWebhook(
@@ -92,6 +100,41 @@ export class WebhookController {
                     });
                   }
                 }
+
+                // Send Email Invoice
+                this.invoiceService.emailOrderInvoice(order.id).catch(err => this.logger.error(err));
+
+                // Send WhatsApp Invoice
+                (async () => {
+                  try {
+                    const user = await this.prisma.user.findUnique({ where: { id: order.userId } });
+                    let phone = user?.phone;
+                    if (!phone) {
+                      const addr = await this.prisma.address.findFirst({
+                        where: { userId: order.userId },
+                        orderBy: { isDefault: 'desc' },
+                      });
+                      phone = addr?.phone;
+                    }
+
+                    if (phone) {
+                      const invoice = await this.invoiceService.generateInvoice(undefined, order.id);
+                      const message = `🛍️ *Payment Received!* 🛍️\n\nThank you for shopping at Anmol Vastralay!\nYour Razorpay payment for order *#${order.id.slice(-8).toUpperCase()}* was successful.\n\nAttached is your invoice. 🧾`;
+                      
+                      await this.whatsappWebService.sendDocument(
+                        phone,
+                        { url: invoice.invoiceUrl },
+                        `${invoice.invoiceNumber}.pdf`,
+                        message
+                      );
+                    }
+                  } catch (err) {
+                    this.logger.error('Failed to send WA order invoice', err);
+                  }
+                })();
+
+                // Emit event for delivery boy assignment
+                this.eventEmitter.emit('order.processing', { orderId: order.id });
               }
             }
           });

@@ -9,6 +9,7 @@ import {
   UpdateOrderStatusSchema,
 } from '@backend/models/order.model';
 import { WhatsappService } from '@backend/services/whatsapp.service';
+import { WhatsappWebService } from '@backend/services/whatsapp-web.service';
 import { InvoiceService } from '@backend/services/invoice.service';
 
 @Injectable()
@@ -18,6 +19,7 @@ export class OrderService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly whatsappService: WhatsappService,
+    private readonly whatsappWebService: WhatsappWebService,
     private readonly invoiceService: InvoiceService,
     private readonly eventEmitter: EventEmitter2,
   ) {
@@ -135,20 +137,45 @@ export class OrderService {
       this.eventEmitter.emit('order.processing', { orderId: result.orderId });
     }
 
-    // 6. Send WhatsApp confirmation if user has phone
+    // 6. Handle post-order confirmations asynchronously
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (user?.phone) {
-      // Send async without blocking response
-      this.whatsappService
-        .sendOrderConfirmation(user.phone, result.orderId, result.amount)
-        .catch((err) =>
-          console.error('Failed to send WA order confirmation', err),
-        );
-    }
+    
     if (input.paymentMethod === 'COD') {
+      // 6a. Send Email Invoice
       this.invoiceService.emailOrderInvoice(result.orderId).catch((error) =>
         console.error('Failed to send order invoice email', error),
       );
+
+      // 6b. Send WhatsApp Confirmation with Invoice using Baileys
+      (async () => {
+        try {
+          // Find phone fallback if user profile doesn't have it
+          let phone = user?.phone;
+          if (!phone) {
+            const address = await this.prisma.address.findFirst({
+              where: { userId },
+              orderBy: { isDefault: 'desc' },
+            });
+            phone = address?.phone;
+          }
+
+          if (phone) {
+            // Ensure invoice is generated and uploaded so we can fetch its URL
+            const invoice = await this.invoiceService.generateInvoice(undefined, result.orderId);
+            
+            const message = `🛍️ *Order Confirmed!* 🛍️\n\nThank you for shopping at Anmol Vastralay!\nYour order *#${result.orderId.slice(-8).toUpperCase()}* for ₹${result.amount} has been placed successfully.\n\nAttached is your invoice. 🧾`;
+            
+            await this.whatsappWebService.sendDocument(
+              phone,
+              { url: invoice.invoiceUrl },
+              `${invoice.invoiceNumber}.pdf`,
+              message
+            );
+          }
+        } catch (err) {
+          console.error('Failed to send WA order confirmation with invoice', err);
+        }
+      })();
     }
 
     return result;

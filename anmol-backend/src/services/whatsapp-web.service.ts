@@ -112,4 +112,34 @@ export class WhatsappWebService implements OnModuleInit, OnModuleDestroy {
       return false;
     }
   }
+
+  /**
+   * Send a WhatsApp document message (like PDF) to a phone number.
+   */
+  async sendDocument(phone: string, documentData: Buffer | { url: string }, fileName: string, caption?: string): Promise<boolean> {
+    if (!this.isReady || !this.sock) {
+      this.logger.warn(`Cannot send document to ${phone}, WhatsApp Web Client is not ready.`);
+      return false;
+    }
+
+    try {
+      let cleanedPhone = phone.replace(/[^0-9]/g, '');
+      if (cleanedPhone.length === 10) {
+        cleanedPhone = '91' + cleanedPhone;
+      }
+      
+      const jid = `${cleanedPhone}@s.whatsapp.net`;
+      await this.sock.sendMessage(jid, { 
+        document: documentData, 
+        mimetype: 'application/pdf', 
+        fileName,
+        caption 
+      });
+      this.logger.log(`Successfully sent document to ${phone}`);
+      return true;
+    } catch (err) {
+      this.logger.error(`Failed to send document to ${phone}:`, err);
+      return false;
+    }
+  }
 }
