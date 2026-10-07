@@ -1,11 +1,20 @@
 'use client';
 
 import { use } from 'react';
-import { ProductForm } from '@/components/product-form';
+import dynamic from 'next/dynamic';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui';
 import { trpc } from '@/lib/trpc';
 import { Eye, EyeOff } from 'lucide-react';
+
+const ProductForm = dynamic(
+  () => import('@/components/product-form').then((mod) => mod.ProductForm),
+  {
+    loading: () => (
+      <div className="h-[720px] animate-pulse rounded-xl bg-white shadow-sm" />
+    ),
+  },
+);
 
 export default function EditProductPage({
   params,

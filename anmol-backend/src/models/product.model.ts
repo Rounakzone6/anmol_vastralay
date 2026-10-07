@@ -1,7 +1,5 @@
 import {
   Prisma,
-  Product,
-  ProductImage,
   ProductVariant,
   ProductKind,
 } from '@prisma/client';
@@ -106,16 +104,44 @@ export const RemoveImageSchema = z.object({
   deleteFromCloudinary: z.boolean().optional(),
 });
 
-type ProductWithRelations = Product & {
-  images: ProductImage[];
-  variants: ProductVariant[];
-  category?: { id: string; name: string; slug: string };
-  subcategory?: { id: string; name: string; slug: string } | null;
-  itemType?: { id: string; name: string; slug: string } | null;
-  reviews?: { rating: number }[];
-};
+export const productPublicSelect = {
+  id: true,
+  name: true,
+  slug: true,
+  description: true,
+  metaTitle: true,
+  metaDescription: true,
+  brand: true,
+  kind: true,
+  netPrice: true,
+  discountPercent: true,
+  allowsExtraSaya: true,
+  extraSayaPrice: true,
+  createdAt: true,
+  images: {
+    select: { url: true, altText: true, sortOrder: true },
+    orderBy: { sortOrder: 'asc' as const },
+  },
+  variants: {
+    select: { id: true, color: true, size: true, stockQty: true },
+  },
+  category: { select: { id: true, name: true, slug: true } },
+  subcategory: { select: { id: true, name: true, slug: true } },
+  itemType: { select: { id: true, name: true, slug: true } },
+  reviews: { select: { rating: true } },
+  categoryId: true,
+  subcategoryId: true,
+  itemTypeId: true,
+  isActive: true,
+} satisfies Prisma.ProductSelect;
 
-export function mapVariant(variant: ProductVariant) {
+type ProductWithRelations = Prisma.ProductGetPayload<{
+  select: typeof productPublicSelect;
+}>;
+
+export function mapVariant(
+  variant: Pick<ProductVariant, 'id' | 'color' | 'size' | 'stockQty'>,
+) {
   return {
     ...variant,
     stockQty: variant.stockQty,

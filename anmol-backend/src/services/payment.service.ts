@@ -17,8 +17,17 @@ export class PaymentService {
     return this.prisma.payment.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
-      include: {
-        order: true,
+      select: {
+        id: true,
+        orderId: true,
+        amount: true,
+        status: true,
+        paymentMethod: true,
+        transactionId: true,
+        createdAt: true,
+        order: {
+          select: { id: true, status: true, totalAmount: true },
+        },
       },
     });
   }

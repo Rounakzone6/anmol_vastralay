@@ -1,7 +1,9 @@
 import { notFound, redirect } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { fetchPublicTrpc } from '@/lib/server-data';
 import { absoluteUrl, jsonLd, pageMetadata } from '@/lib/seo';
-import ProductDetailsClient from './ProductDetailsClient';
+
+const ProductDetailsClient = dynamic(() => import('./ProductDetailsClient'));
 
 type Product = {
   id: string;

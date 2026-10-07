@@ -35,7 +35,7 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
   const baseUrl = SITE_URL;
 
   if (id === 0 || id === undefined) {
-    let categoryRoutes: MetadataRoute.Sitemap = [];
+    const categoryRoutes: MetadataRoute.Sitemap = [];
     try {
       const api = process.env.NEXT_PUBLIC_API_URL;
       if (api) {

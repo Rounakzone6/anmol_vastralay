@@ -185,9 +185,18 @@ export class OrderService {
     return this.prisma.order.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        status: true,
+        totalAmount: true,
+        shippingAddress: true,
+        invoiceUrl: true,
+        createdAt: true,
         items: {
-          include: {
+          select: {
+            id: true,
+            quantity: true,
+            price: true,
             product: {
               select: {
                 id: true,
@@ -200,10 +209,15 @@ export class OrderService {
                 },
               },
             },
-            variant: true,
+            variant: {
+              select: { id: true, color: true, size: true },
+            },
           },
         },
-        statusHistory: { orderBy: { createdAt: 'asc' } },
+        statusHistory: {
+          select: { id: true, status: true, note: true, createdAt: true },
+          orderBy: { createdAt: 'asc' },
+        },
       },
     });
   }
@@ -211,9 +225,19 @@ export class OrderService {
   async getOrderDetails(userId: string, orderId: string) {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      include: {
+      select: {
+        id: true,
+        userId: true,
+        status: true,
+        totalAmount: true,
+        shippingAddress: true,
+        invoiceUrl: true,
+        createdAt: true,
         items: {
-          include: {
+          select: {
+            id: true,
+            quantity: true,
+            price: true,
             product: {
               select: {
                 id: true,
@@ -226,12 +250,25 @@ export class OrderService {
                 },
               },
             },
-            variant: true,
+            variant: {
+              select: { id: true, color: true, size: true },
+            },
           },
         },
-        payments: true,
+        payments: {
+          select: {
+            id: true,
+            amount: true,
+            status: true,
+            paymentMethod: true,
+            createdAt: true,
+          },
+        },
         user: { select: { name: true, email: true, phone: true } },
-        statusHistory: { orderBy: { createdAt: 'asc' } },
+        statusHistory: {
+          select: { id: true, status: true, note: true, createdAt: true },
+          orderBy: { createdAt: 'asc' },
+        },
       },
     });
 

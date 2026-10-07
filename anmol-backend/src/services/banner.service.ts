@@ -22,6 +22,15 @@ export class BannerService {
         ...(placement ? { placement } : {}),
       },
       orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        subtitle: true,
+        buttonText: true,
+        imageUrl: true,
+        placement: true,
+        linkUrl: true,
+      },
     });
   }
 

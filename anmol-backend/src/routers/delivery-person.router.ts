@@ -76,7 +76,8 @@ export const deliveryPersonRouter = router({
   getAvailable: publicProcedure
     .query(async ({ ctx }) => {
       return ctx.prisma.deliveryPerson.findMany({
-        where: { status: 'AVAILABLE' }
+        where: { status: 'AVAILABLE' },
+        select: { id: true, name: true, status: true },
       });
     }),
 });

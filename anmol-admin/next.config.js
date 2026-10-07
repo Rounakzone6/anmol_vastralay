@@ -3,10 +3,8 @@ const nextConfig = {
   experimental: {
     externalDir: true,
   },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
         protocol: 'https',

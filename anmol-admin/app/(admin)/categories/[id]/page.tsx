@@ -11,8 +11,7 @@ export default function CategoryDetailsPage({ params }: { params: Promise<{ id: 
   const { id } = use(params);
   const utils = trpc.useUtils();
   
-  const { data: categories } = trpc.category.list.useQuery({ includeInactive: true });
-  const category = categories?.find((c: any) => c.id === id);
+  const { data: category } = trpc.category.getById.useQuery({ id });
 
   const createSubcategory = trpc.category.createSubcategory.useMutation({
     onSuccess: () => {

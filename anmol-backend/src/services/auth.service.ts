@@ -240,6 +240,17 @@ export class AuthService {
 
       const record = await this.prisma.user.findUnique({
         where: { id: payload.sub },
+        select: {
+          id: true,
+          email: true,
+          phone: true,
+          name: true,
+          profileImage: true,
+          gender: true,
+          emailVerified: true,
+          phoneVerified: true,
+          role: true,
+        },
       });
       if (!record) return null;
       return this.sanitize(record);

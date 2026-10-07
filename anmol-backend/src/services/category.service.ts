@@ -23,6 +23,19 @@ export class CategoryService {
         : {}),
     };
 
+    if (!input?.includeInactive) {
+      return this.prisma.category.findMany({
+        where,
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          imageUrl: true,
+        },
+      });
+    }
+
     return this.prisma.category.findMany({
       where,
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
@@ -40,7 +53,19 @@ export class CategoryService {
   async getById(id: string) {
     const category = await this.prisma.category.findUnique({
       where: { id },
-      include: { _count: { select: { products: true } } },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        imageUrl: true,
+        isActive: true,
+        sortOrder: true,
+        _count: { select: { products: true } },
+        subcategories: {
+          include: { itemTypes: true },
+        },
+      },
     });
     if (!category) notFound('Category');
     return category;
@@ -49,6 +74,13 @@ export class CategoryService {
   async getBySlug(slug: string) {
     const category = await this.prisma.category.findUnique({
       where: { slug },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        imageUrl: true,
+      },
     });
     if (!category) notFound('Category');
     return category;

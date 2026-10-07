@@ -1,10 +1,12 @@
+import dynamic from 'next/dynamic';
 import CategoryNav from '@/components/CategoryNav';
 import HeroSlider from '@/components/HeroSlider';
-import LatestArrivals from '@/components/LatestArrivals';
-import CategorySection from '@/components/CategorySection';
-import CategoryBanner from '@/components/CategoryBanner';
 import { fetchPublicTrpc } from '@/lib/server-data';
 import { pageMetadata, jsonLd, absoluteUrl, SITE_URL } from '@/lib/seo';
+
+const LatestArrivals = dynamic(() => import('@/components/LatestArrivals'));
+const CategorySection = dynamic(() => import('@/components/CategorySection'));
+const CategoryBanner = dynamic(() => import('@/components/CategoryBanner'));
 
 type ProductList = { items: any[] };
 
@@ -18,7 +20,9 @@ export default async function Home() {
   const [banners, latest, allProducts, categories] = await Promise.all([
     fetchPublicTrpc<any[]>('banner.getBanners', { placement: 'HERO' }),
     fetchPublicTrpc<ProductList>('product.list', { pageSize: 8, includeInactive: false }),
-    fetchPublicTrpc<ProductList>('product.list', { pageSize: 100, includeInactive: false }),
+    // Four products per category are rendered below the fold. Keep this bounded
+    // so the homepage does not grow its initial response with the catalog.
+    fetchPublicTrpc<ProductList>('product.list', { pageSize: 40, includeInactive: false }),
     fetchPublicTrpc<any[]>('category.list', { includeInactive: false }),
   ]);
 

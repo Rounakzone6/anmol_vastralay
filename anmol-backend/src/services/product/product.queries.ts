@@ -4,7 +4,7 @@ import { z } from 'zod';
 import {
   ListProductSchema,
   mapProduct,
-  productInclude,
+  productPublicSelect,
 } from '@backend/models/product.model';
 
 export class ProductQueries {
@@ -30,7 +30,7 @@ export class ProductQueries {
     const [items, total] = await Promise.all([
       this.prisma.product.findMany({
         where,
-        include: productInclude,
+        select: productPublicSelect,
         orderBy: { updatedAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
@@ -50,7 +50,7 @@ export class ProductQueries {
   async getById(id: string) {
     const product = await this.prisma.product.findUnique({
       where: { id },
-      include: productInclude,
+      select: productPublicSelect,
     });
     if (!product) notFound('Product');
     return mapProduct(product);
@@ -59,7 +59,7 @@ export class ProductQueries {
   async getBySlug(slug: string) {
     const product = await this.prisma.product.findUnique({
       where: { slug },
-      include: productInclude,
+      select: productPublicSelect,
     });
     if (!product) notFound('Product');
     return mapProduct(product);

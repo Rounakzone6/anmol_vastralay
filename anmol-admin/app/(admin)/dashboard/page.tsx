@@ -2,10 +2,19 @@
 
 import { trpc } from '@/lib/trpc';
 import { SareeBanner } from '@/components/dashboard/saree-banner';
-import { DashboardCharts } from '@/components/dashboard/dashboard-charts';
+import dynamic from 'next/dynamic';
 import { DashboardStats } from '@/app/(admin)/dashboard/components/DashboardStats';
 import { RecentProductsList } from '@/app/(admin)/dashboard/components/RecentProductsList';
 import { RecentPaymentsList } from '@/app/(admin)/dashboard/components/RecentPaymentsList';
+
+const DashboardCharts = dynamic(
+  () => import('@/components/dashboard/dashboard-charts').then((mod) => mod.DashboardCharts),
+  {
+    loading: () => (
+      <div className="mb-8 h-96 animate-pulse rounded-xl bg-white shadow-sm" />
+    ),
+  },
+);
 
 export default function DashboardPage() {
   const { data: categories } = trpc.category.list.useQuery({});

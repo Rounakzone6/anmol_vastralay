@@ -161,6 +161,12 @@ model Product {
   orderItems      OrderItem[]
   interactions    ProductInteraction[]
   reviews         Review[]
+
+  @@index([isActive, updatedAt])
+  @@index([categoryId, isActive, updatedAt])
+  @@index([subcategoryId, isActive, updatedAt])
+  @@index([itemTypeId, isActive, updatedAt])
+  @@index([kind, isActive, updatedAt])
 }
 
 model ProductImage {
@@ -265,6 +271,9 @@ model Order {
   
   deliveryPersonId String?
   deliveryPerson   DeliveryPerson? @relation(fields: [deliveryPersonId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
 }
 
 model OrderStatusHistory {
@@ -339,6 +348,8 @@ model Payment {
   transactionId String?       @unique
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
+  @@index([userId, createdAt])
 }
 
 enum BannerPlacement {
@@ -399,6 +410,7 @@ model Review {
   updatedAt       DateTime @updatedAt
 
   @@unique([productId, userId]) // Limit to 1 review per product per user
+  @@index([productId, createdAt])
 }
 
 model WhatsappSession {

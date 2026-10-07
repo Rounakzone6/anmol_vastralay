@@ -12,21 +12,34 @@ export class WhatsappWebService implements OnModuleInit, OnModuleDestroy {
   private isReady = false;
 
   private qrCode: string | null = null;
+  private isShuttingDown = false;
+  private isExplicitLogout = false;
+  private reconnectTimer: NodeJS.Timeout | null = null;
 
   constructor(private readonly prisma: PrismaService) {}
 
   async onModuleInit() {
+    this.isShuttingDown = false;
     this.logger.log('Initializing Baileys WhatsApp Web Client...');
     await this.connectToWhatsApp();
   }
 
   async onModuleDestroy() {
+    this.isShuttingDown = true;
+    this.clearReconnectTimer();
     if (this.sock) {
-      await this.sock.logout();
+      // Closing the transport preserves the DB-backed auth state across
+      // deploys/restarts. An explicit admin logout is the only operation that
+      // should invalidate the WhatsApp session.
+      this.sock.ws.close();
+      this.sock = null;
+      this.isReady = false;
     }
   }
 
   private async connectToWhatsApp() {
+    if (this.isShuttingDown) return;
+
     const { state, saveCreds } = await usePrismaAuthState(this.prisma);
 
     this.sock = makeWASocket({
@@ -49,22 +62,49 @@ export class WhatsappWebService implements OnModuleInit, OnModuleDestroy {
         this.isReady = false;
         this.qrCode = null;
         
+        if (this.isShuttingDown) return;
+
         if (shouldReconnect) {
-          setTimeout(() => this.connectToWhatsApp(), 5000);
-        } else {
-          // Logged out intentionally
-          this.prisma.whatsappSession.deleteMany().then(() => {
-            this.logger.log('Cleared WhatsApp sessions from database after logout.');
-          });
+          this.scheduleReconnect(5000);
+        } else if (!this.isExplicitLogout) {
+          // A logout from the phone invalidates the Baileys credentials.
+          void this.clearAuthStateAndReconnect('WhatsApp was logged out from the phone');
         }
       } else if (connection === 'open') {
         this.isReady = true;
         this.qrCode = null;
         this.logger.log('✓ WhatsApp Web (Baileys) is connected and ready!');
       }
+
     });
 
     this.sock.ev.on('creds.update', saveCreds);
+  }
+
+  private clearReconnectTimer() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+  }
+
+  private scheduleReconnect(delayMs: number) {
+    if (this.isShuttingDown || this.reconnectTimer) return;
+
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      void this.connectToWhatsApp();
+    }, delayMs);
+  }
+
+  private async clearAuthStateAndReconnect(reason: string) {
+    if (this.isShuttingDown) return;
+
+    this.clearReconnectTimer();
+    await this.prisma.whatsappSession.deleteMany();
+    this.logger.warn(`${reason}; cleared WhatsApp sessions from database.`);
+    this.isExplicitLogout = false;
+    this.scheduleReconnect(2000);
   }
 
   getStatus() {
@@ -75,17 +115,26 @@ export class WhatsappWebService implements OnModuleInit, OnModuleDestroy {
   }
 
   async logout() {
-    if (this.sock) {
+    if (!this.sock) {
+      await this.prisma.whatsappSession.deleteMany();
+      this.isExplicitLogout = false;
+      this.scheduleReconnect(2000);
+      return false;
+    }
+
+    this.isExplicitLogout = true;
+    try {
       await this.sock.logout();
+    } finally {
       this.sock = null;
       this.isReady = false;
       this.qrCode = null;
       await this.prisma.whatsappSession.deleteMany();
-      // Re-initialize to generate a new QR immediately
-      setTimeout(() => this.connectToWhatsApp(), 2000);
-      return true;
+      this.logger.log('Cleared WhatsApp sessions from database after admin logout.');
+      this.isExplicitLogout = false;
+      this.scheduleReconnect(2000);
     }
-    return false;
+    return true;
   }
 
   /**

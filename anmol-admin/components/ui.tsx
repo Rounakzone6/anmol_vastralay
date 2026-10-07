@@ -4,9 +4,11 @@ import { Loader2 } from 'lucide-react';
 export function Button({
   className = '',
   variant = 'primary',
+  size = 'default',
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline';
+  size?: 'sm' | 'default';
 }) {
   const variants = {
     primary: 'bg-violet-600 text-white hover:bg-violet-700 hover:shadow-md hover:-translate-y-0.5 shadow-sm shadow-violet-200',
@@ -15,10 +17,14 @@ export function Button({
     ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
     outline: 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm',
   };
+  const sizes = {
+    sm: 'px-3 py-1.5 text-xs',
+    default: 'px-4 py-2 text-sm',
+  };
 
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none ${variants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none ${sizes[size]} ${variants[variant]} ${className}`}
       {...props}
     />
   );

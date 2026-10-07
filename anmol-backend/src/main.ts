@@ -52,6 +52,7 @@ function requestLogger(req: Request, res: Response, next: NextFunction) {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
   const prisma = app.get(PrismaService);
   const cloudinary = app.get(CloudinaryService);
   const auth = app.get(AuthService);

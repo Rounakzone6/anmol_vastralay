@@ -15,15 +15,20 @@ export class CartService {
   async getCart(userId: string) {
     let cart = await this.prisma.cart.findUnique({
       where: { userId },
-      include: {
+      select: {
         items: {
-          include: {
+          select: {
+            id: true,
+            productId: true,
+            variantId: true,
+            quantity: true,
             product: {
               select: {
                 id: true,
                 name: true,
                 slug: true,
                 netPrice: true,
+                discountPercent: true,
                 images: {
                   take: 1,
                   select: { url: true, altText: true },
@@ -31,7 +36,9 @@ export class CartService {
                 },
               },
             },
-            variant: true,
+            variant: {
+              select: { id: true, color: true, size: true, stockQty: true },
+            },
           },
         },
       },
@@ -40,15 +47,20 @@ export class CartService {
     if (!cart) {
       cart = await this.prisma.cart.create({
         data: { userId },
-        include: {
+        select: {
           items: {
-            include: {
+            select: {
+              id: true,
+              productId: true,
+              variantId: true,
+              quantity: true,
               product: {
                 select: {
                   id: true,
                   name: true,
                   slug: true,
                   netPrice: true,
+                  discountPercent: true,
                   images: {
                     take: 1,
                     select: { url: true, altText: true },
@@ -56,7 +68,9 @@ export class CartService {
                   },
                 },
               },
-              variant: true,
+              variant: {
+                select: { id: true, color: true, size: true, stockQty: true },
+              },
             },
           },
         },
