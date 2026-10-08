@@ -64,4 +64,17 @@ export class ProductQueries {
     if (!product) notFound('Product');
     return mapProduct(product);
   }
+
+  async getOutOfStockVariants() {
+    const variants = await this.prisma.productVariant.findMany({
+      where: { stockQty: { lte: 0 } },
+      include: {
+        product: {
+          select: { name: true, slug: true, isActive: true }
+        }
+      },
+      orderBy: { updatedAt: 'desc' }
+    });
+    return variants;
+  }
 }

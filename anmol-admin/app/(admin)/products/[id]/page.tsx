@@ -11,7 +11,7 @@ const ProductForm = dynamic(
   () => import('@/components/product-form').then((mod) => mod.ProductForm),
   {
     loading: () => (
-      <div className="h-180 animate-pulse rounded-xl bg-white shadow-sm" />
+      <div className="h- animate-pulse rounded-xl bg-white shadow-sm" />
     ),
   },
 );

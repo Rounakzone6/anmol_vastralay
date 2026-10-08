@@ -38,6 +38,11 @@ export const productRouter = router({
       return ctx.services.product.getBySlug(input.slug);
     }),
 
+  getOutOfStockVariants: staffProcedure
+    .query(async ({ ctx }) => {
+      return ctx.services.product.getOutOfStockVariants();
+    }),
+
   create: staffProcedure
     .input(productBaseSchema)
     .mutation(async ({ ctx, input }) => {

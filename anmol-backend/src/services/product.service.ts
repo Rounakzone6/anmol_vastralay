@@ -43,6 +43,10 @@ export class ProductService {
     return this.queries.getBySlug(slug);
   }
 
+  async getOutOfStockVariants() {
+    return this.queries.getOutOfStockVariants();
+  }
+
   async create(input: z.infer<typeof productBaseSchema>) {
     return this.mutations.create(input);
   }

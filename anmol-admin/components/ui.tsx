@@ -82,6 +82,18 @@ export function Card({ children, className = '' }: { children: ReactNode; classN
   );
 }
 
+export function CardHeader({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return <div className={`mb-4 flex flex-col space-y-1.5 ${className}`}>{children}</div>;
+}
+
+export function CardTitle({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return <h3 className={`font-semibold leading-none tracking-tight ${className}`}>{children}</h3>;
+}
+
+export function CardContent({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return <div className={className}>{children}</div>;
+}
+
 export function Badge({ 
   children, 
   variant = 'default',

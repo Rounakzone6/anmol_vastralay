@@ -11,7 +11,9 @@ import {
   Users, 
   Tags, 
   Package, 
-  Image as ImageIcon, 
+  Image as ImageIcon,
+  Bell,
+  CreditCard, 
   ShieldCheck, 
   LogOut,
   Menu,
@@ -19,10 +21,13 @@ import {
   Truck,
   MessageCircle
 } from 'lucide-react';
+import { StockNotification } from '@/components/stock-notification';
 
 const links = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/updates', label: 'Updates', icon: Bell },
   { href: '/orders', label: 'Orders', icon: ShoppingCart },
+  { href: '/payments', label: 'Payments', icon: CreditCard },
   { href: '/customers', label: 'Customers', icon: Users },
   { href: '/categories', label: 'Categories', icon: Tags },
   { href: '/products', label: 'Products', icon: Package },
@@ -140,6 +145,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
       <main className="flex-1 w-full lg:w-auto p-4 sm:p-6 lg:p-12 overflow-x-hidden">
         <div className="mx-auto max-w-6xl">
+          <StockNotification />
           {children}
         </div>
       </main>
