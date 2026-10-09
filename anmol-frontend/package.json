@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.83",
+    "@ai-sdk/groq": "^4.0.59",
     "@ai-sdk/react": "^3.0.210",
     "@prisma/client": "^7.8.0",
     "@react-oauth/google": "^0.13.5",

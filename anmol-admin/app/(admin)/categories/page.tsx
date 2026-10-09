@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/page-header';
+import { useDebounce } from '@/hooks/use-debounce';
 import { Button, Card, Input, Label, Textarea, Badge, Spinner } from '@/components/ui';
 import { ImageUpload } from '@/components/image-upload';
 import { trpc } from '@/lib/trpc';
-import { Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -25,8 +26,12 @@ import { SortableCategoryRow } from '@/app/(admin)/categories/components/sortabl
 
 export default function CategoriesPage() {
   const utils = trpc.useUtils();
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
+
   const { data: categories, isLoading } = trpc.category.list.useQuery({
     includeInactive: true,
+    search: debouncedSearch || undefined,
   });
   
   // Local state for optimistic drag & drop
@@ -146,6 +151,20 @@ export default function CategoriesPage() {
           </div>
         }
       />
+
+      <div className="mb-6 flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1 max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search size={16} className="text-slate-400" />
+          </div>
+          <Input
+            className="pl-10"
+            placeholder="Search categories by name…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
 
       {showForm ? (
         <Card className="mb-8 border-violet-100 ring-violet-50">

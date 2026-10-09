@@ -1,22 +1,42 @@
+import { createGroq } from '@ai-sdk/groq';
+import { streamText } from 'ai';
+
+const groq = createGroq({
+  apiKey: process.env.GROQ_API_KEY || '',
+});
+
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:3010';
-  const headers = new Headers({ 'content-type': 'application/json' });
-  const authorization = req.headers.get('authorization');
-  const internalToken = process.env.AI_SERVICE_INTERNAL_TOKEN;
+  try {
+    const { messages } = await req.json();
 
-  if (authorization) headers.set('authorization', authorization);
-  if (internalToken) headers.set('x-ai-service-token', internalToken);
+    const result = streamText({
+      model: groq('llama-3.3-70b-versatile'),
+      messages,
+      system: `You are a helpful, polite, and professional AI customer support assistant for an Indian clothing store named "Anmol Vastralay".
+You MUST ALWAYS reply in Hinglish (a mix of Hindi and English written in English script).
+Example: "Haanji, aapka order process ho gaya hai. Aapko jaldi hi shipping details mil jayengi."
 
-  const response = await fetch(`${aiServiceUrl}/chat`, {
-    method: 'POST',
-    headers,
-    body: await req.text(),
-  });
+Your goal is to assist customers with queries about order tracking, return policies, product availability, and general store information.
 
-  return new Response(response.body, {
-    status: response.status,
-    headers: response.headers,
-  });
+Store Information:
+- Store Name: Anmol Vastralay
+- Products: Sarees, Kurtis, Suits, Lehengas, and Menswear.
+- Return Policy: We offer a 7-day hassle-free return policy for unused items with original tags.
+- Shipping: Free shipping on orders over ₹1000. Standard delivery takes 3-5 business days.
+- Location: Anmol Vastralay, Main Market, City Center.
+- Support Hours: 24/7 via this chatbot. Human agents are available 10 AM to 7 PM.
+
+Keep your answers concise and friendly.`,
+    });
+
+    return result.toDataStreamResponse();
+  } catch (error: any) {
+    console.error('Chat API Error:', error);
+    return new Response(
+      JSON.stringify({ error: error.message || 'Internal Server Error' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
 }

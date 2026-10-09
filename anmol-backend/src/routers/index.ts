@@ -13,6 +13,7 @@ import { reviewRouter } from '@backend/routers/review.router';
 import { deliveryPersonRouter } from '@backend/routers/delivery-person.router';
 import { whatsappRouter } from '@backend/routers/whatsapp.router';
 import { dashboardRouter } from '@backend/routers/dashboard.router';
+import { posRouter } from '@backend/routers/pos.router';
 
 export function createAppRouter(auth: AuthService) {
   return router({
@@ -29,6 +30,7 @@ export function createAppRouter(auth: AuthService) {
     deliveryPerson: deliveryPersonRouter,
     whatsapp: whatsappRouter,
     dashboard: dashboardRouter,
+    pos: posRouter,
   });
 }
 

@@ -36,6 +36,7 @@ export function ProductForm({ productId }: ProductFormProps) {
   const [kind, setKind] = useState<'SAREE' | 'STANDARD'>('STANDARD');
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
+  const [description, setDescription] = useState('');
   const [netPrice, setNetPrice] = useState('');
   const [discountPercent, setDiscountPercent] = useState('0');
   const [allowsExtraSaya, setAllowsExtraSaya] = useState(false);
@@ -58,6 +59,7 @@ export function ProductForm({ productId }: ProductFormProps) {
     setKind(product.kind);
     setMetaTitle(product.metaTitle ?? '');
     setMetaDescription(product.metaDescription ?? '');
+    setDescription(product.description ?? '');
     setNetPrice(String(product.netPrice));
     setDiscountPercent(String(product.discountPercent));
     setAllowsExtraSaya(product.allowsExtraSaya);
@@ -114,6 +116,7 @@ export function ProductForm({ productId }: ProductFormProps) {
       setKind('STANDARD');
       setMetaTitle('');
       setMetaDescription('');
+      setDescription('');
       setNetPrice('');
       setDiscountPercent('0');
       setAllowsExtraSaya(false);
@@ -124,6 +127,9 @@ export function ProductForm({ productId }: ProductFormProps) {
       
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to create product');
+    }
   });
   const update = trpc.product.update.useMutation({
     onSuccess: () => {
@@ -132,6 +138,9 @@ export function ProductForm({ productId }: ProductFormProps) {
       toast.success('Product updated successfully!');
       router.push('/products');
     },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to update product');
+    }
   });
 
   function buildImageUrls() {
@@ -161,6 +170,7 @@ export function ProductForm({ productId }: ProductFormProps) {
       subcategoryId: subcategoryId || undefined,
       itemTypeId: itemTypeId || undefined,
       kind,
+      description: description || undefined,
       metaTitle: metaTitle || undefined,
       metaDescription: metaDescription || undefined,
       netPrice: Number(netPrice),
@@ -244,6 +254,11 @@ export function ProductForm({ productId }: ProductFormProps) {
             setMetaTitle={setMetaTitle}
             metaDescription={metaDescription}
             setMetaDescription={setMetaDescription}
+            description={description}
+            setDescription={setDescription}
+            imageUrl={images[0]?.url}
+            categoryId={categoryId}
+            categories={categories || []}
           />
 
           <Card className="p-8 rounded-3xl border-slate-200/60 shadow-sm">

@@ -4,6 +4,7 @@ import { Boom } from '@hapi/boom';
 import pino from 'pino';
 import { PrismaService } from './prisma.service';
 import { usePrismaAuthState } from './whatsapp-auth';
+import { ChatbotService } from './chatbot.service';
 
 @Injectable()
 export class WhatsappWebService implements OnModuleInit, OnModuleDestroy {
@@ -16,12 +17,17 @@ export class WhatsappWebService implements OnModuleInit, OnModuleDestroy {
   private isExplicitLogout = false;
   private reconnectTimer: NodeJS.Timeout | null = null;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly chatbotService: ChatbotService
+  ) {}
 
   async onModuleInit() {
     this.isShuttingDown = false;
-    this.logger.log('Initializing Baileys WhatsApp Web Client...');
-    await this.connectToWhatsApp();
+    this.logger.log('Initializing Baileys WhatsApp Web Client in background...');
+    this.connectToWhatsApp().catch((err) => {
+      this.logger.error('Failed to initialize Baileys WhatsApp in background', err);
+    });
   }
 
   async onModuleDestroy() {
@@ -79,6 +85,32 @@ export class WhatsappWebService implements OnModuleInit, OnModuleDestroy {
     });
 
     this.sock.ev.on('creds.update', saveCreds);
+
+    this.sock.ev.on('messages.upsert', async (m) => {
+      if (m.type === 'notify') {
+        for (const msg of m.messages) {
+          if (!msg.key.fromMe && msg.message) {
+            const text = msg.message.conversation || msg.message.extendedTextMessage?.text;
+            if (text) {
+               void this.handleIncomingMessage(msg.key.remoteJid, text);
+            }
+          }
+        }
+      }
+    });
+  }
+
+  private async handleIncomingMessage(jid: string | null | undefined, text: string) {
+    if (!jid || !this.sock) return;
+    try {
+       this.logger.log(`Received WhatsApp message from ${jid}: ${text}`);
+       const phone = jid.split('@')[0];
+       const reply = await this.chatbotService.processMessage(phone, text);
+       await this.sock.sendMessage(jid, { text: reply });
+       this.logger.log(`Replied to ${jid} via AI Chatbot`);
+    } catch (err) {
+       this.logger.error('Error handling incoming message', err);
+    }
   }
 
   private clearReconnectTimer() {

@@ -9,6 +9,7 @@ import {
   LoginSchema,
   RegisterSchema,
   GoogleAuthSchema,
+  VerifyOtpSchema,
 } from '@backend/models/auth.model';
 
 export const createAuthRouter = (auth: AuthService) =>
@@ -40,6 +41,19 @@ export const createAuthRouter = (auth: AuthService) =>
           throw new TRPCError({
             code: 'BAD_REQUEST',
             message: message.replace('BAD_REQUEST:', ''),
+          });
+        }
+      }),
+
+    verifyOtp: publicProcedure
+      .input(VerifyOtpSchema)
+      .mutation(async ({ input }) => {
+        try {
+          return await auth.verifyOtp(input.email, input.code, input.type);
+        } catch (error: any) {
+          throw new TRPCError({
+            code: 'UNAUTHORIZED',
+            message: error.message || 'Invalid or expired OTP',
           });
         }
       }),

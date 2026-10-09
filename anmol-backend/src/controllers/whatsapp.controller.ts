@@ -1,7 +1,8 @@
-import { Controller, Post, Req, Res, Logger } from '@nestjs/common';
+import { Controller, Post, Req, Res, Headers, Logger } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { ChatbotService } from '@backend/services/chatbot.service';
 import { WhatsappService } from '@backend/services/whatsapp.service';
+import * as twilio from 'twilio';
 
 interface TwilioWebhookBody {
   From?: string;
@@ -20,8 +21,32 @@ export class WhatsappController {
   ) {}
 
   @Post('webhook')
-  async handleWebhook(@Req() req: Request, @Res() res: Response) {
+  async handleWebhook(
+    @Req() req: Request, 
+    @Res() res: Response,
+    @Headers('x-twilio-signature') signature: string,
+  ) {
     try {
+      const authToken = process.env.TWILIO_AUTH_TOKEN;
+      // You should set TWILIO_WEBHOOK_URL in your .env to the exact URL Twilio requests
+      const webhookUrl = process.env.TWILIO_WEBHOOK_URL; 
+
+      if (authToken && webhookUrl && signature) {
+        const isValid = twilio.validateRequest(
+          authToken,
+          signature,
+          webhookUrl,
+          req.body
+        );
+
+        if (!isValid) {
+          this.logger.error('Invalid Twilio webhook signature');
+          return res.status(401).send('Unauthorized');
+        }
+      } else {
+        this.logger.warn('Twilio signature verification bypassed (missing ENV vars or signature)');
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const body: TwilioWebhookBody = req.body;
       const from = body.From ?? ''; // "whatsapp:+91..."

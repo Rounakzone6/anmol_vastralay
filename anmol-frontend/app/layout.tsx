@@ -4,6 +4,7 @@ import { Providers } from '@/app/providers';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ChatbotWidgetWrapper from '@/components/ChatbotWidgetWrapper';
+import { PhonePrompt } from '@/components/PhonePrompt';
 import { Inter } from 'next/font/google';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
@@ -76,7 +77,7 @@ export default async function RootLayout({
           </main>
           <Footer categories={categories} />
           <ChatbotWidgetWrapper />
-
+          <PhonePrompt />
         </Providers>
       </body>
     </html>

@@ -17,7 +17,7 @@ import { ProductService } from '@backend/services/product.service';
 @Injectable()
 export class ChatbotService {
   private readonly logger = new Logger(ChatbotService.name);
-  private genAI: GoogleGenerativeAI;
+  private genAI: GoogleGenerativeAI | undefined;
   private model: GenerativeModel | undefined;
 
   constructor(
@@ -106,19 +106,26 @@ Keep your answers concise and friendly, suitable for WhatsApp. Do not use markdo
       let result = await chat.sendMessage(parts);
       let response = result.response;
 
-      if (response.functionCalls && response.functionCalls.length > 0) {
-        const call = response.functionCalls[0] as unknown as LocalFunctionCall;
+      const functionCalls = typeof response.functionCalls === 'function' ? response.functionCalls() : undefined;
+      if (functionCalls && functionCalls.length > 0) {
+        const call = functionCalls[0] as unknown as LocalFunctionCall;
         let functionResponse: Record<string, unknown> = {};
         this.logger.log(`AI called function: ${call.name}`);
 
         if (call.name === 'checkOrderStatus') {
           const args = call.args;
           try {
+            const cleanPhone = phone.replace(/^whatsapp:/, '');
+            const user = await this.prisma.user.findFirst({
+              where: { phone: cleanPhone },
+            });
+
             const order = await this.prisma.order.findUnique({
               where: { id: String(args.orderId) },
               include: { items: { include: { product: true } } },
             });
-            if (order) {
+
+            if (order && user && order.userId === user.id) {
               functionResponse = {
                 status: order.status,
                 totalAmount: order.totalAmount,
@@ -127,7 +134,7 @@ Keep your answers concise and friendly, suitable for WhatsApp. Do not use markdo
                   .join(', '),
               };
             } else {
-              functionResponse = { error: 'Order not found' };
+              functionResponse = { error: 'Order not found or you are not authorized to view it.' };
             }
           } catch (e: unknown) {
             this.logger.debug(e);

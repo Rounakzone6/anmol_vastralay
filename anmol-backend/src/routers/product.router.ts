@@ -3,6 +3,8 @@ import {
   staffProcedure,
   publicProcedure,
 } from '@backend/config/trpc.config';
+import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
 import {
   ListProductSchema,
   productBaseSchema,
@@ -36,6 +38,19 @@ export const productRouter = router({
     .input(ProductSlugSchema)
     .query(async ({ ctx, input }) => {
       return ctx.services.product.getBySlug(input.slug);
+    }),
+
+  getRecommendations: publicProcedure
+    .input(ProductIdSchema)
+    .query(async ({ ctx, input }) => {
+      try {
+        return await ctx.services.product.getRecommendations(input.id);
+      } catch (error: any) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: error.message || 'Failed to fetch recommendations',
+        });
+      }
     }),
 
   getOutOfStockVariants: staffProcedure
@@ -101,5 +116,22 @@ export const productRouter = router({
     .input(RemoveImageSchema)
     .mutation(async ({ ctx, input }) => {
       return ctx.services.product.removeImage(input);
+    }),
+
+  generateAiDetails: staffProcedure
+    .input(z.object({
+      imageUrl: z.string().url(),
+      categoryName: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await ctx.services.ai.generateProductDetails(input.imageUrl, input.categoryName);
+      } catch (error: any) {
+        console.error('Error in generateAiDetails:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: error.message || 'Failed to generate product details using AI',
+        });
+      }
     }),
 });

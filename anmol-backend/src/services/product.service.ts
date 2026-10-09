@@ -47,6 +47,10 @@ export class ProductService {
     return this.queries.getOutOfStockVariants();
   }
 
+  async getRecommendations(productId: string) {
+    return this.queries.getRecommendations(productId);
+  }
+
   async create(input: z.infer<typeof productBaseSchema>) {
     return this.mutations.create(input);
   }

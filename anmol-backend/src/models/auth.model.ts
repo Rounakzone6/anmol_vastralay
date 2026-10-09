@@ -19,3 +19,9 @@ export const RegisterSchema = z
 export const GoogleAuthSchema = z.object({
   credential: z.string().min(1),
 });
+
+export const VerifyOtpSchema = z.object({
+  email: z.string().min(1),
+  code: z.string().min(6).max(6),
+  type: z.enum(['LOGIN', 'REGISTER']),
+});

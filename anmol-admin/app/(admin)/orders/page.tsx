@@ -1,10 +1,13 @@
 'use client';
 
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useDebounce } from '@/hooks/use-debounce';
 import { PageHeader } from '@/components/page-header';
-import { Card, Select, Badge, Spinner } from '@/components/ui';
+import { Card, Select, Badge, Spinner, Input } from '@/components/ui';
 import { trpc } from '@/lib/trpc';
 import Link from 'next/link';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
 const STATUS_STYLES = {
@@ -16,7 +19,38 @@ const STATUS_STYLES = {
 } as const;
 
 export default function OrdersPage() {
+  const searchParams = useSearchParams();
+  const highlightId = searchParams?.get('highlight');
+
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
+
   const { data: orders, isLoading, refetch } = trpc.order.adminGetOrders.useQuery();
+
+  useEffect(() => {
+    if (highlightId && orders) {
+      setTimeout(() => {
+        const el = document.getElementById(`order-row-${highlightId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('bg-violet-100');
+          setTimeout(() => el.classList.remove('bg-violet-100'), 3000);
+        }
+      }, 300);
+    }
+  }, [highlightId, orders]);
+  
+  const filteredOrders = useMemo(() => {
+    if (!orders) return [];
+    if (!debouncedSearch) return orders;
+    const lowerSearch = debouncedSearch.toLowerCase();
+    return orders.filter((o: any) => 
+      o.id.toLowerCase().includes(lowerSearch) || 
+      (o.user?.name && o.user.name.toLowerCase().includes(lowerSearch)) ||
+      (o.user?.phone && o.user.phone.toLowerCase().includes(lowerSearch))
+    );
+  }, [orders, debouncedSearch]);
+  
   const updateStatus = trpc.order.adminUpdateOrderStatus.useMutation({
     onSuccess: (data, variables) => {
       toast.success(`Order status updated to ${variables.status}`);
@@ -37,7 +71,21 @@ export default function OrdersPage() {
         description="Manage customer orders, track shipments, and update fulfillment statuses." 
       />
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5 mt-6">
+      <div className="mt-6 mb-2 flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1 max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search size={16} className="text-slate-400" />
+          </div>
+          <Input
+            className="pl-10"
+            placeholder="Search orders by ID, name or phone…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5 mt-4">
         {isLoading ? (
           <div className="p-12 flex flex-col items-center justify-center text-slate-400">
             <Spinner size={32} className="mb-4" />
@@ -65,8 +113,8 @@ export default function OrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {orders.map((o: any) => (
-                  <tr key={o.id} className="hover:bg-slate-50/50 transition-colors group">
+                {filteredOrders.map((o: any) => (
+                  <tr key={o.id} id={`order-row-${o.id}`} className="hover:bg-slate-50/50 transition-all duration-700 group">
                     <td className="px-6 py-4 font-mono text-xs text-slate-500">
                       <Link href={`/orders/${o.id}`} className="hover:text-violet-600 transition-colors">
                         {o.id.slice(-8).toUpperCase()}

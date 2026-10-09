@@ -12,6 +12,7 @@ import type { CustomerService } from '@backend/services/customer.service';
 import type { BannerService } from '@backend/services/banner.service';
 import type { ReviewService } from '@backend/services/review.service';
 import type { WhatsappWebService } from '@backend/services/whatsapp-web.service';
+import type { AiService } from '@backend/services/ai.service';
 
 export interface TRPCContext {
   prisma: PrismaClient;
@@ -29,6 +30,7 @@ export interface TRPCContext {
     banner: BannerService;
     review: ReviewService;
     whatsapp: WhatsappWebService;
+    ai: AiService;
   };
 }
 

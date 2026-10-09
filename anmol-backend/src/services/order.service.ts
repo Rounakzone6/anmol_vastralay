@@ -223,8 +223,8 @@ export class OrderService {
   }
 
   async getOrderDetails(userId: string, orderId: string) {
-    const order = await this.prisma.order.findUnique({
-      where: { id: orderId },
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, userId },
       select: {
         id: true,
         userId: true,

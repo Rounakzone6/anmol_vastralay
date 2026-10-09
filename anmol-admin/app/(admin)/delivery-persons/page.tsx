@@ -177,6 +177,7 @@ export default function DeliveryPersonsPage() {
                 <tr>
                   <th className="px-6 py-4">Name</th>
                   <th className="px-6 py-4">Phone</th>
+                  <th className="px-6 py-4 text-center">Deliveries</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
@@ -193,6 +194,11 @@ export default function DeliveryPersonsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-slate-600 whitespace-nowrap">{p.phone || '-'}</td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap">
+                      <Badge variant="info" className="bg-blue-50 text-blue-700 border-blue-200">
+                        {p._count?.orders || 0}
+                      </Badge>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {p.status === 'AVAILABLE' ? (
                         <Badge variant="default" className="bg-emerald-50 text-emerald-700 border-emerald-200 border">Available</Badge>

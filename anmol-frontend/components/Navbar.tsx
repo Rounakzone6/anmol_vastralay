@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, Search, ShoppingCart, Heart, LogOut, User, MapPin, Package, ChevronDown, Shield } from "lucide-react";
+import { Menu, X, Search, ShoppingCart, Heart, LogOut, User, MapPin, Package, ChevronDown, Shield, Home, Grid } from "lucide-react";
 import { useAuth } from "@/lib/useAuth";
 import { trpc } from "@/lib/trpc";
 
@@ -241,28 +241,17 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Mobile Menu & Cart Button */}
+          {/* Mobile Profile Icon (Top Right) */}
           <div className="flex items-center gap-4 md:hidden">
-            {isClient && isAuthenticated && (
+            {isClient && isAuthenticated ? (
               <Link href="/profile" className="text-gray-600">
-                <ProfileAvatar size={30} profileImg={profileImg} displayName={displayName} initials={initials} />
+                <ProfileAvatar size={34} profileImg={profileImg} displayName={displayName} initials={initials} />
+              </Link>
+            ) : (
+              <Link href="/login" className="text-gray-600">
+                <User size={24} />
               </Link>
             )}
-            <Link href="/cart" className="relative text-gray-600">
-              <ShoppingCart size={24} />
-              {isClient && cartItemCount > 0 && (
-                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#85142b] text-[10px] font-bold text-white">
-                  {cartItemCount}
-                </span>
-              )}
-            </Link>
-            
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="rounded-md p-1 text-gray-600 hover:bg-gray-100 focus:outline-none"
-            >
-              {isOpen ? <X size={26} /> : <Menu size={26} />}
-            </button>
           </div>
 
         </div>
@@ -284,27 +273,81 @@ const Navbar = () => {
         </form>
       </div>
 
-      {/* Mobile Drawer/Menu links */}
+      {/* Mobile Bottom Navigation Bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-[60] bg-white/95 backdrop-blur-xl border-t border-gray-200 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] pb-safe">
+        <div className="flex justify-around items-center h-16">
+          <Link href="/" onClick={() => setIsOpen(false)} className="flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-500 hover:text-[#85142b]">
+            <Home size={22} />
+            <span className="text-[10px] font-semibold">Home</span>
+          </Link>
+          <Link href="/collections" onClick={() => setIsOpen(false)} className="flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-500 hover:text-[#85142b]">
+            <Grid size={22} />
+            <span className="text-[10px] font-semibold">Shop</span>
+          </Link>
+          <Link href="/wishlist" onClick={() => setIsOpen(false)} className="flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-500 hover:text-[#85142b]">
+            <Heart size={22} />
+            <span className="text-[10px] font-semibold">Wishlist</span>
+          </Link>
+          <Link href="/cart" onClick={() => setIsOpen(false)} className="relative flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-500 hover:text-[#85142b]">
+            <div className="relative">
+              <ShoppingCart size={22} />
+              {isClient && cartItemCount > 0 && (
+                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#85142b] text-[10px] font-bold text-white">
+                  {cartItemCount}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] font-semibold">Cart</span>
+          </Link>
+          <button onClick={() => setIsOpen(!isOpen)} className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isOpen ? 'text-[#85142b]' : 'text-gray-500 hover:text-[#85142b]'}`}>
+            <Menu size={22} className={isOpen ? "scale-110 transition-transform" : ""} />
+            <span className="text-[10px] font-semibold">Menu</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Bottom Sheet Overlay */}
       {isOpen && (
-        <div className="border-t border-gray-200 bg-white px-4 py-3 shadow-inner md:hidden">
-          <div className="space-y-3 font-medium text-gray-700">
-            <Link href="/" onClick={() => setIsOpen(false)} className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Home</Link>
-            <Link href="/collections" onClick={() => setIsOpen(false)} className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">Collections</Link>
-            <Link href="/about" onClick={() => setIsOpen(false)} className="block rounded-lg px-3 py-2 hover:bg-gray-50 hover:text-[#85142b]">About</Link>
-            <hr className="border-gray-200" />
+        <div 
+          className="fixed inset-0 bg-gray-900/60 z-40 md:hidden backdrop-blur-sm transition-opacity" 
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Mobile Bottom Sheet Menu */}
+      <div className={`fixed inset-x-0 bottom-[64px] z-50 max-h-[80vh] rounded-t-3xl bg-white shadow-[0_-20px_40px_rgba(0,0,0,0.2)] transform transition-transform duration-300 ease-out md:hidden flex flex-col ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+        <div className="flex justify-center pt-3 pb-2 cursor-pointer" onClick={() => setIsOpen(false)}>
+           <div className="w-12 h-1.5 bg-gray-200 rounded-full" />
+        </div>
+        <div className="overflow-y-auto px-4 pb-6">
+          <div className="space-y-2 mt-2">
+            <Link href="/" onClick={() => setIsOpen(false)} className="block rounded-xl px-4 py-3 font-medium text-gray-700 hover:bg-gray-50 hover:text-[#85142b]">Home</Link>
+            <Link href="/collections" onClick={() => setIsOpen(false)} className="block rounded-xl px-4 py-3 font-medium text-gray-700 hover:bg-gray-50 hover:text-[#85142b]">Collections</Link>
+            <Link href="/about" onClick={() => setIsOpen(false)} className="block rounded-xl px-4 py-3 font-medium text-gray-700 hover:bg-gray-50 hover:text-[#85142b]">About Us</Link>
+            <hr className="border-gray-100 my-2" />
             {isClient && isAuthenticated ? (
               <>
-                <Link href="/profile" className="block rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-gray-50">My Profile</Link>
-                <Link href="/orders" className="block rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-gray-50">My Orders</Link>
-                <Link href="/profile?tab=addresses" className="block rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-gray-50">My Addresses</Link>
-                <button onClick={logout} className="block w-full text-left rounded-lg px-3 py-2 text-sm text-red-500 hover:bg-gray-50">Logout</button>
+                <Link href="/profile" onClick={() => setIsOpen(false)} className="flex items-center gap-3 rounded-xl px-4 py-3 font-medium text-gray-700 hover:bg-gray-50">
+                  <User size={18} className="text-gray-400" /> My Profile
+                </Link>
+                <Link href="/orders" onClick={() => setIsOpen(false)} className="flex items-center gap-3 rounded-xl px-4 py-3 font-medium text-gray-700 hover:bg-gray-50">
+                  <Package size={18} className="text-gray-400" /> My Orders
+                </Link>
+                <Link href="/profile?tab=addresses" onClick={() => setIsOpen(false)} className="flex items-center gap-3 rounded-xl px-4 py-3 font-medium text-gray-700 hover:bg-gray-50">
+                  <MapPin size={18} className="text-gray-400" /> My Addresses
+                </Link>
+                <button onClick={() => { setIsOpen(false); logout(); }} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 font-medium text-red-600 hover:bg-red-50 text-left">
+                  <LogOut size={18} /> Logout
+                </button>
               </>
             ) : (
-              <Link href="/login" className="block rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-gray-50">Login / Register</Link>
+              <Link href="/login" onClick={() => setIsOpen(false)} className="flex items-center gap-3 rounded-xl px-4 py-3 font-medium text-gray-700 hover:bg-gray-50">
+                <User size={18} className="text-gray-400" /> Login / Register
+              </Link>
             )}
           </div>
         </div>
-      )}
+      </div>
     </nav>
   );
 };

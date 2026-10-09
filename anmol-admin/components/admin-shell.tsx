@@ -19,12 +19,14 @@ import {
   Menu,
   X,
   Truck,
-  MessageCircle
+  MessageCircle,
+  LineChart
 } from 'lucide-react';
 import { StockNotification } from '@/components/stock-notification';
 
 const links = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/forecast', label: 'Demand Forecast', icon: LineChart },
   { href: '/updates', label: 'Updates', icon: Bell },
   { href: '/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/payments', label: 'Payments', icon: CreditCard },
@@ -32,6 +34,7 @@ const links = [
   { href: '/categories', label: 'Categories', icon: Tags },
   { href: '/products', label: 'Products', icon: Package },
   { href: '/banners', label: 'Banners', icon: ImageIcon },
+  { href: '/pos', label: 'POS Billing', icon: CreditCard },
   { href: '/delivery-persons', label: 'Delivery', icon: Truck, adminOnly: true },
   { href: '/staff', label: 'Staff', icon: ShieldCheck, adminOnly: true },
   { href: '/settings/whatsapp', label: 'WhatsApp', icon: MessageCircle, adminOnly: true },
@@ -107,45 +110,90 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     </>
   );
 
+  const mobileNavItems = [
+    { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
+    { href: '/orders', label: 'Orders', icon: ShoppingCart },
+    { href: '/products', label: 'Products', icon: Package },
+    { href: '/customers', label: 'Users', icon: Users },
+  ];
+
   return (
-    <div className="flex min-h-screen bg-slate-50 font-sans flex-col lg:flex-row">
+    <div className="flex min-h-screen bg-slate-50 font-sans flex-col lg:flex-row print:bg-white print:block">
       {/* Mobile Top Bar */}
-      <div className="lg:hidden flex items-center justify-between p-4 border-b border-slate-200 bg-white/80 backdrop-blur-md sticky top-0 z-40">
+      <div className="lg:hidden print:hidden flex items-center justify-center p-4 border-b border-slate-200 bg-white/80 backdrop-blur-md sticky top-0 z-40">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-violet-600 flex items-center justify-center shadow-md shadow-violet-200">
             <span className="text-white font-bold text-lg leading-none">A</span>
           </div>
-          <span className="text-xl font-bold tracking-tight text-slate-900">Anmol</span>
+          <span className="text-xl font-bold tracking-tight text-slate-900">Anmol Admin</span>
         </Link>
-        <button
-          onClick={toggleMobileMenu}
-          className="p-2 -mr-2 text-slate-600 hover:text-slate-900 focus:outline-none"
-        >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
       </div>
 
-      {/* Mobile Sidebar Overlay */}
+      {/* Mobile Bottom Navigation Bar */}
+      <div className="lg:hidden print:hidden fixed bottom-0 left-0 right-0 z-[60] bg-white/95 backdrop-blur-xl border-t border-slate-200 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] pb-safe">
+        <nav className="flex justify-around items-center h-16">
+          {mobileNavItems.map((link) => {
+            const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={closeMobileMenu}
+                className="flex flex-col items-center justify-center w-full h-full space-y-1 relative"
+              >
+                {active && (
+                  <span className="absolute top-0 inset-x-0 mx-auto w-10 h-1 bg-violet-600 rounded-b-md" />
+                )}
+                <Icon size={22} className={`${active ? 'text-violet-600 scale-110 transition-transform' : 'text-slate-400'}`} />
+                <span className={`text-[10px] font-semibold ${active ? 'text-violet-600' : 'text-slate-500'}`}>
+                  {link.label}
+                </span>
+              </Link>
+            );
+          })}
+          
+          <button
+            onClick={toggleMobileMenu}
+            className="flex flex-col items-center justify-center w-full h-full space-y-1 relative"
+          >
+            {isMobileMenuOpen && (
+              <span className="absolute top-0 inset-x-0 mx-auto w-10 h-1 bg-violet-600 rounded-b-md" />
+            )}
+            <Menu size={22} className={`${isMobileMenuOpen ? 'text-violet-600 scale-110 transition-transform' : 'text-slate-400'}`} />
+            <span className={`text-[10px] font-semibold ${isMobileMenuOpen ? 'text-violet-600' : 'text-slate-500'}`}>
+              Menu
+            </span>
+          </button>
+        </nav>
+      </div>
+
+      {/* Mobile Bottom Sheet Overlay */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/50 z-40 lg:hidden backdrop-blur-sm transition-opacity" 
+          className="fixed inset-0 bg-slate-900/60 z-40 lg:hidden backdrop-blur-sm transition-opacity" 
           onClick={closeMobileMenu}
         />
       )}
 
-      {/* Mobile Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:hidden flex flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <SidebarContent />
+      {/* Mobile Bottom Sheet Menu */}
+      <aside className={`fixed inset-x-0 bottom-[64px] z-50 max-h-[80vh] rounded-t-3xl bg-white shadow-[0_-20px_40px_rgba(0,0,0,0.2)] transform transition-transform duration-300 ease-out lg:hidden flex flex-col ${isMobileMenuOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+        <div className="flex justify-center pt-3 pb-1 cursor-pointer" onClick={closeMobileMenu}>
+           <div className="w-12 h-1.5 bg-slate-200 rounded-full" />
+        </div>
+        <div className="overflow-y-auto pb-6">
+          <SidebarContent />
+        </div>
       </aside>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-64 flex-col border-r border-slate-200 bg-white/60 backdrop-blur-xl sticky top-0 h-screen overflow-hidden">
+      <aside className="hidden lg:flex print:hidden w-64 flex-col border-r border-slate-200 bg-white/60 backdrop-blur-xl sticky top-0 h-screen overflow-hidden">
         <SidebarContent />
       </aside>
 
-      <main className="flex-1 w-full lg:w-auto p-4 sm:p-6 lg:p-12 overflow-x-hidden">
-        <div className="mx-auto max-w-6xl">
-          <StockNotification />
+      <main className={`flex-1 w-full lg:w-auto p-4 sm:p-6 lg:p-12 overflow-x-hidden pb-24 lg:pb-12 print:p-0 print:overflow-visible ${pathname === '/pos' ? 'bg-slate-900' : ''}`}>
+        <div className={`mx-auto print:max-w-none ${pathname === '/pos' ? 'max-w-none' : 'max-w-6xl'}`}>
+          {pathname !== '/pos' && <div className="print:hidden"><StockNotification /></div>}
           {children}
         </div>
       </main>

@@ -2,8 +2,9 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/page-header';
+import { useDebounce } from '@/hooks/use-debounce';
 import { Button, Card, Input, Select, Badge } from '@/components/ui';
 import { formatCurrency } from '@/lib/format';
 import { trpc } from '@/lib/trpc';
@@ -12,13 +13,17 @@ import { Spinner } from '@/components/ui';
 
 export default function ProductsPage() {
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
   const [categoryId, setCategoryId] = useState('');
+  const [page, setPage] = useState(1);
   const { data: categories } = trpc.category.list.useQuery({});
+
   const { data, isLoading } = trpc.product.list.useQuery({
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     categoryId: categoryId || undefined,
     includeInactive: true,
-    pageSize: 50,
+    pageSize: 10,
+    page: page,
   });
 
   return (
@@ -45,7 +50,10 @@ export default function ProductsPage() {
             className="pl-10"
             placeholder="Search products by name…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
           />
         </div>
         <div className="relative w-full sm:w-64">
@@ -55,7 +63,10 @@ export default function ProductsPage() {
           <Select
             className="pl-10"
             value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
+            onChange={(e) => {
+              setCategoryId(e.target.value);
+              setPage(1);
+            }}
           >
             <option value="">All categories</option>
             {categories?.map((c: any) => (
@@ -159,6 +170,32 @@ export default function ProductsPage() {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+        
+        {data && data.totalPages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200">
+            <span className="text-sm text-slate-500">
+              Showing page {data.page} of {data.totalPages} ({data.total} total products)
+            </span>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={data.page === 1}
+              >
+                Previous
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setPage(p => Math.min(data.totalPages, p + 1))}
+                disabled={data.page === data.totalPages}
+              >
+                Next
+              </Button>
+            </div>
           </div>
         )}
       </div>

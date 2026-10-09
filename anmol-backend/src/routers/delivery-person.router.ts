@@ -69,11 +69,22 @@ export const deliveryPersonRouter = router({
   getAll: adminProcedure
     .query(async ({ ctx }) => {
       return ctx.prisma.deliveryPerson.findMany({
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
+        include: {
+          _count: {
+            select: {
+              orders: {
+                where: {
+                  status: 'DELIVERED',
+                },
+              },
+            },
+          },
+        },
       });
     }),
 
-  getAvailable: publicProcedure
+  getAvailable: adminProcedure
     .query(async ({ ctx }) => {
       return ctx.prisma.deliveryPerson.findMany({
         where: { status: 'AVAILABLE' },

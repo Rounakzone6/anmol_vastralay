@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { PageHeader } from '@/components/page-header';
-import { Badge, Spinner } from '@/components/ui';
+import { useDebounce } from '@/hooks/use-debounce';
+import { Badge, Spinner, Input } from '@/components/ui';
 import { trpc } from '@/lib/trpc';
-import { X, CreditCard, User, FileText, Hash, Calendar } from 'lucide-react';
+import { X, CreditCard, User, FileText, Hash, Calendar, Search } from 'lucide-react';
 
 const STATUS_VARIANTS: Record<string, "success" | "warning" | "danger" | "info" | "default"> = {
   COMPLETED: 'success',
@@ -98,13 +99,23 @@ function PaymentDetailsModal({ payment, onClose }: { payment: any; onClose: () =
 }
 
 export default function PaymentsPage() {
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
+
   const { data: payments, isLoading } = trpc.payment.adminGetPayments.useQuery();
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
 
-  // Filter out COD if we only want online payments, or we can show all and admin can filter.
-  // The requirement says: "all the online payment history". 
-  // Often COD transactionId is empty or paymentMethod is COD. We will show all but emphasize transaction ID.
-  const onlinePayments = payments?.filter(p => p.transactionId && p.paymentMethod !== 'COD') || [];
+  const filteredOnlinePayments = useMemo(() => {
+    const onlinePayments = payments?.filter(p => p.transactionId && p.paymentMethod !== 'COD') || [];
+    if (!debouncedSearch) return onlinePayments;
+    const lowerSearch = debouncedSearch.toLowerCase();
+    return onlinePayments.filter((p: any) => 
+      (p.transactionId && p.transactionId.toLowerCase().includes(lowerSearch)) ||
+      (p.orderId && p.orderId.toLowerCase().includes(lowerSearch)) ||
+      (p.user?.name && p.user.name.toLowerCase().includes(lowerSearch)) ||
+      (p.user?.phone && p.user.phone.toLowerCase().includes(lowerSearch))
+    );
+  }, [payments, debouncedSearch]);
 
   return (
     <div className="pb-12">
@@ -113,13 +124,27 @@ export default function PaymentsPage() {
         description="Track and manage all online transactions across the platform." 
       />
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5 mt-6">
+      <div className="mt-6 mb-2 flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1 max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search size={16} className="text-slate-400" />
+          </div>
+          <Input
+            className="pl-10"
+            placeholder="Search by transaction ID, order ID, or customer…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5 mt-4">
         {isLoading ? (
           <div className="p-12 flex flex-col items-center justify-center text-slate-400">
             <Spinner size={32} className="mb-4" />
             <p className="text-sm font-medium">Loading payments...</p>
           </div>
-        ) : !onlinePayments.length ? (
+        ) : !filteredOnlinePayments.length ? (
           <div className="p-12 text-center flex flex-col items-center justify-center">
             <CreditCard className="h-10 w-10 text-slate-300 mb-3" />
             <p className="text-lg font-medium text-slate-900 mb-2">No online payments found</p>
@@ -141,7 +166,7 @@ export default function PaymentsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {onlinePayments.map((payment: any) => (
+                {filteredOnlinePayments.map((payment: any) => (
                   <tr key={payment.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4 font-mono text-xs text-slate-600">
                       {payment.transactionId?.slice(0, 16) || '—'}...

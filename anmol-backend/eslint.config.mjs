@@ -29,6 +29,21 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "MemberExpression[property.name='$queryRawUnsafe']",
+          message:
+            'Do not use Prisma $queryRawUnsafe. Use Prisma query builders or a tagged $queryRaw template.',
+        },
+        {
+          selector:
+            "MemberExpression[property.name='$executeRawUnsafe']",
+          message:
+            'Do not use Prisma $executeRawUnsafe. Use Prisma query builders or a tagged $executeRaw template.',
+        },
+      ],
       "prettier/prettier": ["error", { endOfLine: "auto" }],
     },
   },

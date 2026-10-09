@@ -38,6 +38,8 @@ model DeliveryPerson {
   updatedAt DateTime             @updatedAt
   
   orders    Order[]
+
+  @@index([status, updatedAt])
 }
 
 
@@ -65,6 +67,8 @@ model User {
   interactions ProductInteraction[]
   otpCodes     OtpCode[]
   reviews      Review[]
+
+  @@index([role, createdAt])
 }
 
 enum OtpType {
@@ -74,14 +78,17 @@ enum OtpType {
 
 model OtpCode {
   id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      OtpType
   code      String
   target    String
   expiresAt DateTime
   verified  Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([userId, type, verified, createdAt])
+  @@index([target, code, verified])
 }
 
 model Category {
@@ -98,6 +105,8 @@ model Category {
   updatedAt   DateTime  @updatedAt
   products      Product[]
   subcategories Subcategory[]
+
+  @@index([isActive, sortOrder])
 }
 
 model Subcategory {
@@ -115,6 +124,8 @@ model Subcategory {
   
   itemTypes   ItemType[]
   products    Product[]
+
+  @@index([categoryId, isActive])
 }
 
 model ItemType {
@@ -131,6 +142,8 @@ model ItemType {
   updatedAt     DateTime    @updatedAt
 
   products      Product[]
+
+  @@index([subcategoryId, isActive])
 }
 
 model Product {
@@ -178,6 +191,8 @@ model ProductImage {
   altText   String?
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+
+  @@index([productId, sortOrder])
 }
 
 model ProductVariant {
@@ -196,6 +211,7 @@ model ProductVariant {
   orderItems OrderItem[]
 
   @@unique([productId, color, sizeKey])
+  @@index([stockQty, updatedAt])
 }
 
 model Address {
@@ -215,6 +231,8 @@ model Address {
   isDefault Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId, isDefault, createdAt])
 }
 
 model Cart {
@@ -251,11 +269,17 @@ enum OrderStatus {
   REPLACED
 }
 
+enum OrderSource {
+  ONLINE
+  POS
+}
+
 model Order {
   id              String      @id @default(cuid())
   userId          String
   user            User        @relation(fields: [userId], references: [id])
   status          OrderStatus @default(PENDING)
+  source          OrderSource @default(ONLINE)
   totalAmount     Decimal     @db.Decimal(10, 2)
   shippingAddress String
   items           OrderItem[]
@@ -299,6 +323,9 @@ model OrderItem {
   price     Decimal         @db.Decimal(10, 2)
   returnRequestsAsOriginal    ReturnRequest[] @relation("OriginalItem")
   returnRequestsAsReplacement ReturnRequest?  @relation("ReplacementItem")
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 enum ReturnType {
@@ -327,6 +354,9 @@ model ReturnRequest {
   replacementItem     OrderItem?   @relation("ReplacementItem", fields: [replacementItemId], references: [id])
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
+
+  @@index([orderId])
+  @@index([status, createdAt])
 }
 
 enum PaymentStatus {
@@ -350,6 +380,8 @@ model Payment {
   updatedAt     DateTime      @updatedAt
 
   @@index([userId, createdAt])
+  @@index([orderId])
+  @@index([status, createdAt])
 }
 
 enum BannerPlacement {
@@ -370,6 +402,8 @@ model Banner {
   isActive    Boolean         @default(true)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+
+  @@index([isActive, placement, createdAt])
 }
 
 model SiteVisit {
@@ -394,6 +428,10 @@ model ProductInteraction {
   sessionId String?
   action    InteractionType
   createdAt DateTime        @default(now())
+
+  @@index([productId, action])
+  @@index([userId, createdAt])
+  @@index([sessionId, createdAt])
 }
 
 model Review {

@@ -45,21 +45,31 @@ export class PaymentService {
     userId: string,
     input: z.infer<typeof VerifyRazorpayPaymentSchema>,
   ) {
-    const secret = process.env.RAZORPAY_KEY_SECRET || 'dummy_key_secret';
+    const secret = process.env.RAZORPAY_KEY_SECRET;
+    if (!secret) {
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Payment verification is not configured',
+      });
+    }
 
     const generatedSignature = crypto
       .createHmac('sha256', secret)
       .update(input.razorpay_order_id + '|' + input.razorpay_payment_id)
       .digest('hex');
 
-    if (generatedSignature !== input.razorpay_signature) {
+    const suppliedSignature = Buffer.from(input.razorpay_signature, 'utf8');
+    const expectedSignature = Buffer.from(generatedSignature, 'utf8');
+    if (
+      suppliedSignature.length !== expectedSignature.length ||
+      !crypto.timingSafeEqual(suppliedSignature, expectedSignature)
+    ) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: 'Invalid payment signature',
       });
     }
 
-    // Find the payment record
     const payment = await this.prisma.payment.findUnique({
       where: { transactionId: input.razorpay_order_id },
     });
@@ -70,38 +80,38 @@ export class PaymentService {
         message: 'Payment record not found',
       });
     }
-    if (payment.status === 'COMPLETED') {
-      return payment;
-    }
-
-    // Update payment and order in transaction
     const result = await this.prisma.$transaction(async (tx) => {
-      const updatedPayment = await tx.payment.update({
-        where: { id: payment.id },
+      const claimedPayment = await tx.payment.updateMany({
+        where: { id: payment.id, status: 'PENDING' },
         data: { status: 'COMPLETED' },
       });
 
-      const order = await tx.order.findUnique({
-        where: { id: payment.orderId },
-        include: { items: true },
+      if (claimedPayment.count === 0) {
+        return tx.payment.findUniqueOrThrow({ where: { id: payment.id } });
+      }
+
+      const order = await tx.order.updateMany({
+        where: { id: payment.orderId, status: 'PENDING' },
+        data: {
+          status: 'PROCESSING',
+        },
       });
 
-      if (order && order.status === 'PENDING') {
-        await tx.order.update({
-          where: { id: order.id },
+      if (order.count > 0) {
+        await tx.orderStatusHistory.create({
           data: {
+            orderId: payment.orderId,
             status: 'PROCESSING',
-            statusHistory: {
-              create: {
-                status: 'PROCESSING',
-                note: 'Payment confirmed and order is being prepared',
-              },
-            },
+            note: 'Payment confirmed and order is being prepared',
           },
         });
 
-        // Deduct inventory for online payments exactly once
-        for (const item of order.items) {
+        const orderItems = await tx.orderItem.findMany({
+          where: { orderId: payment.orderId, variantId: { not: null } },
+          select: { variantId: true, quantity: true },
+        });
+
+        for (const item of orderItems) {
           if (item.variantId) {
             await tx.productVariant.update({
               where: { id: item.variantId },
@@ -111,7 +121,7 @@ export class PaymentService {
         }
       }
 
-      return updatedPayment;
+      return tx.payment.findUniqueOrThrow({ where: { id: payment.id } });
     });
     this.invoiceService.emailOrderInvoice(payment.orderId).catch((error) =>
       console.error('Failed to send paid order invoice email', error),

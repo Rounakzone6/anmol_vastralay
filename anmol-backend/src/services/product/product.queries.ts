@@ -11,7 +11,7 @@ export class ProductQueries {
   constructor(private readonly prisma: PrismaService) {}
 
   async list(input?: z.infer<typeof ListProductSchema>) {
-    const page = input?.cursor || input?.page || 1;
+    const page = input?.cursor ?? input?.page ?? 1;
     const pageSize = input?.pageSize ?? 20;
     const where = {
       ...(input?.includeInactive ? {} : { isActive: true }),
@@ -76,5 +76,48 @@ export class ProductQueries {
       orderBy: { updatedAt: 'desc' }
     });
     return variants;
+  }
+
+  async getRecommendations(productId: string) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+      select: { id: true, categoryId: true, subcategoryId: true, name: true, description: true }
+    });
+    
+    if (!product) notFound('Product');
+
+    // 1. Fetch products in the same category, excluding current product
+    const similarProducts = await this.prisma.product.findMany({
+      where: {
+        id: { not: productId },
+        categoryId: product.categoryId,
+        isActive: true,
+      },
+      select: productPublicSelect,
+      take: 20,
+    });
+
+    // 2. Simple Content-Based Scoring using keyword overlap
+    const getKeywords = (text: string) => (text || '').toLowerCase().split(/\\W+/).filter(w => w.length > 3);
+    const sourceKeywords = new Set([...getKeywords(product.name), ...getKeywords(product.description || '')]);
+
+    const scoredProducts = similarProducts.map(p => {
+      const pKeywords = [...getKeywords(p.name), ...getKeywords(p.description || '')];
+      let score = 0;
+      pKeywords.forEach(kw => {
+        if (sourceKeywords.has(kw)) score += 1;
+      });
+      // Boost score if same subcategory
+      if (p.subcategoryId === product.subcategoryId) score += 5;
+      
+      return { product: p, score };
+    });
+
+    // Sort by score descending, take top 4
+    scoredProducts.sort((a, b) => b.score - a.score);
+    
+    const recommendations = scoredProducts.slice(0, 4).map(sp => mapProduct(sp.product));
+    
+    return recommendations;
   }
 }

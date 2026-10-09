@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from '@backend/services/auth.service';
 import { PrismaModule } from '@backend/modules/prisma.module';
 import { EmailModule } from '@backend/modules/email.module';
+import { OtpService } from '@backend/services/otp.service';
 
 @Module({
   imports: [
@@ -12,15 +13,21 @@ import { EmailModule } from '@backend/modules/email.module';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') ?? 'dev-secret-change-me',
-        signOptions: {
-          expiresIn: config.get('JWT_EXPIRES_IN') ?? '7d',
-        },
-      }),
+      useFactory: (config: ConfigService) => {
+        const secret = config.get<string>('JWT_SECRET');
+        if (!secret) {
+          throw new Error('FATAL: JWT_SECRET environment variable is missing.');
+        }
+        return {
+          secret,
+          signOptions: {
+            expiresIn: config.get('JWT_EXPIRES_IN') ?? '7d',
+          },
+        };
+      },
     }),
   ],
-  providers: [AuthService],
+  providers: [AuthService, OtpService],
   exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

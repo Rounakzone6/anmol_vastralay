@@ -17,8 +17,8 @@ import { UserService } from '@backend/services/user.service';
 import { CustomerService } from '@backend/services/customer.service';
 import { BannerService } from '@backend/services/banner.service';
 import { ReviewService } from '@backend/services/review.service';
-
 import { WhatsappWebService } from '@backend/services/whatsapp-web.service';
+import { AiService } from '@backend/services/ai.service';
 
 import { createAppRouter } from '@backend/routers';
 
@@ -68,6 +68,7 @@ async function bootstrap() {
     banner: app.get(BannerService),
     review: app.get(ReviewService),
     whatsapp: app.get(WhatsappWebService),
+    ai: app.get(AiService),
   };
 
   const appRouter = createAppRouter(auth);
@@ -93,21 +94,25 @@ async function bootstrap() {
         process.env.ADMIN_URL,
       ].filter(Boolean);
 
-      // Allow if it matches explicit URLs, or if it's a Vercel preview URL for frontend or admin
-      if (
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        (origin.startsWith('https://anmol-vastralay') &&
-          origin.endsWith('.vercel.app')) ||
-        (origin.startsWith('https://anmol-admin') &&
-          origin.endsWith('.vercel.app'))
-      ) {
+      const isVercelPreview = origin && /^https:\/\/(anmol-vastralay|anmol-admin)(-[a-zA-Z0-9-]+)?\.vercel\.app$/.test(origin);
+
+      if (!origin || allowedOrigins.includes(origin) || isVercelPreview) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        callback(new Error(`CORS policy blocked access from origin: ${origin}`));
       }
     },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Origin',
+      'X-Requested-With',
+      'Content-Type',
+      'Accept',
+      'Authorization',
+      'x-trpc-source',
+    ],
     credentials: true,
+    maxAge: 86400, // Cache preflight requests for 24 hours
   });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 

@@ -15,6 +15,24 @@ A high-performance NestJS backend for the Anmol Vastralay e-commerce platform. P
 - **Rate Limiting**: Throttle requests to prevent abuse
 - **Comprehensive Validation**: tRPC + Zod schema validation
 
+## Database Query Safety
+
+Application database access must use Prisma's typed query builders (`findMany`,
+`findUnique`, `create`, `update`, and related methods). Prisma parameterizes
+values supplied through these APIs, including search text and filter values, so
+they are not concatenated into SQL statements.
+
+When a database operation cannot be expressed with the query builder, use a
+tagged Prisma template:
+
+```ts
+await prisma.$queryRaw`SELECT "id" FROM "Product" WHERE "slug" = ${slug}`;
+```
+
+Never concatenate user-controlled values into SQL and never use
+`$queryRawUnsafe` or `$executeRawUnsafe`. The backend ESLint configuration
+rejects both unsafe Prisma APIs.
+
 ## Prerequisites
 
 - **Node.js** v18+ (check with `node --version`)

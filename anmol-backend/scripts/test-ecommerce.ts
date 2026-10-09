@@ -40,8 +40,9 @@ async function runTests() {
   const appRouter = createAppRouter(auth);
 
   const testPhone = '9876543210';
+  const testEmail = 'test@example.com';
   console.log('\n--- Cleaning up previous test data ---');
-  await prisma.user.deleteMany({ where: { phone: testPhone } });
+  await prisma.user.deleteMany({ where: { OR: [{ phone: testPhone }, { email: testEmail }] } });
   
   console.log('\n1. Testing Registration...');
   
@@ -53,21 +54,35 @@ async function runTests() {
     services,
   };
   
-  // In trpc v10/v11 createCaller works on the router
   const publicCaller = appRouter.createCaller(publicContext);
   
   const regResult = await publicCaller.auth.register({
+    email: testEmail,
     phone: testPhone,
     name: 'Test Customer',
     password: 'password123',
   });
-  console.log('✅ User registered successfully. Token received.');
+  console.log('✅ User registered successfully. OTP challenge received.');
+
+  const otpCode = await prisma.otpCode.findFirst({
+    where: { target: testEmail, type: 'EMAIL' },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (!otpCode) throw new Error('OTP code not found');
+
+  const verifyResult = await publicCaller.auth.verifyOtp({
+    email: testEmail,
+    code: otpCode.code,
+    type: 'REGISTER',
+  });
+  console.log('✅ User verified via OTP. Token received.');
   
   const authContext = {
     prisma,
     cloudinary,
     auth,
-    user: regResult.user,
+    user: verifyResult.user,
     services,
   };
   
@@ -136,7 +151,7 @@ async function runTests() {
   
   // Cleanup
   console.log('Cleaning up test data...');
-  await prisma.user.deleteMany({ where: { phone: testPhone } });
+  await prisma.user.deleteMany({ where: { OR: [{ phone: testPhone }, { email: testEmail }] } });
   
   await app.close();
 }

@@ -69,7 +69,7 @@ export class OtpService {
    */
   async sendSmsOtp(phone: string, code: string): Promise<boolean> {
     if (!this.twilioClient) {
-      this.logger.log(`[DEV SMS OTP] To ${phone}: ${code}`);
+      this.logger.log(`[DEV SMS OTP] To ${phone}: ******`);
       return true; // Silently succeed in dev
     }
 
@@ -92,7 +92,7 @@ export class OtpService {
    */
   async sendEmailOtp(email: string, code: string): Promise<boolean> {
     if (!this.smtpTransport) {
-      this.logger.log(`[DEV EMAIL OTP] To ${email}: ${code}`);
+      this.logger.log(`[DEV EMAIL OTP] To ${email}: ******`);
       return true; // Silently succeed in dev
     }
 

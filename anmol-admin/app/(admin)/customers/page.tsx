@@ -1,17 +1,49 @@
 'use client';
 
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useDebounce } from '@/hooks/use-debounce';
 import { PageHeader } from '@/components/page-header';
-import { Card, Badge, Spinner } from '@/components/ui';
+import { Card, Badge, Spinner, Input } from '@/components/ui';
 import { trpc } from '@/lib/trpc';
-import { Users } from 'lucide-react';
+import { Users, Search } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CustomersPage() {
+  const searchParams = useSearchParams();
+  const highlightId = searchParams?.get('highlight');
+
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
+
   const { data: customers, isLoading } = trpc.user.getCustomers.useQuery(undefined, {
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
     retry: false,
   });
+
+  const filteredCustomers = useMemo(() => {
+    if (!customers) return [];
+    if (!debouncedSearch) return customers;
+    const lowerSearch = debouncedSearch.toLowerCase();
+    return customers.filter((c: any) => 
+      (c.name && c.name.toLowerCase().includes(lowerSearch)) ||
+      (c.phone && c.phone.toLowerCase().includes(lowerSearch))
+    );
+  }, [customers, debouncedSearch]);
+
+  useEffect(() => {
+    if (highlightId && customers) {
+      setTimeout(() => {
+        const el = document.getElementById(`customer-row-${highlightId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('bg-violet-100');
+          setTimeout(() => el.classList.remove('bg-violet-100'), 3000);
+        }
+      }, 300);
+    }
+  }, [highlightId, customers]);
 
   return (
     <div className="pb-12">
@@ -20,7 +52,21 @@ export default function CustomersPage() {
         description="Manage your registered customers and view their order history." 
       />
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5 mt-6">
+      <div className="mt-6 mb-2 flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1 max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search size={16} className="text-slate-400" />
+          </div>
+          <Input
+            className="pl-10"
+            placeholder="Search customers by name or phone…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5 mt-4">
         {isLoading ? (
           <div className="p-12 flex flex-col items-center justify-center text-slate-400">
             <Spinner size={32} className="mb-4" />
@@ -48,8 +94,8 @@ export default function CustomersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {customers.map((c: any) => (
-                  <tr key={c.id} className="hover:bg-slate-50/50 transition-colors group">
+                {filteredCustomers.map((c: any) => (
+                  <tr key={c.id} id={`customer-row-${c.id}`} className="hover:bg-slate-50/50 transition-all duration-700 group">
                     <td className="px-6 py-4">
                       <Link href={`/customers/${c.id}`} className="flex items-center gap-3">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700 font-bold text-sm">

@@ -86,20 +86,21 @@ export class WebhookController {
               });
 
               if (order && order.status === 'PENDING') {
-                await tx.order.update({
-                  where: { id: order.id },
+                const updatedOrder = await tx.order.updateMany({
+                  where: { id: order.id, status: 'PENDING' },
                   data: { status: 'PROCESSING' },
                 });
 
-                // Deduct inventory for online payments exactly once
-                for (const item of order.items) {
-                  if (item.variantId) {
-                    await tx.productVariant.update({
-                      where: { id: item.variantId },
-                      data: { stockQty: { decrement: item.quantity } },
-                    });
+                if (updatedOrder.count > 0) {
+                  // Deduct inventory for online payments exactly once
+                  for (const item of order.items) {
+                    if (item.variantId) {
+                      await tx.productVariant.update({
+                        where: { id: item.variantId },
+                        data: { stockQty: { decrement: item.quantity } },
+                      });
+                    }
                   }
-                }
 
                 // Send Email Invoice
                 this.invoiceService.emailOrderInvoice(order.id).catch(err => this.logger.error(err));
@@ -135,6 +136,7 @@ export class WebhookController {
 
                 // Emit event for delivery boy assignment
                 this.eventEmitter.emit('order.processing', { orderId: order.id });
+                }
               }
             }
           });

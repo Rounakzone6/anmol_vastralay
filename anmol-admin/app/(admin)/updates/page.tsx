@@ -1,9 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
-import { Bell, Package, ShoppingCart, Users, Truck, Clock, ExternalLink } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, Select } from '@/components/ui';
+import { Bell, Package, ShoppingCart, Users, Truck, Clock, ExternalLink, Filter } from 'lucide-react';
 import Link from 'next/link';
 
 function getIcon(type: string) {
@@ -17,7 +18,9 @@ function getIcon(type: string) {
 }
 
 export default function UpdatesPage() {
-  const { data: updates, isLoading } = trpc.dashboard.getUpdates.useQuery(undefined, {
+  const [filter, setFilter] = useState<'LAST_WEEK' | 'TODAY' | 'YESTERDAY' | 'ALL_TIME'>('LAST_WEEK');
+
+  const { data: updates, isLoading } = trpc.dashboard.getUpdates.useQuery({ filter }, {
     refetchInterval: 30000,
   });
 
@@ -29,8 +32,23 @@ export default function UpdatesPage() {
       />
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-xl">Recent Activity</CardTitle>
+          <div className="relative w-40">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+              <Filter size={14} className="text-slate-400" />
+            </div>
+            <Select
+              className="pl-9 py-1.5 text-sm"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value as any)}
+            >
+              <option value="TODAY">Today</option>
+              <option value="YESTERDAY">Yesterday</option>
+              <option value="LAST_WEEK">Last 7 Days</option>
+              <option value="ALL_TIME">All Time</option>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (

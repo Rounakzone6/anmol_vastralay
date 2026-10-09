@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthModule } from '@backend/modules/auth.module';
 import { CloudinaryModule } from '@backend/modules/cloudinary.module';
 import { PrismaModule } from '@backend/modules/prisma.module';
@@ -20,6 +23,8 @@ import { WhatsappController } from '@backend/controllers/whatsapp.controller';
 import { ChatbotService } from '@backend/services/chatbot.service';
 import { InvoiceService } from '@backend/services/invoice.service';
 import { EmailModule } from '@backend/modules/email.module';
+import { AiService } from '@backend/services/ai.service';
+import { RetargetingService } from '@backend/services/retargeting.service';
 
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { DeliveryAssignmentService } from '@backend/services/delivery-assignment.service';
@@ -27,7 +32,12 @@ import { DeliveryAssignmentService } from '@backend/services/delivery-assignment
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
+    ThrottlerModule.forRoot([{
+      ttl: 60000, // 1 minute
+      limit: 100, // 100 requests per minute
+    }]),
     PrismaModule,
     CloudinaryModule,
     EmailModule,
@@ -35,6 +45,10 @@ import { DeliveryAssignmentService } from '@backend/services/delivery-assignment
   ],
   controllers: [WebhookController, WhatsappController],
   providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     CategoryService,
     ProductService,
     CartService,
@@ -50,6 +64,8 @@ import { DeliveryAssignmentService } from '@backend/services/delivery-assignment
     ChatbotService,
     InvoiceService,
     DeliveryAssignmentService,
+    AiService,
+    RetargetingService,
   ],
 })
 export class AppModule {}

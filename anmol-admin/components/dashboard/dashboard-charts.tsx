@@ -19,7 +19,7 @@ import {
   ZAxis,
 } from 'recharts';
 import { Card } from '@/components/ui';
-import { ArrowRightLeft, RefreshCcw, Users, TrendingUp } from 'lucide-react';
+import { ArrowRightLeft, RefreshCcw, Users, TrendingUp, PackageSearch } from 'lucide-react';
 import { format, subDays, isSameDay } from 'date-fns';
 
 const COLORS = ['#8b5cf6', '#f59e0b', '#ec4899', '#14b8a6', '#ef4444', '#3b82f6'];
@@ -99,6 +99,26 @@ export function DashboardCharts({ orders = [], payments = [], categories = [], p
       .sort((a, b) => b.totalSpent - a.totalSpent)
       .slice(0, 10); // top 10 customers
   }, [orders]);
+
+  // 5. Category Inventory Data
+  const categoryInventoryData = useMemo(() => {
+    if (!categories || !products || !categories.length || !products.length) return [];
+    
+    const categoryMap = new Map();
+    categories.forEach(c => categoryMap.set(c.id, c.name));
+    
+    const inventoryCount: Record<string, number> = {};
+    
+    products.forEach(p => {
+      const categoryName = categoryMap.get(p.categoryId) || 'Uncategorized';
+      const totalStock = p.variants?.reduce((sum: number, v: any) => sum + (v.stockQty || 0), 0) || 0;
+      inventoryCount[categoryName] = (inventoryCount[categoryName] || 0) + totalStock;
+    });
+    
+    return Object.entries(inventoryCount)
+      .map(([name, stock]) => ({ name, stock }))
+      .sort((a, b) => b.stock - a.stock);
+  }, [categories, products]);
 
   return (
     <div className="mt-8 mb-12 flex flex-col gap-6">
@@ -238,6 +258,42 @@ export function DashboardCharts({ orders = [], payments = [], categories = [], p
                 </ResponsiveContainer>
              ) : (
                 <div className="h-full flex items-center justify-center text-slate-400">No orders data available</div>
+             )}
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-1">
+        {/* Category Inventory Breakdown */}
+        <Card className="p-6 border-slate-200/60 shadow-sm bg-white/70 backdrop-blur-md">
+          <div className="flex items-center gap-2 mb-6">
+            <PackageSearch className="h-5 w-5 text-amber-500" />
+            <h3 className="text-lg font-bold text-slate-800">Category Inventory Breakdown</h3>
+          </div>
+          <div className="h-72 w-full">
+             {categoryInventoryData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={288}>
+                  <BarChart
+                    data={categoryInventoryData}
+                    margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      cursor={{ fill: '#f1f5f9' }}
+                      formatter={(value: any) => [value, 'Available Stock']}
+                    />
+                    <Bar dataKey="stock" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={40} name="Stock">
+                      {categoryInventoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+             ) : (
+                <div className="h-full flex items-center justify-center text-slate-400">No inventory data available</div>
              )}
           </div>
         </Card>

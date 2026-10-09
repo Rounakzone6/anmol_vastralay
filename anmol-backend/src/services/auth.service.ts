@@ -1,10 +1,11 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserRole } from '@prisma/client';
+import { UserRole, OtpType } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
 import { PrismaService } from '@backend/services/prisma.service';
 import { EmailService } from '@backend/services/email.service';
+import { OtpService } from '@backend/services/otp.service';
 
 export type AuthUser = {
   id: string;
@@ -30,7 +31,8 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
-    private readonly email: EmailService,
+    private readonly emailService: EmailService,
+    private readonly otpService: OtpService,
   ) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     this.googleClient = new OAuth2Client(clientId);
@@ -40,10 +42,14 @@ export class AuthService {
     return bcrypt.hash(password, 10);
   }
 
+  private generateOtp(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
   async login(
     identifier: string,
     password: string,
-  ): Promise<{ token: string; user: AuthUser }> {
+  ): Promise<{ success: boolean; message: string; email: string; type: string }> {
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;
 
@@ -51,22 +57,22 @@ export class AuthService {
       if (password !== adminPassword) {
         throw new UnauthorizedException('Invalid credentials');
       }
-      const user: AuthUser = {
-        id: 'admin',
-        email: adminEmail,
-        phone: null,
-        name: 'Admin',
-        profileImage: null,
-        gender: null,
-        emailVerified: true,
-        phoneVerified: false,
-        role: UserRole.ADMIN,
-      };
-      const token = await this.jwt.signAsync({
-        sub: user.id,
-        role: user.role,
-      } satisfies JwtPayload);
-      return { token, user };
+      
+      const code = this.generateOtp();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      
+      await this.prisma.otpCode.create({
+        data: {
+          type: OtpType.EMAIL,
+          code,
+          target: adminEmail,
+          expiresAt,
+        }
+      });
+      
+      await this.otpService.sendEmailOtp(adminEmail, code);
+
+      return { success: true, message: 'OTP sent to email', email: adminEmail, type: 'LOGIN' };
     }
 
     const record = await this.prisma.user.findFirst({
@@ -89,13 +95,27 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const user = this.sanitize(record);
-    const token = await this.jwt.signAsync({
-      sub: user.id,
-      role: user.role,
-    } satisfies JwtPayload);
+    const targetEmail = record.email;
+    if (!targetEmail) {
+       throw new UnauthorizedException('Account has no email for OTP verification. Please contact support.');
+    }
 
-    return { token, user };
+    const code = this.generateOtp();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await this.prisma.otpCode.create({
+      data: {
+        userId: record.id,
+        type: OtpType.EMAIL,
+        code,
+        target: targetEmail,
+        expiresAt,
+      }
+    });
+
+    await this.otpService.sendEmailOtp(targetEmail, code);
+
+    return { success: true, message: 'OTP sent to email', email: targetEmail, type: 'LOGIN' };
   }
 
   async register(input: {
@@ -103,32 +123,45 @@ export class AuthService {
     phone?: string;
     name: string;
     password: string;
-  }) {
-    if (!input.email && !input.phone) {
-      throw new Error('BAD_REQUEST:Either email or phone number is required');
+  }): Promise<{ success: boolean; message: string; email: string; type: string }> {
+    if (!input.email) {
+      throw new Error('BAD_REQUEST:Email is required for MFA registration');
     }
 
     try {
       const hashedPassword = await this.hashPassword(input.password);
       const user = await this.prisma.user.create({
         data: {
-          email: input.email || null,
+          email: input.email,
           phone: input.phone || null,
           name: input.name,
           password: hashedPassword,
           role: 'CUSTOMER',
+          emailVerified: false,
           cart: { create: {} },
         },
-        select: { id: true, email: true, phone: true, name: true, role: true },
       });
 
-      this.email.sendWelcomeEmail(user.email, user.name).catch((error) =>
+      this.emailService.sendWelcomeEmail(user.email!, user.name).catch((error) =>
         console.error('Failed to send welcome email', error),
       );
 
-      // Log them in using whichever identifier they provided
-      const loginIdentifier = input.email || input.phone!;
-      return await this.login(loginIdentifier, input.password);
+      const code = this.generateOtp();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+      await this.prisma.otpCode.create({
+        data: {
+          userId: user.id,
+          type: OtpType.EMAIL,
+          code,
+          target: user.email!,
+          expiresAt,
+        }
+      });
+
+      await this.otpService.sendEmailOtp(user.email!, code);
+
+      return { success: true, message: 'OTP sent to email', email: user.email!, type: 'REGISTER' };
     } catch (error: any) {
       if (error.code === 'P2002') {
         const field = error.meta?.target?.[0];
@@ -141,6 +174,71 @@ export class AuthService {
       }
       throw new Error(`BAD_REQUEST:${error.message || 'Registration failed'}`);
     }
+  }
+
+  async verifyOtp(email: string, code: string, type: string): Promise<{ token: string; user: AuthUser }> {
+    const otpRecord = await this.prisma.otpCode.findFirst({
+       where: {
+          target: email,
+          code,
+          verified: false,
+          expiresAt: { gt: new Date() }
+       },
+       orderBy: { createdAt: 'desc' }
+    });
+
+    if (!otpRecord) {
+       throw new UnauthorizedException('Invalid or expired OTP code');
+    }
+
+    await this.prisma.otpCode.update({
+       where: { id: otpRecord.id },
+       data: { verified: true }
+    });
+
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (adminEmail && email === adminEmail) {
+        const user: AuthUser = {
+           id: 'admin',
+           email: adminEmail,
+           phone: null,
+           name: 'Admin',
+           profileImage: null,
+           gender: null,
+           emailVerified: true,
+           phoneVerified: false,
+           role: UserRole.ADMIN,
+         };
+         const token = await this.jwt.signAsync({
+           sub: user.id,
+           role: user.role,
+         } satisfies JwtPayload);
+         return { token, user };
+    }
+
+    const userRecord = await this.prisma.user.findFirst({
+       where: { email }
+    });
+
+    if (!userRecord) {
+        throw new UnauthorizedException('User not found');
+    }
+
+    if (!userRecord.emailVerified) {
+        await this.prisma.user.update({
+            where: { id: userRecord.id },
+            data: { emailVerified: true }
+        });
+        userRecord.emailVerified = true;
+    }
+
+    const user = this.sanitize(userRecord);
+    const token = await this.jwt.signAsync({
+      sub: user.id,
+      role: user.role,
+    } satisfies JwtPayload);
+
+    return { token, user };
   }
 
   async googleAuth(
@@ -204,7 +302,7 @@ export class AuthService {
           cart: { create: {} },
         },
       });
-      this.email.sendWelcomeEmail(record.email, record.name).catch((error) =>
+      this.emailService.sendWelcomeEmail(record.email!, record.name).catch((error) =>
         console.error('Failed to send Google welcome email', error),
       );
     }
