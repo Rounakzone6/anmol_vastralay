@@ -162,7 +162,7 @@ Keep your answers concise and friendly, suitable for WhatsApp. Do not use markdo
               pageSize: 3,
             });
             functionResponse = {
-              products: products.items.map((p) => ({
+              products: products.items.map((p: any) => ({
                 name: p.name,
                 price: p.netPrice,
               })),
