@@ -29,7 +29,15 @@ export class ProductQueries {
         : {}),
       ...(input?.kind ? { kind: input.kind } : {}),
       ...(input?.search
-        ? { name: { contains: input.search, mode: 'insensitive' as const } }
+        ? {
+            OR: [
+              { name: { contains: input.search, mode: 'insensitive' as const } },
+              { description: { contains: input.search, mode: 'insensitive' as const } },
+              { brand: { contains: input.search, mode: 'insensitive' as const } },
+              { category: { name: { contains: input.search, mode: 'insensitive' as const } } },
+              { variants: { some: { sku: { equals: input.search } } } }
+            ]
+          }
         : {}),
     };
 
