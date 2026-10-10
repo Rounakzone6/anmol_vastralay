@@ -72,7 +72,8 @@ export class AuthService {
       // Set rate limit (60 seconds)
       await redis.set(rateLimitKey, '1', 'EX', 60);
 
-      await this.otpService.sendEmailOtp(adminEmail, code);
+      // Run in background without awaiting to prevent slow API response
+      this.otpService.sendEmailOtp(adminEmail, code).catch(console.error);
 
       return { success: true, message: 'OTP sent to email', email: adminEmail, type: 'LOGIN' };
     }
@@ -115,7 +116,8 @@ export class AuthService {
     // Set rate limit (60 seconds)
     await redis.set(rateLimitKey, '1', 'EX', 60);
 
-    await this.otpService.sendEmailOtp(targetEmail, code);
+    // Run in background without awaiting to prevent slow API response
+    this.otpService.sendEmailOtp(targetEmail, code).catch(console.error);
 
     return { success: true, message: 'OTP sent to email', email: targetEmail, type: 'LOGIN' };
   }
@@ -160,7 +162,8 @@ export class AuthService {
       // Set rate limit (60 seconds)
       await redis.set(rateLimitKey, '1', 'EX', 60);
 
-      await this.otpService.sendEmailOtp(user.email!, code);
+      // Run in background without awaiting to prevent slow API response
+      this.otpService.sendEmailOtp(user.email!, code).catch(console.error);
 
       return { success: true, message: 'OTP sent to email', email: user.email!, type: 'REGISTER' };
     } catch (error: any) {
