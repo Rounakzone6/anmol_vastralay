@@ -72,8 +72,13 @@ export class AuthService {
       // Set rate limit (60 seconds)
       await redis.set(rateLimitKey, '1', 'EX', 60);
 
-      // Run in background without awaiting to prevent slow API response
-      this.otpService.sendEmailOtp(adminEmail, code).catch(console.error);
+      const sent = await this.otpService.sendEmailOtp(adminEmail, code);
+      if (!sent) {
+        // Rollback redis keys on failure
+        await redis.del(`otp:${adminEmail}`);
+        await redis.del(rateLimitKey);
+        throw new BadRequestException('Failed to send OTP email. Please try again.');
+      }
 
       return { success: true, message: 'OTP sent to email', email: adminEmail, type: 'LOGIN' };
     }
@@ -116,10 +121,15 @@ export class AuthService {
     // Set rate limit (60 seconds)
     await redis.set(rateLimitKey, '1', 'EX', 60);
 
-    // Run in background without awaiting to prevent slow API response
-    this.otpService.sendEmailOtp(targetEmail, code).catch(console.error);
+      const sent = await this.otpService.sendEmailOtp(targetEmail, code);
+      if (!sent) {
+        // Rollback redis keys on failure
+        await redis.del(`otp:${targetEmail}`);
+        await redis.del(rateLimitKey);
+        throw new BadRequestException('Failed to send OTP email. Please try again.');
+      }
 
-    return { success: true, message: 'OTP sent to email', email: targetEmail, type: 'LOGIN' };
+      return { success: true, message: 'OTP sent to email', email: targetEmail, type: 'LOGIN' };
   }
 
   async register(input: {
@@ -162,8 +172,13 @@ export class AuthService {
       // Set rate limit (60 seconds)
       await redis.set(rateLimitKey, '1', 'EX', 60);
 
-      // Run in background without awaiting to prevent slow API response
-      this.otpService.sendEmailOtp(user.email!, code).catch(console.error);
+      const sent = await this.otpService.sendEmailOtp(user.email!, code);
+      if (!sent) {
+        // Rollback redis keys on failure
+        await redis.del(`otp:${user.email}`);
+        await redis.del(rateLimitKey);
+        throw new BadRequestException('Failed to send OTP email. Please try again.');
+      }
 
       return { success: true, message: 'OTP sent to email', email: user.email!, type: 'REGISTER' };
     } catch (error: any) {

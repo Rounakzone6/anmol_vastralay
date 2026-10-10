@@ -92,6 +92,10 @@ export class OtpService {
    */
   async sendEmailOtp(email: string, code: string): Promise<boolean> {
     if (!this.smtpTransport) {
+      if (process.env.NODE_ENV === 'production') {
+        this.logger.error(`[ERROR] SMTP not configured. Cannot send OTP to ${email}. Check your environment variables (SMTP_HOST, SMTP_USER, SMTP_PASS).`);
+        return false;
+      }
       this.logger.log(`[DEV EMAIL OTP] To ${email}: ${code}`);
       return true; // Silently succeed in dev
     }
