@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as nodemailer from 'nodemailer';
+import type { Transporter } from 'nodemailer';
 
 type OrderEmailData = {
   id: string;
@@ -13,22 +15,27 @@ type OrderEmailData = {
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private readonly from: string;
-  private readonly apiKey: string;
-  private readonly isConfigured: boolean;
+  private readonly transport: Transporter | null = null;
+  private readonly from: string = '';
 
   constructor(config: ConfigService) {
-    this.apiKey = config.get<string>('BREVO_API_KEY') || '';
-    this.from = config.get<string>('BREVO_FROM_EMAIL') || config.get<string>('SMTP_FROM_EMAIL') || 'noreply@anmolvastralay.com';
+    const host = config.get<string>('SMTP_HOST');
+    const port = config.get<number>('SMTP_PORT') || 587;
+    const user = config.get<string>('SMTP_USER');
+    const pass = config.get<string>('SMTP_PASS');
+    this.from = config.get<string>('SMTP_FROM_EMAIL') || user || '';
 
-    if (!this.apiKey) {
-      this.isConfigured = false;
-      this.logger.warn('Brevo API Key not configured; transactional emails are disabled');
+    if (!host || !user || !pass) {
+      this.logger.warn('SMTP not configured; transactional emails are disabled');
       return;
     }
 
-    this.isConfigured = true;
-    this.logger.log('✓ Brevo configured for transactional emails');
+    this.transport = nodemailer.createTransport({
+      host,
+      port,
+      secure: config.get<string>('SMTP_SECURE') === 'true' || port === 465,
+      auth: { user, pass },
+    });
   }
 
   async sendWelcomeEmail(email: string | null, name: string | null) {
@@ -66,44 +73,23 @@ export class EmailService {
           <p style="margin-top:32px">Thank you for shopping with Anmol Vastralay.</p>
         </div>
       `,
-      attachments: [{
-        name: `invoice-${order.id.slice(-8).toUpperCase()}.pdf`,
-        content: invoice.toString('base64'),
-      }],
+      attachments: [{ filename: `invoice-${order.id.slice(-8).toUpperCase()}.pdf`, content: invoice, contentType: 'application/pdf' }],
     });
   }
 
-  private async send(message: { to: string; subject: string; html: string; attachments?: Array<any> }) {
-    if (!this.isConfigured) {
-      this.logger.warn(`Email skipped (Brevo unavailable): ${message.subject} -> ${message.to}`);
+  private async send(message: { to: string; subject: string; html: string; attachments?: Array<{ filename: string; content: Buffer; contentType: string }> }) {
+    if (!this.transport) {
+      this.logger.warn(`Email skipped (SMTP unavailable): ${message.subject} -> ${message.to}`);
       return;
     }
-    
     try {
-      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'api-key': this.apiKey,
-        },
-        body: JSON.stringify({
-          sender: { name: 'Anmol Vastralay', email: this.from },
-          to: [{ email: message.to }],
-          subject: message.subject,
-          htmlContent: message.html,
-          attachment: message.attachments, // Brevo uses 'attachment' array
-        }),
+      await this.transport.sendMail({
+        from: `"Anmol Vastralay" <${this.from}>`,
+        ...message,
       });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(`Brevo API Error: ${response.status} ${errorData}`);
-      }
-
       this.logger.log(`Email sent: ${message.subject} -> ${message.to}`);
-    } catch (error: any) {
-      this.logger.error(`Email failed: ${message.subject} -> ${message.to}`, error.message);
+    } catch (error) {
+      this.logger.error(`Email failed: ${message.subject} -> ${message.to}`, error instanceof Error ? error.stack : String(error));
     }
   }
 
