@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useDebounce } from '@/hooks/use-debounce';
 import { PageHeader } from '@/components/page-header';
@@ -11,6 +11,14 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 
 export default function CustomersPage() {
+  return (
+    <Suspense fallback={<div className="p-12 flex justify-center"><Spinner size={32} /></div>}>
+      <CustomersContent />
+    </Suspense>
+  );
+}
+
+function CustomersContent() {
   const searchParams = useSearchParams();
   const highlightId = searchParams?.get('highlight');
 

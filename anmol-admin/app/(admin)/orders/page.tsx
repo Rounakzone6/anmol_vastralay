@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useDebounce } from '@/hooks/use-debounce';
 import { PageHeader } from '@/components/page-header';
@@ -19,6 +19,14 @@ const STATUS_STYLES = {
 } as const;
 
 export default function OrdersPage() {
+  return (
+    <Suspense fallback={<div className="p-12 flex justify-center"><Spinner size={32} /></div>}>
+      <OrdersContent />
+    </Suspense>
+  );
+}
+
+function OrdersContent() {
   const searchParams = useSearchParams();
   const highlightId = searchParams?.get('highlight');
 
