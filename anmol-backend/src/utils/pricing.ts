@@ -6,7 +6,7 @@ function toNumber(value: Numeric): number {
   return typeof value === 'number' ? value : Number(value);
 }
 
-export function computeSellingPrice(
+function computeSellingPrice(
   netPrice: Numeric,
   discountPercent: Numeric,
 ): number {

@@ -13,6 +13,7 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { redis } from '@backend/config/redis.config';
 import { NotificationQueueService } from '@backend/services/notification-queue.service';
 import { NotificationProcessor } from '@backend/processors/notification.processor';
+import { AbandonedCartCron } from '@backend/cron/abandoned-cart.cron';
 import { CategoryService } from '@backend/services/category.service';
 import { ProductService } from '@backend/services/product.service';
 import { CartService } from '@backend/services/cart.service';
@@ -95,6 +96,7 @@ import { DeliveryAssignmentService } from '@backend/services/delivery-assignment
     RetargetingService,
     NotificationQueueService,
     NotificationProcessor,
+    AbandonedCartCron,
   ],
 })
 export class AppModule {}

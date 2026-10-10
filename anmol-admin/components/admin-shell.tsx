@@ -20,7 +20,8 @@ import {
   X,
   Truck,
   MessageCircle,
-  LineChart
+  LineChart,
+  Headset
 } from 'lucide-react';
 import { StockNotification } from '@/components/stock-notification';
 
@@ -31,6 +32,7 @@ const links = [
   { href: '/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/payments', label: 'Payments', icon: CreditCard },
   { href: '/customers', label: 'Customers', icon: Users },
+  { href: '/support', label: 'Support (Helpdesk)', icon: Headset },
   { href: '/categories', label: 'Categories', icon: Tags },
   { href: '/products', label: 'Products', icon: Package },
   { href: '/banners', label: 'Banners', icon: ImageIcon },
@@ -119,16 +121,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans flex-col lg:flex-row print:bg-white print:block">
-      {/* Mobile Top Bar */}
-      <div className="lg:hidden print:hidden flex items-center justify-center p-4 border-b border-slate-200 bg-white/80 backdrop-blur-md sticky top-0 z-40">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-violet-600 flex items-center justify-center shadow-md shadow-violet-200">
-            <span className="text-white font-bold text-lg leading-none">A</span>
-          </div>
-          <span className="text-xl font-bold tracking-tight text-slate-900">Anmol Admin</span>
-        </Link>
-      </div>
-
       {/* Mobile Bottom Navigation Bar */}
       <div className="lg:hidden print:hidden fixed bottom-0 left-0 right-0 z-[60] bg-white/95 backdrop-blur-xl border-t border-slate-200 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] pb-safe">
         <nav className="flex justify-around items-center h-16">

@@ -124,6 +124,55 @@ export const dashboardRouter = router({
     return updates.sort((a, b) => b.date.getTime() - a.date.getTime());
   }),
 
+  getCategoryInventory: staffProcedure.query(async ({ ctx }) => {
+    const prisma = ctx.prisma as PrismaClient;
+    const categories = await prisma.category.findMany({
+      select: {
+        id: true,
+        name: true,
+        products: {
+          select: {
+            variants: {
+              select: {
+                stockQty: true,
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const inventoryData = categories.map(category => {
+      let totalStock = 0;
+      category.products.forEach(p => {
+        p.variants.forEach(v => totalStock += v.stockQty);
+      });
+      return {
+        name: category.name,
+        stock: totalStock,
+      };
+    }).filter(c => c.stock > 0).sort((a, b) => b.stock - a.stock);
+
+    return inventoryData;
+  }),
+
+  getStats: staffProcedure.query(async ({ ctx }) => {
+    const prisma = ctx.prisma as PrismaClient;
+    const [categoriesCount, activeProducts, lowStockVariants, customersCount] = await Promise.all([
+      prisma.category.count(),
+      prisma.product.count({ where: { isActive: true } }),
+      prisma.productVariant.count({ where: { stockQty: { lte: 5 } } }),
+      prisma.user.count({ where: { role: 'CUSTOMER' } }),
+    ]);
+
+    return {
+      categoriesCount,
+      activeProducts,
+      lowStock: lowStockVariants,
+      customersCount,
+    };
+  }),
+
   generateDemandForecast: staffProcedure.query(async ({ ctx }) => {
     try {
       const cacheKey = `dashboard:demand_forecast:${new Date().toISOString().split('T')[0]}`;

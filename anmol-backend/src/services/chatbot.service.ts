@@ -64,6 +64,21 @@ Keep your answers concise and friendly, suitable for WhatsApp. Do not use markdo
                   'Get information about the store location, return policy, and delivery policy.',
                 parameters: { type: SchemaType.OBJECT, properties: {} },
               },
+              {
+                name: 'escalateToHuman',
+                description:
+                  'Use this if the customer is angry, explicitly asks to speak to a human, or if you cannot solve their complex issue (e.g., complex refund, custom tailoring request, complaints).',
+                parameters: {
+                  type: SchemaType.OBJECT,
+                  properties: {
+                    subject: {
+                      type: SchemaType.STRING,
+                      description: 'A short summary of the customer\'s issue.',
+                    },
+                  },
+                  required: ['subject'],
+                },
+              },
             ],
           },
         ],
@@ -163,6 +178,39 @@ Keep your answers concise and friendly, suitable for WhatsApp. Do not use markdo
               'We offer a 7-day hassle-free return policy for unused items.',
             delivery: 'Standard delivery takes 3-5 business days.',
           };
+        } else if (call.name === 'escalateToHuman') {
+          try {
+            const cleanPhone = phone.replace(/^whatsapp:/, '');
+            const user = await this.prisma.user.findFirst({
+              where: { phone: cleanPhone },
+            });
+
+            if (user) {
+              const ticket = await this.prisma.supportTicket.create({
+                data: {
+                  userId: user.id,
+                  subject: String(call.args.subject),
+                  status: 'OPEN',
+                  messages: {
+                    create: [
+                      { sender: 'AI', text: `Escalated reason: ${call.args.subject}` },
+                      { sender: 'CUSTOMER', text } // Add the last user message for context
+                    ]
+                  }
+                },
+              });
+              functionResponse = { 
+                success: true, 
+                ticketId: ticket.id,
+                messageToUser: 'Ticket has been created. A human agent will contact them shortly.' 
+              };
+            } else {
+              functionResponse = { error: 'Customer is not registered. Ask them to register on our website first.' };
+            }
+          } catch (e: unknown) {
+            this.logger.debug(e);
+            functionResponse = { error: 'Failed to create ticket.' };
+          }
         }
 
         result = await chat.sendMessage([

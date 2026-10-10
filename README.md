@@ -116,10 +116,16 @@ npm run dev
 ## 🌟 Key Features
 
 * **RAG Customer Care AI:** The storefront features a smart floating chatbot powered by Gemini 1.5 Pro. It has secure access to the backend database via custom tools to autonomously fetch live order details for customers based on their Order ID.
+* **AI-Powered CRM & Helpdesk:** A bespoke CRM system is built into the Admin Panel featuring:
+  * **Abandoned Cart Recovery:** Automatically reminds users via WhatsApp after 1 hour using background BullMQ jobs.
+  * **Smart Segmentation:** Calculates Lifetime Value (LTV) to segment users into VIP, Regular, Dormant, and New.
+  * **Bulk Broadcasting:** Admins can send targeted WhatsApp campaigns to segments. Includes smart anti-ban delay queuing.
+  * **AI Handoff Ticketing:** When the AI chatbot detects an angry customer or a complex issue, it escalates the conversation to an Admin Inbox where humans can take over and reply directly via WhatsApp.
 * **End-to-End Type Safety:** Because the backend uses tRPC, the frontends instantly know the exact data structure of products, users, and orders without needing manual TypeScript interfaces.
 * **Infinite Scroll:** The collections page dynamically loads products as the user scrolls, keeping initial page load lightning fast.
 * **Mobile-First Responsive Design:** Every page and component smoothly adapts to phones, tablets, and massive 4K monitors using fluid Tailwind breakpoints.
 * **Secure Auth:** JWT-based authentication for customers and admins.
+* **Optimized & Clean Codebase:** The entire repository has been deeply scanned via strict static analysis tools (like Knip) to guarantee 100% usage of all dependencies, exports, and files.
 
 ---
 

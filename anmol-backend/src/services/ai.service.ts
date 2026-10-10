@@ -1,14 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 
 @Injectable()
 export class AiService {
   private genAI: GoogleGenerativeAI;
   private model: any;
+  private groq: Groq;
 
   constructor() {
     this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
     this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    this.groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
   }
 
   async generateProductDetails(imageUrl: string, categoryName: string = '') {
@@ -124,6 +127,30 @@ export class AiService {
     } catch (error) {
       console.error('Error generating retargeting message:', error);
       return "Hi there! We miss you at Anmol Vastralay. Use code COMEBACK15 for 15% off your next purchase! 🛍️";
+    }
+  }
+
+  async polishCampaignMessage(draftMessage: string) {
+    try {
+      const completion = await this.groq.chat.completions.create({
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an expert copywriter for an Indian ethnic fashion store. Your job is to polish, improve, and add excitement (using emojis) to WhatsApp broadcast messages sent to customers. Keep the response concise, engaging, and directly ready to be sent (no quotes or extra text). Retain the original intent but make it sound professional and catchy.'
+          },
+          {
+            role: 'user',
+            content: `Please polish this WhatsApp broadcast message:\n\n${draftMessage}`
+          }
+        ],
+        model: 'llama3-8b-8192',
+        temperature: 0.7,
+      });
+
+      return completion.choices[0]?.message?.content?.trim() || draftMessage;
+    } catch (error) {
+      console.error('Error polishing campaign message with Groq:', error);
+      return draftMessage; // fallback to original if API fails
     }
   }
 }

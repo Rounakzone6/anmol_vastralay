@@ -91,6 +91,10 @@ export class CartService {
     await redis.hincrby(cartKey, field, input.quantity);
     await redis.expire(cartKey, 30 * 86400);
     
+    // Track update time for Abandoned Cart recovery
+    await redis.zadd('carts:updated_at', Date.now(), userId);
+    await redis.srem('carts:reminded', userId); // Reset reminder status
+    
     return { success: true, id: field };
   }
 
@@ -102,11 +106,18 @@ export class CartService {
     
     if (input.quantity <= 0) {
       await redis.hdel(cartKey, input.cartItemId);
+      // Track update
+      await redis.zadd('carts:updated_at', Date.now(), userId);
+      await redis.srem('carts:reminded', userId);
       return { deleted: true };
     }
 
     await redis.hset(cartKey, input.cartItemId, input.quantity);
     await redis.expire(cartKey, 30 * 86400);
+    
+    // Track update
+    await redis.zadd('carts:updated_at', Date.now(), userId);
+    await redis.srem('carts:reminded', userId);
     
     return { success: true };
   }
@@ -117,12 +128,22 @@ export class CartService {
   ) {
     const cartKey = this.getCartKey(userId);
     await redis.hdel(cartKey, input.cartItemId);
+    
+    // Track update
+    await redis.zadd('carts:updated_at', Date.now(), userId);
+    await redis.srem('carts:reminded', userId);
+    
     return { success: true };
   }
 
   async clearCart(userId: string) {
     const cartKey = this.getCartKey(userId);
     await redis.del(cartKey);
+    
+    // Remove from tracking
+    await redis.zrem('carts:updated_at', userId);
+    await redis.srem('carts:reminded', userId);
+    
     return { success: true };
   }
 }

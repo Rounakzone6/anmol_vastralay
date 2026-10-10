@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo} from 'react';
 import {
   AreaChart,
   Area,
@@ -28,12 +28,10 @@ const PAYMENT_COLORS = ['#3b82f6', '#10b981'];
 interface DashboardChartsProps {
   orders?: any[];
   payments?: any[];
-  categories?: any[];
-  products?: any[];
-  customers?: any[];
+  categoryInventory?: any[];
 }
 
-export function DashboardCharts({ orders = [], payments = [], categories = [], products = [], customers = [] }: DashboardChartsProps) {
+export function DashboardCharts({ orders = [], payments = [], categoryInventory = [] }: DashboardChartsProps) {
   
   // 1. Sales Data (Last 7 days)
   const salesData = useMemo(() => {
@@ -100,25 +98,8 @@ export function DashboardCharts({ orders = [], payments = [], categories = [], p
       .slice(0, 10); // top 10 customers
   }, [orders]);
 
-  // 5. Category Inventory Data
-  const categoryInventoryData = useMemo(() => {
-    if (!categories || !products || !categories.length || !products.length) return [];
-    
-    const categoryMap = new Map();
-    categories.forEach(c => categoryMap.set(c.id, c.name));
-    
-    const inventoryCount: Record<string, number> = {};
-    
-    products.forEach(p => {
-      const categoryName = categoryMap.get(p.categoryId) || 'Uncategorized';
-      const totalStock = p.variants?.reduce((sum: number, v: any) => sum + (v.stockQty || 0), 0) || 0;
-      inventoryCount[categoryName] = (inventoryCount[categoryName] || 0) + totalStock;
-    });
-    
-    return Object.entries(inventoryCount)
-      .map(([name, stock]) => ({ name, stock }))
-      .sort((a, b) => b.stock - a.stock);
-  }, [categories, products]);
+  // 5. Category Inventory Data is now passed directly from backend
+  const categoryInventoryData = categoryInventory;
 
   return (
     <div className="mt-8 mb-12 flex flex-col gap-6">

@@ -27,7 +27,7 @@ interface AuthState {
   updateUser: (user: AuthUserData) => void;
 }
 
-export const useAuthStore = create<AuthState>()(
+const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       token: null,

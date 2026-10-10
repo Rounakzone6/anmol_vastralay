@@ -139,7 +139,7 @@ type ProductWithRelations = Prisma.ProductGetPayload<{
   select: typeof productPublicSelect;
 }>;
 
-export function mapVariant(
+function mapVariant(
   variant: Pick<ProductVariant, 'id' | 'color' | 'size' | 'stockQty'>,
 ) {
   return {

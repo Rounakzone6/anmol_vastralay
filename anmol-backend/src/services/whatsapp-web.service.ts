@@ -105,6 +105,33 @@ export class WhatsappWebService implements OnModuleInit, OnModuleDestroy {
     try {
        this.logger.log(`Received WhatsApp message from ${jid}: ${text}`);
        const phone = jid.split('@')[0];
+       
+       const cleanPhone = phone.replace(/^91/, ''); // Simple cleanup assuming Indian numbers
+       const user = await this.prisma.user.findFirst({
+         where: { phone: { endsWith: cleanPhone } },
+       });
+
+       if (user) {
+         // Check if user has an OPEN ticket
+         const openTicket = await this.prisma.supportTicket.findFirst({
+           where: { userId: user.id, status: 'OPEN' },
+         });
+
+         if (openTicket) {
+           // User has an open ticket. Route to Human Helpdesk instead of AI.
+           await this.prisma.ticketMessage.create({
+             data: {
+               ticketId: openTicket.id,
+               sender: 'CUSTOMER',
+               text,
+             },
+           });
+           this.logger.log(`Routed message to OPEN ticket ${openTicket.id} for user ${user.id}`);
+           return; // Do not process with AI
+         }
+       }
+
+       // No open ticket, let AI handle it
        const reply = await this.chatbotService.processMessage(phone, text);
        await this.sock.sendMessage(jid, { text: reply });
        this.logger.log(`Replied to ${jid} via AI Chatbot`);

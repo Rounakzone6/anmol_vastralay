@@ -26,6 +26,8 @@ export class NotificationProcessor extends WorkerHost {
         return this.handleOrderEmail(job.data);
       case 'order-whatsapp':
         return this.handleOrderWhatsApp(job.data);
+      case 'abandoned-cart-whatsapp':
+        return this.handleAbandonedCartWhatsApp(job.data);
       case 'marketing-message':
         return this.handleMarketingMessage(job.data);
       default:
@@ -94,6 +96,18 @@ export class NotificationProcessor extends WorkerHost {
       this.logger.log(`✅ Sent marketing message to ${data.phone}`);
     } catch (error) {
       this.logger.error(`❌ Failed to send marketing message to ${data.phone}`, error);
+      throw error;
+    }
+  }
+
+  private async handleAbandonedCartWhatsApp(data: { userId: string; phone: string }) {
+    try {
+      const message = `👋 Hi there!\n\nWe noticed you left some beautiful items in your Anmol Vastralay cart. 🛍️\n\nCheckout now before they go out of stock! Here is a 5% discount code just for you: *COMEBACK5*\n\n🛒 Tap here to continue shopping: ${process.env.FRONTEND_URL}/cart`;
+      
+      await this.whatsappWebService.sendMessage(data.phone, message);
+      this.logger.log(`✅ Sent abandoned cart reminder to ${data.phone}`);
+    } catch (error) {
+      this.logger.error(`❌ Failed to send abandoned cart reminder to ${data.phone}`, error);
       throw error;
     }
   }

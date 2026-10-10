@@ -96,7 +96,7 @@ export function jsonLd(value: unknown) {
   return JSON.stringify(value).replace(/</g, '\\u003c');
 }
 
-export function breadcrumbJsonLd(items: { name: string; item: string }[]) {
+function breadcrumbJsonLd(items: { name: string; item: string }[]) {
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',

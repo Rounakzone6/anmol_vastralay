@@ -3,8 +3,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-export const TOKEN_KEY = 'anmol_admin_token';
-export const COOKIE_NAME = 'admin_token';
+const TOKEN_KEY = 'anmol_admin_token';
+const COOKIE_NAME = 'admin_token';
 
 interface AdminAuthState {
   token: string | null;
@@ -12,7 +12,7 @@ interface AdminAuthState {
   clearTokenState: () => void;
 }
 
-export const useAdminAuthStore = create<AdminAuthState>()(
+const useAdminAuthStore = create<AdminAuthState>()(
   persist(
     (set) => ({
       token: null,
