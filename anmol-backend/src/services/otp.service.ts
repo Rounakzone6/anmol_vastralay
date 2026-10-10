@@ -92,7 +92,7 @@ export class OtpService {
    */
   async sendEmailOtp(email: string, code: string): Promise<boolean> {
     if (!this.smtpTransport) {
-      this.logger.log(`[DEV EMAIL OTP] To ${email}: ******`);
+      this.logger.log(`[DEV EMAIL OTP] To ${email}: ${code}`);
       return true; // Silently succeed in dev
     }
 
@@ -125,6 +125,7 @@ export class OtpService {
       return true;
     } catch (err) {
       this.logger.error(`Failed to send email to ${email}:`, err);
+      this.logger.log(`[FALLBACK EMAIL OTP] To ${email}: ${code}`);
       return false;
     }
   }
