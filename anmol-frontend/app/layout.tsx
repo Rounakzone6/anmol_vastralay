@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import ChatbotWidgetWrapper from '@/components/ChatbotWidgetWrapper';
 import { PhonePrompt } from '@/components/PhonePrompt';
 import { Inter } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 import { fetchPublicTrpc } from '@/lib/server-data';
@@ -79,6 +80,7 @@ export default async function RootLayout({
           <ChatbotWidgetWrapper />
           <PhonePrompt />
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
