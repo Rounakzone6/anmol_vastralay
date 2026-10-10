@@ -14,7 +14,7 @@ import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_NAME, SITE_URL, jsonLd, organi
 
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || SITE_URL),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001" || SITE_URL),
   title: {
     template: `%s | ${SITE_NAME}`,
     default: DEFAULT_TITLE,

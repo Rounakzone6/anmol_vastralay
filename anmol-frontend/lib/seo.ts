@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-export const SITE_URL = 'https://anmolvastralay.com';
+export const SITE_URL = 'https://anmol-vastralay.vercel.app';
 export const SITE_NAME = 'Anmol Vastralay';
 export const DEFAULT_TITLE = 'Anmol Vastralay | Premium Ethnic & Western Fashion in India';
 export const DEFAULT_DESCRIPTION =

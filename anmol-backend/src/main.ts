@@ -23,6 +23,7 @@ import { AiService } from '@backend/services/ai.service';
 import { createAppRouter } from '@backend/routers';
 
 const logger = new Logger('Bootstrap');
+const backendurl = process.env.BACKEND_URL || 'http://localhost:3001';
 
 function getBearerToken(req: Request): string | undefined {
   const header = req.headers.authorization;
@@ -94,7 +95,7 @@ async function bootstrap() {
         process.env.ADMIN_URL,
       ].filter(Boolean);
 
-      const isVercelPreview = origin && /^https:\/\/(anmol-vastralay|anmol-admin)(-[a-zA-Z0-9-]+)?\.vercel\.app$/.test(origin);
+      const isVercelPreview = origin && /^https:\/\/(anmol-vastralay|anmol-admin|admin-anmolvastralay)(-[a-zA-Z0-9-]+)?\.vercel\.app$/.test(origin);
 
       if (!origin || allowedOrigins.includes(origin) || isVercelPreview) {
         callback(null, true);
@@ -161,8 +162,8 @@ async function bootstrap() {
   await app.listen(port);
 
   logger.log(`✓ API Server running on port ${port}`);
-  logger.log(`✓ tRPC Playground: http://localhost:${port}/trpc`);
-  logger.log(`✓ Health Check: http://localhost:${port}/health`);
+  logger.log(`✓ tRPC Playground: ${backendurl}/trpc`);
+  logger.log(`✓ Health Check: ${backendurl}/health`);
   logger.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
   logger.log(
     `✓ Database: ${process.env.DATABASE_URL?.split('@')[1] || 'not configured'}`,
