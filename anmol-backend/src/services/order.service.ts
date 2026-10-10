@@ -11,6 +11,8 @@ import {
 import { WhatsappService } from '@backend/services/whatsapp.service';
 import { WhatsappWebService } from '@backend/services/whatsapp-web.service';
 import { InvoiceService } from '@backend/services/invoice.service';
+import { CartService } from '@backend/services/cart.service';
+import { NotificationQueueService } from '@backend/services/notification-queue.service';
 
 @Injectable()
 export class OrderService {
@@ -22,6 +24,8 @@ export class OrderService {
     private readonly whatsappWebService: WhatsappWebService,
     private readonly invoiceService: InvoiceService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly cartService: CartService,
+    private readonly notificationQueue: NotificationQueueService,
   ) {
     this.razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID || 'dummy_key_id',
@@ -30,15 +34,8 @@ export class OrderService {
   }
 
   async createOrder(userId: string, input: z.infer<typeof CreateOrderSchema>) {
-    // 1. Get user cart
-    const cart = await this.prisma.cart.findUnique({
-      where: { userId },
-      include: {
-        items: {
-          include: { product: true },
-        },
-      },
-    });
+    // 1. Get user cart from Redis via CartService
+    const cart = await this.cartService.getCart(userId);
 
     if (!cart || cart.items.length === 0) {
       throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cart is empty' });
@@ -119,10 +116,7 @@ export class OrderService {
         }
       }
 
-      // 5. Clear cart
-      await tx.cartItem.deleteMany({
-        where: { cartId: cart.id },
-      });
+      // Note: Cart clearing happens after transaction finishes successfully since it's in Redis
 
       return {
         orderId: order.id,
@@ -132,50 +126,28 @@ export class OrderService {
       };
     });
     
+    // 5. Clear cart in Redis
+    await this.cartService.clearCart(userId);
+    
     // Emit event if order status is PROCESSING
     if (input.paymentMethod === 'COD') {
       this.eventEmitter.emit('order.processing', { orderId: result.orderId });
     }
 
-    // 6. Handle post-order confirmations asynchronously
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    
+    // 6. Handle post-order confirmations asynchronously via BullMQ
     if (input.paymentMethod === 'COD') {
-      // 6a. Send Email Invoice
-      this.invoiceService.emailOrderInvoice(result.orderId).catch((error) =>
-        console.error('Failed to send order invoice email', error),
-      );
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      
+      await this.notificationQueue.enqueueOrderEmail({
+        orderId: result.orderId,
+      });
 
-      // 6b. Send WhatsApp Confirmation with Invoice using Baileys
-      (async () => {
-        try {
-          // Find phone fallback if user profile doesn't have it
-          let phone = user?.phone;
-          if (!phone) {
-            const address = await this.prisma.address.findFirst({
-              where: { userId },
-              orderBy: { isDefault: 'desc' },
-            });
-            phone = address?.phone;
-          }
-
-          if (phone) {
-            // Ensure invoice is generated and uploaded so we can fetch its URL
-            const invoice = await this.invoiceService.generateInvoice(undefined, result.orderId);
-            
-            const message = `🛍️ *Order Confirmed!* 🛍️\n\nThank you for shopping at Anmol Vastralay!\nYour order *#${result.orderId.slice(-8).toUpperCase()}* for ₹${result.amount} has been placed successfully.\n\nAttached is your invoice. 🧾`;
-            
-            await this.whatsappWebService.sendDocument(
-              phone,
-              { url: invoice.invoiceUrl },
-              `${invoice.invoiceNumber}.pdf`,
-              message
-            );
-          }
-        } catch (err) {
-          console.error('Failed to send WA order confirmation with invoice', err);
-        }
-      })();
+      await this.notificationQueue.enqueueOrderWhatsApp({
+        orderId: result.orderId,
+        userId: userId,
+        amount: result.amount,
+        phone: user?.phone,
+      });
     }
 
     return result;

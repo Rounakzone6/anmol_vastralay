@@ -13,6 +13,7 @@ import { CustomerService } from '../src/services/customer.service';
 import { BannerService } from '../src/services/banner.service';
 import { ReviewService } from '../src/services/review.service';
 import { WhatsappWebService } from '../src/services/whatsapp-web.service';
+import { AiService } from '../src/services/ai.service';
 
 import { createAppRouter } from '../src/routers';
 
@@ -35,6 +36,7 @@ async function runTests() {
     banner: app.get(BannerService),
     review: app.get(ReviewService),
     whatsapp: app.get(WhatsappWebService),
+    ai: app.get(AiService),
   };
 
   const appRouter = createAppRouter(auth);

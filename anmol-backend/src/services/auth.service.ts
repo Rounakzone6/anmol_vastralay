@@ -6,6 +6,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { PrismaService } from '@backend/services/prisma.service';
 import { EmailService } from '@backend/services/email.service';
 import { OtpService } from '@backend/services/otp.service';
+import { redis } from '@backend/config/redis.config';
 
 export type AuthUser = {
   id: string;
@@ -57,19 +58,20 @@ export class AuthService {
       if (password !== adminPassword) {
         throw new UnauthorizedException('Invalid credentials');
       }
+
+      const rateLimitKey = `ratelimit:otp:${adminEmail}`;
+      if (await redis.get(rateLimitKey)) {
+        throw new UnauthorizedException('Please wait 60 seconds before requesting another OTP');
+      }
       
       const code = this.generateOtp();
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
       
-      await this.prisma.otpCode.create({
-        data: {
-          type: OtpType.EMAIL,
-          code,
-          target: adminEmail,
-          expiresAt,
-        }
-      });
+      // Store in Redis (expires in 10 minutes)
+      await redis.set(`otp:${adminEmail}`, code, 'EX', 600);
       
+      // Set rate limit (60 seconds)
+      await redis.set(rateLimitKey, '1', 'EX', 60);
+
       await this.otpService.sendEmailOtp(adminEmail, code);
 
       return { success: true, message: 'OTP sent to email', email: adminEmail, type: 'LOGIN' };
@@ -100,18 +102,18 @@ export class AuthService {
        throw new UnauthorizedException('Account has no email for OTP verification. Please contact support.');
     }
 
-    const code = this.generateOtp();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const rateLimitKey = `ratelimit:otp:${targetEmail}`;
+    if (await redis.get(rateLimitKey)) {
+      throw new UnauthorizedException('Please wait 60 seconds before requesting another OTP');
+    }
 
-    await this.prisma.otpCode.create({
-      data: {
-        userId: record.id,
-        type: OtpType.EMAIL,
-        code,
-        target: targetEmail,
-        expiresAt,
-      }
-    });
+    const code = this.generateOtp();
+
+    // Store in Redis (expires in 10 minutes)
+    await redis.set(`otp:${targetEmail}`, code, 'EX', 600);
+
+    // Set rate limit (60 seconds)
+    await redis.set(rateLimitKey, '1', 'EX', 60);
 
     await this.otpService.sendEmailOtp(targetEmail, code);
 
@@ -138,7 +140,6 @@ export class AuthService {
           password: hashedPassword,
           role: 'CUSTOMER',
           emailVerified: false,
-          cart: { create: {} },
         },
       });
 
@@ -146,18 +147,18 @@ export class AuthService {
         console.error('Failed to send welcome email', error),
       );
 
-      const code = this.generateOtp();
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      const rateLimitKey = `ratelimit:otp:${user.email}`;
+      if (await redis.get(rateLimitKey)) {
+        throw new UnauthorizedException('Please wait 60 seconds before requesting another OTP');
+      }
 
-      await this.prisma.otpCode.create({
-        data: {
-          userId: user.id,
-          type: OtpType.EMAIL,
-          code,
-          target: user.email!,
-          expiresAt,
-        }
-      });
+      const code = this.generateOtp();
+
+      // Store in Redis (expires in 10 minutes)
+      await redis.set(`otp:${user.email}`, code, 'EX', 600);
+
+      // Set rate limit (60 seconds)
+      await redis.set(rateLimitKey, '1', 'EX', 60);
 
       await this.otpService.sendEmailOtp(user.email!, code);
 
@@ -177,24 +178,14 @@ export class AuthService {
   }
 
   async verifyOtp(email: string, code: string, type: string): Promise<{ token: string; user: AuthUser }> {
-    const otpRecord = await this.prisma.otpCode.findFirst({
-       where: {
-          target: email,
-          code,
-          verified: false,
-          expiresAt: { gt: new Date() }
-       },
-       orderBy: { createdAt: 'desc' }
-    });
+    const storedCode = await redis.get(`otp:${email}`);
 
-    if (!otpRecord) {
+    if (!storedCode || storedCode !== code) {
        throw new UnauthorizedException('Invalid or expired OTP code');
     }
 
-    await this.prisma.otpCode.update({
-       where: { id: otpRecord.id },
-       data: { verified: true }
-    });
+    // Delete the OTP after successful verification
+    await redis.del(`otp:${email}`);
 
     const adminEmail = process.env.ADMIN_EMAIL;
     if (adminEmail && email === adminEmail) {
@@ -299,7 +290,6 @@ export class AuthService {
           profileImage: picture, // Store Google image URL as-is
           emailVerified: !!email, // Google already verified the email
           role: 'CUSTOMER',
-          cart: { create: {} },
         },
       });
       this.emailService.sendWelcomeEmail(record.email!, record.name).catch((error) =>

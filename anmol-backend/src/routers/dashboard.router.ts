@@ -2,6 +2,7 @@ import { router, staffProcedure } from '@backend/config/trpc.config';
 import { PrismaClient } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
+import { redis } from '@backend/config/redis.config';
 
 export const dashboardRouter = router({
   getUpdates: staffProcedure
@@ -125,6 +126,13 @@ export const dashboardRouter = router({
 
   generateDemandForecast: staffProcedure.query(async ({ ctx }) => {
     try {
+      const cacheKey = `dashboard:demand_forecast:${new Date().toISOString().split('T')[0]}`;
+      const cachedForecast = await redis.get(cacheKey);
+      
+      if (cachedForecast) {
+        return cachedForecast;
+      }
+
       const prisma = ctx.prisma as PrismaClient;
       
       const ninetyDaysAgo = new Date();
@@ -177,7 +185,12 @@ export const dashboardRouter = router({
       }));
 
       // Pass the data to the Gemini AI Service
-      return await ctx.services.ai.generateDemandForecast(JSON.stringify(formattedData, null, 2));
+      const aiForecast = await ctx.services.ai.generateDemandForecast(JSON.stringify(formattedData, null, 2));
+      
+      // Cache the result for 24 hours
+      await redis.set(cacheKey, aiForecast, 'EX', 86400);
+      
+      return aiForecast;
     } catch (error: any) {
       console.error('Error generating demand forecast:', error);
       throw new TRPCError({

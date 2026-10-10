@@ -1,5 +1,6 @@
 import { PrismaService } from '@backend/services/prisma.service';
 import { notFound } from '@backend/config/trpc.config';
+import { redis } from '@backend/config/redis.config';
 import { z } from 'zod';
 import {
   ListProductSchema,
@@ -11,6 +12,12 @@ export class ProductQueries {
   constructor(private readonly prisma: PrismaService) {}
 
   async list(input?: z.infer<typeof ListProductSchema>) {
+    const cacheKey = `product:list:${JSON.stringify(input || {})}`;
+    const cachedData = await redis.get(cacheKey);
+    if (cachedData) {
+      return JSON.parse(cachedData);
+    }
+
     const page = input?.cursor ?? input?.page ?? 1;
     const pageSize = input?.pageSize ?? 20;
     const where = {
@@ -38,31 +45,48 @@ export class ProductQueries {
       this.prisma.product.count({ where }),
     ]);
 
-    return {
+    const result = {
       items: items.map(mapProduct),
       total,
       page,
       pageSize,
       totalPages: Math.ceil(total / pageSize),
     };
+
+    // Cache for 10 minutes
+    await redis.set(cacheKey, JSON.stringify(result), 'EX', 600);
+
+    return result;
   }
 
   async getById(id: string) {
+    const cacheKey = `product:id:${id}`;
+    const cachedData = await redis.get(cacheKey);
+    if (cachedData) return JSON.parse(cachedData);
+
     const product = await this.prisma.product.findUnique({
       where: { id },
       select: productPublicSelect,
     });
     if (!product) notFound('Product');
-    return mapProduct(product);
+    const result = mapProduct(product);
+    await redis.set(cacheKey, JSON.stringify(result), 'EX', 600);
+    return result;
   }
 
   async getBySlug(slug: string) {
+    const cacheKey = `product:slug:${slug}`;
+    const cachedData = await redis.get(cacheKey);
+    if (cachedData) return JSON.parse(cachedData);
+
     const product = await this.prisma.product.findUnique({
       where: { slug },
       select: productPublicSelect,
     });
     if (!product) notFound('Product');
-    return mapProduct(product);
+    const result = mapProduct(product);
+    await redis.set(cacheKey, JSON.stringify(result), 'EX', 600);
+    return result;
   }
 
   async getOutOfStockVariants() {

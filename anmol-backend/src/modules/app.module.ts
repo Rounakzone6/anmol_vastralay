@@ -6,6 +6,13 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthModule } from '@backend/modules/auth.module';
 import { CloudinaryModule } from '@backend/modules/cloudinary.module';
 import { PrismaModule } from '@backend/modules/prisma.module';
+import { BullModule } from '@nestjs/bullmq';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { ExpressAdapter } from '@bull-board/express';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { redis } from '@backend/config/redis.config';
+import { NotificationQueueService } from '@backend/services/notification-queue.service';
+import { NotificationProcessor } from '@backend/processors/notification.processor';
 import { CategoryService } from '@backend/services/category.service';
 import { ProductService } from '@backend/services/product.service';
 import { CartService } from '@backend/services/cart.service';
@@ -42,6 +49,26 @@ import { DeliveryAssignmentService } from '@backend/services/delivery-assignment
     CloudinaryModule,
     EmailModule,
     AuthModule,
+    BullModule.forRoot({
+      connection: redis,
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    }),
+    BullModule.registerQueue({
+      name: 'notifications',
+    }),
+    BullBoardModule.forRoot({
+      route: '/admin/queues',
+      adapter: ExpressAdapter,
+    }),
+    BullBoardModule.forFeature({
+      name: 'notifications',
+      adapter: BullMQAdapter,
+    }),
   ],
   controllers: [WebhookController, WhatsappController],
   providers: [
@@ -66,6 +93,8 @@ import { DeliveryAssignmentService } from '@backend/services/delivery-assignment
     DeliveryAssignmentService,
     AiService,
     RetargetingService,
+    NotificationQueueService,
+    NotificationProcessor,
   ],
 })
 export class AppModule {}
