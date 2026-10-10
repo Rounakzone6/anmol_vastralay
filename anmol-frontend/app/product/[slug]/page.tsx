@@ -128,7 +128,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   let suggestedProducts: any[] = [];
   try {
     reviewStats = await fetchPublicTrpc('review.stats', { productId: product.id });
-    suggestedProducts = await fetchPublicTrpc('product.getRecommendations', { id: product.id });
+    suggestedProducts = (await fetchPublicTrpc<any[]>('product.getRecommendations', { id: product.id })) || [];
   } catch (e) {
     console.error('Failed to fetch initial stats or related products', e);
   }

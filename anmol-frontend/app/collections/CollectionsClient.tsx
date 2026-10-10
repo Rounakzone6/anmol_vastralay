@@ -44,7 +44,6 @@ export default function CollectionsClient({
       search: debouncedSearch || undefined,
       categorySlug: selectedCategorySlug || undefined,
       subcategoryId: selectedSubcategoryId || undefined,
-      subcategoryId: selectedSubcategoryId || undefined,
     },
     {
       initialData: (!selectedCategorySlug && !selectedSubcategoryId && debouncedSearch === initialSearchTerm) ? initialData : undefined,

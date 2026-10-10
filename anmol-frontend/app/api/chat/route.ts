@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const { messages } = await req.json();
 
     const result = streamText({
-      model: groq('llama-3.3-70b-versatile'),
+      model: groq('llama-3.3-70b-versatile') as any,
       messages,
       system: `You are a helpful, polite, and professional AI customer support assistant for an Indian clothing store named "Anmol Vastralay".
 You MUST ALWAYS reply in Hinglish (a mix of Hindi and English written in English script).
@@ -31,7 +31,7 @@ Store Information:
 Keep your answers concise and friendly.`,
     });
 
-    return result.toDataStreamResponse();
+    return (result as any).toDataStreamResponse ? (result as any).toDataStreamResponse() : result.toTextStreamResponse();
   } catch (error: any) {
     console.error('Chat API Error:', error);
     return new Response(
