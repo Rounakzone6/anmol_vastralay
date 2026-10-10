@@ -12,8 +12,6 @@ import {
   DeleteCategorySchema,
   CreateSubcategorySchema,
   UpdateSubcategorySchema,
-  CreateItemTypeSchema,
-  UpdateItemTypeSchema,
   ReorderCategorySchema,
 } from '@backend/models/category.model';
 import { z } from 'zod';
@@ -40,13 +38,13 @@ export const categoryRouter = router({
   create: staffProcedure
     .input(CreateCategorySchema)
     .mutation(async ({ ctx, input }) => {
-      return ctx.services.category.create(input);
+      return ctx.services.category.create(input, ctx.user.id);
     }),
 
   update: staffProcedure
     .input(UpdateCategorySchema)
     .mutation(async ({ ctx, input }) => {
-      return ctx.services.category.update(input);
+      return ctx.services.category.update(input, ctx.user.id);
     }),
 
   delete: staffProcedure
@@ -83,21 +81,12 @@ export const categoryRouter = router({
       ctx.services.category.deleteSubcategory(input.id),
     ),
 
-  createItemType: staffProcedure
-    .input(CreateItemTypeSchema)
-    .mutation(async ({ ctx, input }) =>
-      ctx.services.category.createItemType(input),
-    ),
-
-  updateItemType: staffProcedure
-    .input(UpdateItemTypeSchema)
-    .mutation(async ({ ctx, input }) =>
-      ctx.services.category.updateItemType(input),
-    ),
-
-  deleteItemType: staffProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(async ({ ctx, input }) =>
-      ctx.services.category.deleteItemType(input.id),
-    ),
+  generateAiDetails: staffProcedure
+    .input(z.object({ name: z.string(), description: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      // Need to inject aiService via services, but wait, is it in ctx.services?
+      // Let's check trpc.config.ts if AiService is exposed. 
+      // If not, we might need to add it or it might already be there (it is used in product.router.ts).
+      return ctx.services.ai.generateCategoryDetails(input);
+    }),
 });

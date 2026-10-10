@@ -120,8 +120,17 @@ export const dashboardRouter = router({
       })),
     ];
 
+    // Filter updates to match the selected date range
+    const filteredUpdates = updates.filter(update => {
+      if (!dateFilter) return true;
+      const updateDate = update.date.getTime();
+      const start = dateFilter.getTime();
+      const end = endDateFilter ? endDateFilter.getTime() : Infinity;
+      return updateDate >= start && updateDate < end;
+    });
+
     // Sort by most recent first
-    return updates.sort((a, b) => b.date.getTime() - a.date.getTime());
+    return filteredUpdates.sort((a, b) => b.date.getTime() - a.date.getTime());
   }),
 
   getCategoryInventory: staffProcedure.query(async ({ ctx }) => {

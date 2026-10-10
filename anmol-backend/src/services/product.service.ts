@@ -51,12 +51,12 @@ export class ProductService {
     return this.queries.getRecommendations(productId);
   }
 
-  async create(input: z.infer<typeof productBaseSchema>) {
-    return this.mutations.create(input);
+  async create(input: z.infer<typeof productBaseSchema>, userId: string) {
+    return this.mutations.create(input, userId);
   }
 
-  async update(input: z.infer<typeof UpdateProductSchema>) {
-    return this.mutations.update(input);
+  async update(input: z.infer<typeof UpdateProductSchema>, userId: string) {
+    return this.mutations.update(input, userId);
   }
 
   async delete(input: z.infer<typeof DeleteProductSchema>) {

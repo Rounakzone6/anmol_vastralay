@@ -189,22 +189,38 @@ export class AuthService {
 
     const adminEmail = process.env.ADMIN_EMAIL;
     if (adminEmail && email === adminEmail) {
-        const user: AuthUser = {
-           id: 'admin',
-           email: adminEmail,
-           phone: null,
-           name: 'Admin',
-           profileImage: null,
-           gender: null,
-           emailVerified: true,
-           phoneVerified: false,
-           role: UserRole.ADMIN,
-         };
-         const token = await this.jwt.signAsync({
-           sub: user.id,
-           role: user.role,
-         } satisfies JwtPayload);
-         return { token, user };
+      await this.prisma.user.upsert({
+        where: { id: 'admin' },
+        update: {
+          email: adminEmail,
+          role: UserRole.ADMIN,
+          emailVerified: true,
+        },
+        create: {
+          id: 'admin',
+          email: adminEmail,
+          name: 'Admin',
+          role: UserRole.ADMIN,
+          emailVerified: true,
+        },
+      });
+
+      const user: AuthUser = {
+        id: 'admin',
+        email: adminEmail,
+        phone: null,
+        name: 'Admin',
+        profileImage: null,
+        gender: null,
+        emailVerified: true,
+        phoneVerified: false,
+        role: UserRole.ADMIN,
+      };
+      const token = await this.jwt.signAsync({
+        sub: user.id,
+        role: user.role,
+      } satisfies JwtPayload);
+      return { token, user };
     }
 
     const userRecord = await this.prisma.user.findFirst({

@@ -1,8 +1,6 @@
 import { Card, Label, Select } from '@/components/ui';
 import { Tag } from 'lucide-react';
 import { SubcategorySelector } from '@/components/product-form-sections/organization/SubcategorySelector';
-import { ItemTypeSelector } from '@/components/product-form-sections/organization/ItemTypeSelector';
-
 type ProductOrganizationProps = {
   kind: 'SAREE' | 'STANDARD';
   setKind: (v: 'SAREE' | 'STANDARD') => void;
@@ -10,8 +8,7 @@ type ProductOrganizationProps = {
   setCategoryId: (v: string) => void;
   subcategoryId: string;
   setSubcategoryId: (v: string) => void;
-  itemTypeId: string;
-  setItemTypeId: (v: string) => void;
+
   categories: any[];
   setVariants: React.Dispatch<React.SetStateAction<any[]>>;
 };
@@ -23,15 +20,12 @@ export function ProductOrganization({
   setCategoryId,
   subcategoryId,
   setSubcategoryId,
-  itemTypeId,
-  setItemTypeId,
   categories,
   setVariants,
 }: ProductOrganizationProps) {
   const activeCategory = categories?.find((c: any) => c.id === categoryId);
   const subcategories: any[] = activeCategory?.subcategories || [];
   const activeSubcategory = subcategories.find((s: any) => s.id === subcategoryId);
-  const itemTypes: any[] = activeSubcategory?.itemTypes || [];
 
   return (
     <Card className="p-8 rounded-3xl border-slate-200/60 shadow-sm overflow-hidden relative">
@@ -71,7 +65,6 @@ export function ProductOrganization({
             onChange={(e) => {
               setCategoryId(e.target.value);
               setSubcategoryId('');
-              setItemTypeId('');
             }}
             required
             className="rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white shadow-inner font-medium"
@@ -89,15 +82,7 @@ export function ProductOrganization({
           categoryId={categoryId}
           subcategoryId={subcategoryId}
           setSubcategoryId={setSubcategoryId}
-          setItemTypeId={setItemTypeId}
           subcategories={subcategories}
-        />
-
-        <ItemTypeSelector
-          subcategoryId={subcategoryId}
-          itemTypeId={itemTypeId}
-          setItemTypeId={setItemTypeId}
-          itemTypes={itemTypes}
         />
       </div>
     </Card>

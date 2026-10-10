@@ -291,7 +291,6 @@ export function ProductInfo({
             ['Product', displayProduct.name],
             displayProduct.category?.name && ['Category', displayProduct.category.name],
             displayProduct.subcategory?.name && ['Subcategory', displayProduct.subcategory.name],
-            displayProduct.itemType?.name && ['Type', displayProduct.itemType.name],
           ]
             .filter(Boolean)
             .map((row: any, i) => (
@@ -305,6 +304,19 @@ export function ProductInfo({
             ))}
         </dl>
       </div>
+
+      {/* ── Description ── */}
+      {displayProduct.description && (
+        <div className="mt-7 border-t border-gray-100 pt-6">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-gray-800 mb-4">
+            Description
+          </h3>
+          <div 
+            className="text-gray-700 text-sm leading-relaxed space-y-3 [&>p]:mb-3 [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:mb-3 [&>ol]:list-decimal [&>ol]:pl-5 [&>ol]:mb-3 [&>strong]:font-semibold [&>b]:font-semibold [&>h4]:font-bold [&>h4]:mt-4 [&>h4]:mb-2 [&>h3]:font-bold [&>h3]:text-base [&>h3]:mt-5 [&>h3]:mb-2"
+            dangerouslySetInnerHTML={{ __html: displayProduct.description }} 
+          />
+        </div>
+      )}
     </div>
   );
 }

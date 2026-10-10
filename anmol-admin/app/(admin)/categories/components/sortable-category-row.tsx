@@ -127,7 +127,13 @@ export function SortableCategoryRow({
       </td>
       <td className="px-6 py-4">
         <p className="font-semibold text-slate-900">{c.name}</p>
-        <p className="text-xs text-slate-500 mt-1">{c.slug}</p>
+        {c.description ? (
+          <p className="text-xs text-slate-500 mt-1 line-clamp-2" title={c.description}>
+            {c.description}
+          </p>
+        ) : (
+          <p className="text-xs text-slate-400 mt-1 italic">No description</p>
+        )}
       </td>
       <td className="px-6 py-4 text-center">
         {c._count.products > 0 ? (

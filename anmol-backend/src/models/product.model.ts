@@ -19,7 +19,7 @@ export const productBaseSchema = z.object({
   brand: z.string().optional(),
   categoryId: z.string(),
   subcategoryId: z.string().optional().nullable(),
-  itemTypeId: z.string().optional().nullable(),
+
   description: z.string().optional().nullable(),
   metaTitle: z.string().optional().nullable(),
   metaDescription: z.string().optional().nullable(),
@@ -45,7 +45,7 @@ export const ListProductSchema = z.object({
   categoryId: z.string().optional(),
   categorySlug: z.string().optional(),
   subcategoryId: z.string().optional(),
-  itemTypeId: z.string().optional(),
+
   kind: z.nativeEnum(ProductKind).optional(),
   search: z.string().optional(),
   includeInactive: z.boolean().optional(),
@@ -118,6 +118,9 @@ export const productPublicSelect = {
   allowsExtraSaya: true,
   extraSayaPrice: true,
   createdAt: true,
+  updatedAt: true,
+  createdBy: { select: { id: true, name: true, role: true } },
+  updatedBy: { select: { id: true, name: true, role: true } },
   images: {
     select: { url: true, altText: true, sortOrder: true },
     orderBy: { sortOrder: 'asc' as const },
@@ -127,11 +130,11 @@ export const productPublicSelect = {
   },
   category: { select: { id: true, name: true, slug: true } },
   subcategory: { select: { id: true, name: true, slug: true } },
-  itemType: { select: { id: true, name: true, slug: true } },
+
   reviews: { select: { rating: true } },
   categoryId: true,
   subcategoryId: true,
-  itemTypeId: true,
+
   isActive: true,
 } satisfies Prisma.ProductSelect;
 
@@ -171,7 +174,11 @@ export function mapProduct(product: ProductWithRelations) {
     variants: product.variants.map(mapVariant),
     category: product.category,
     subcategory: product.subcategory,
-    itemType: product.itemType,
+
+    createdBy: (product as any).createdBy,
+    updatedBy: (product as any).updatedBy,
+    createdAt: (product as any).createdAt,
+    updatedAt: (product as any).updatedAt,
     averageRating,
     reviewCount,
   };
@@ -190,6 +197,8 @@ export const productInclude = {
   variants: true,
   category: { select: { id: true, name: true, slug: true } },
   subcategory: { select: { id: true, name: true, slug: true } },
-  itemType: { select: { id: true, name: true, slug: true } },
+
   reviews: { select: { rating: true } },
+  createdBy: { select: { id: true, name: true, role: true } },
+  updatedBy: { select: { id: true, name: true, role: true } },
 } satisfies Prisma.ProductInclude;

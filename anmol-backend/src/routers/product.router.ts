@@ -61,13 +61,13 @@ export const productRouter = router({
   create: staffProcedure
     .input(productBaseSchema)
     .mutation(async ({ ctx, input }) => {
-      return ctx.services.product.create(input);
+      return ctx.services.product.create(input, ctx.user.id);
     }),
 
   update: staffProcedure
     .input(UpdateProductSchema)
     .mutation(async ({ ctx, input }) => {
-      return ctx.services.product.update(input);
+      return ctx.services.product.update(input, ctx.user.id);
     }),
 
   delete: staffProcedure
@@ -119,13 +119,24 @@ export const productRouter = router({
     }),
 
   generateAiDetails: staffProcedure
-    .input(z.object({
-      imageUrl: z.string().url(),
-      categoryName: z.string().optional(),
-    }))
+    .input(
+      z.object({
+        imageUrl: z.string().optional().nullable(),
+        categoryName: z.string().optional(),
+        name: z.string().optional(),
+        brand: z.string().optional(),
+        description: z.string().optional(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       try {
-        return await ctx.services.ai.generateProductDetails(input.imageUrl, input.categoryName);
+        return await ctx.services.ai.generateProductDetails({
+          imageUrl: input.imageUrl || undefined,
+          categoryName: input.categoryName,
+          name: input.name,
+          brand: input.brand,
+          description: input.description,
+        });
       } catch (error: any) {
         console.error('Error in generateAiDetails:', error);
         throw new TRPCError({

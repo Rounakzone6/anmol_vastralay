@@ -6,7 +6,8 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { Button, Card, Input, Label, Textarea, Badge, Spinner } from '@/components/ui';
 import { ImageUpload } from '@/components/image-upload';
 import { trpc } from '@/lib/trpc';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   DndContext,
   closestCenter,
@@ -67,6 +68,16 @@ export default function CategoriesPage() {
   });
   const reorder = trpc.category.reorder.useMutation({
     onSuccess: () => utils.category.list.invalidate(),
+  });
+
+  const generateAi = trpc.category.generateAiDetails.useMutation({
+    onSuccess: (data) => {
+      setDescription(data.description);
+      setMetaTitle(data.metaTitle);
+      setMetaDescription(data.metaDescription);
+      toast?.success?.('AI details generated successfully');
+    },
+    onError: (err) => alert(err.message),
   });
 
   const [showForm, setShowForm] = useState(false);
@@ -205,6 +216,22 @@ export default function CategoriesPage() {
                   rows={2}
                   placeholder="Brief description of this category"
                 />
+              </div>
+
+              <div className="flex justify-start">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    if (!name) return alert('Please enter a category name first');
+                    generateAi.mutate({ name, description });
+                  }}
+                  disabled={generateAi.isPending}
+                  className="gap-2 bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100 hover:text-violet-800"
+                >
+                  <Sparkles size={16} />
+                  {generateAi.isPending ? 'Generating...' : 'Auto-generate with AI'}
+                </Button>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-2 mt-4 border-t pt-4">

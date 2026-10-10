@@ -10,49 +10,162 @@ export class AiService {
 
   constructor() {
     this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    this.model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
     this.groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
   }
 
-  async generateProductDetails(imageUrl: string, categoryName: string = '') {
-    try {
-      const response = await fetch(imageUrl);
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      
-      const mimeType = response.headers.get('content-type') || 'image/jpeg';
-      
-      const imagePart = {
-        inlineData: {
-          data: buffer.toString("base64"),
-          mimeType,
+  async generateProductDetails(
+    inputOrImageUrl:
+      | string
+      | {
+          imageUrl?: string;
+          categoryName?: string;
+          name?: string;
+          brand?: string;
+          description?: string;
         },
-      };
-      
-      const prompt = `
-        You are an expert e-commerce copywriter for an Indian clothing store named "Anmol Vastralay".
-        Analyze the attached image of a clothing item (likely a saree, kurti, suit, or lehenga)${categoryName ? ` in the category "${categoryName}"` : ''}.
-        
-        Generate the following details based on the visual features of the item. Return ONLY a valid JSON object with the exact keys below:
-        
-        {
-          "name": "A catchy, SEO-friendly name for the product (max 60 chars)",
-          "shortDescription": "A 1-2 sentence catchy short description (max 150 chars)",
-          "description": "A detailed, engaging product description including material feel, occasion, and style recommendations (2-3 paragraphs, formatted with basic HTML like <p> and <ul>)",
-          "metaTitle": "SEO title for the page (max 60 chars)",
-          "metaDescription": "SEO meta description (max 160 chars)"
+    legacyCategoryName: string = '',
+  ) {
+    const input =
+      typeof inputOrImageUrl === 'string'
+        ? { imageUrl: inputOrImageUrl, categoryName: legacyCategoryName }
+        : inputOrImageUrl;
+
+    const {
+      imageUrl,
+      categoryName = '',
+      name = '',
+      brand = '',
+      description = '',
+    } = input;
+
+    try {
+      let imagePart: { inlineData: { data: string; mimeType: string } } | null = null;
+
+      if (imageUrl && imageUrl.trim()) {
+        try {
+          const response = await fetch(imageUrl);
+          if (response.ok) {
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+            const mimeType = response.headers.get('content-type') || 'image/jpeg';
+            imagePart = {
+              inlineData: {
+                data: buffer.toString('base64'),
+                mimeType,
+              },
+            };
+          }
+        } catch (imgErr) {
+          console.warn('Failed to fetch image for AI generation, proceeding with text context:', imgErr);
         }
+      }
+
+      const prompt = `
+        You are an expert e-commerce copywriter, merchandiser, and SEO specialist for an Indian clothing and ethnic wear store named "Anmol Vastralay".
+        Your task is to generate complete, high-converting, professional, and SEO-optimized product details.
+
+        Available inputs and context:
+        ${categoryName ? `- Category: "${categoryName}"` : '- Category: Indian Apparel / Ethnic Wear'}
+        ${name ? `- User-provided Title/Name: "${name}"` : '- No title provided yet.'}
+        ${brand ? `- User-provided Brand: "${brand}"` : '- No brand provided.'}
+        ${description ? `- User-provided Description/Notes: "${description}"` : '- No initial description provided.'}
+        ${imagePart ? '- Product Image: Attached visual media' : '- Product Image: None provided'}
+
+        Requirements:
+        1. "name":
+           - If the user provided a title, elevate and refine it into a catchy, premium, SEO-friendly e-commerce product title (max 70 chars). Keep the user's intended style/color/fabric.
+           - If no title was provided, generate an attractive and specific product title based on the image visual features and category.
+        2. "brand":
+           - If the user specified a brand, keep and return that exact brand.
+           - If no brand was specified, suggest a fitting brand name or return an empty string.
+        3. "description":
+           - Generate a detailed, rich, engaging product description (2-3 paragraphs) structured with basic HTML tags (<p>, <ul>, <li>, <strong>).
+           - Synthesize both the visual features of the item (colors, fabric look, embroidery, border, work) AND the user's initial description/notes (if any).
+           - Clearly highlight fabric feel, craft/work details, occasions (e.g. festive, wedding, party, everyday luxury), and styling/care suggestions.
+        4. "shortDescription":
+           - A 1-2 sentence catchy short description (max 150 chars).
+        5. "metaTitle":
+           - Highly optimized SEO title for Google Search (max 60 chars), incorporating product name, brand (if available), and store/category keyword.
+        6. "metaDescription":
+           - Highly optimized SEO meta description (max 160 chars) highlighting fabric, style, and reasons to buy.
+
+        Return ONLY a valid JSON object with the exact keys: "name", "brand", "shortDescription", "description", "metaTitle", "metaDescription".
+        Do NOT wrap in markdown code blocks or backticks. Return raw JSON only.
       `;
 
-      const result = await this.model.generateContent([prompt, imagePart]);
-      const text = result.response.text();
-      
-      const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      
-      return JSON.parse(cleanedText);
-    } catch (error) {
+      const contentPayload = imagePart ? [prompt, imagePart] : [prompt];
+      const result = await this.model.generateContent(contentPayload);
+      const text = result.response.text() || '{}';
+
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.error('Failed to find JSON in AI response:', text);
+        throw new Error('AI did not return valid JSON');
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        name: parsed.name || name || '',
+        brand: parsed.brand || brand || '',
+        shortDescription: parsed.shortDescription || '',
+        description: parsed.description || description || '',
+        metaTitle: parsed.metaTitle || '',
+        metaDescription: parsed.metaDescription || '',
+      };
+    } catch (error: any) {
       console.error('Error generating product details:', error);
-      throw new Error('Failed to generate product details with AI');
+      throw new Error(error.message || 'Failed to generate product details with AI');
+    }
+  }
+
+  async generateCategoryDetails(input: { name: string; description: string }) {
+    const { name, description } = input;
+    try {
+      const prompt = `
+        You are an expert e-commerce copywriter and SEO specialist for an Indian clothing and ethnic wear store named "Anmol Vastralay".
+        Your task is to generate complete, high-converting, professional, and SEO-optimized category details.
+
+        Available inputs:
+        - Category Name: "${name}"
+        - Brief Description/Notes: "${description}"
+
+        Requirements:
+        1. "description":
+           - Generate a rich, engaging category description (1-2 paragraphs).
+           - Expand on the brief description provided, highlighting the types of products (like sarees, lehengas, suits, etc.) customers can expect in this category.
+           - Emphasize quality, occasions (festive, wedding, daily wear), and the cultural richness of Anmol Vastralay.
+        2. "metaTitle":
+           - Highly optimized SEO title for Google Search (max 60 chars), incorporating the category name and store keyword (e.g. "Buy [Category] Online | Anmol Vastralay").
+        3. "metaDescription":
+           - Highly optimized SEO meta description (max 160 chars) highlighting the best features of this category and reasons to shop.
+
+        Return ONLY a valid JSON object with the exact keys: "description", "metaTitle", "metaDescription".
+        Do NOT wrap in markdown code blocks or backticks. Return raw JSON only.
+      `;
+
+      const response = await this.groq.chat.completions.create({
+        messages: [{ role: 'user', content: prompt }],
+        model: 'mixtral-8x7b-32768',
+        temperature: 0.7,
+      });
+
+      const text = response.choices[0]?.message?.content || '{}';
+
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('AI did not return valid JSON');
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        description: parsed.description || description || '',
+        metaTitle: parsed.metaTitle || '',
+        metaDescription: parsed.metaDescription || '',
+      };
+    } catch (error: any) {
+      console.error('Error generating category details:', error);
+      throw new Error(error.message || 'Failed to generate category details with AI');
     }
   }
 
@@ -83,9 +196,13 @@ export class AiService {
       const result = await this.model.generateContent(prompt);
       const text = result.response.text();
       
-      const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) {
+        console.error('Failed to find JSON array in AI response:', text);
+        throw new Error('AI did not return valid JSON');
+      }
       
-      return JSON.parse(cleanedText);
+      return JSON.parse(jsonMatch[0]);
     } catch (error) {
       console.error('Error generating demand forecast:', error);
       throw new Error('Failed to generate demand forecast with AI');

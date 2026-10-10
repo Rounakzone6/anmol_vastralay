@@ -60,6 +60,14 @@ export default function EditProductPage({
         }
       />
       <ProductForm productId={id} />
+      {product && (
+        <div className="mt-6 text-center text-sm font-medium text-slate-500 bg-slate-100 py-3 rounded-xl border border-slate-200">
+          <p>Created by {product.createdBy?.name || 'System'} on {new Date(product.createdAt).toLocaleDateString()}</p>
+          {product.updatedBy && (
+            <p className="mt-1 text-xs text-slate-400">Last modified by {product.updatedBy.name} on {new Date(product.updatedAt).toLocaleDateString()}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

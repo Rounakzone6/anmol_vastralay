@@ -57,19 +57,3 @@ export const UpdateSubcategorySchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-export const CreateItemTypeSchema = z.object({
-  name: z.string().min(2),
-  subcategoryId: z.string(),
-  description: z.string().optional(),
-  metaTitle: z.string().optional(),
-  metaDescription: z.string().optional(),
-});
-
-export const UpdateItemTypeSchema = z.object({
-  id: z.string(),
-  name: z.string().min(2).optional(),
-  description: z.string().nullable().optional(),
-  metaTitle: z.string().nullable().optional(),
-  metaDescription: z.string().nullable().optional(),
-  isActive: z.boolean().optional(),
-});

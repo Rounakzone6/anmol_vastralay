@@ -32,7 +32,7 @@ export function ProductForm({ productId }: ProductFormProps) {
   const [brand, setBrand] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [subcategoryId, setSubcategoryId] = useState('');
-  const [itemTypeId, setItemTypeId] = useState('');
+
   const [kind, setKind] = useState<'SAREE' | 'STANDARD'>('STANDARD');
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
@@ -55,7 +55,7 @@ export function ProductForm({ productId }: ProductFormProps) {
     setBrand(product.brand ?? '');
     setCategoryId(product.categoryId);
     setSubcategoryId(product.subcategoryId ?? '');
-    setItemTypeId(product.itemTypeId ?? '');
+
     setKind(product.kind);
     setMetaTitle(product.metaTitle ?? '');
     setMetaDescription(product.metaDescription ?? '');
@@ -112,7 +112,7 @@ export function ProductForm({ productId }: ProductFormProps) {
       setBrand('');
       setCategoryId('');
       setSubcategoryId('');
-      setItemTypeId('');
+
       setKind('STANDARD');
       setMetaTitle('');
       setMetaDescription('');
@@ -168,7 +168,7 @@ export function ProductForm({ productId }: ProductFormProps) {
       brand: brand || undefined,
       categoryId,
       subcategoryId: subcategoryId || undefined,
-      itemTypeId: itemTypeId || undefined,
+
       kind,
       description: description || undefined,
       metaTitle: metaTitle || undefined,
@@ -216,7 +216,7 @@ export function ProductForm({ productId }: ProductFormProps) {
   return (
     <form onSubmit={handleSubmit} className="pb-16 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
       {/* Header Actions */}
-      <div className="sticky top-0 z-30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white/80 backdrop-blur-xl p-6 rounded-3xl shadow-sm border border-slate-200/60 transition-all">
+      <div className="sticky top-[80px] lg:top-6 z-30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white/80 backdrop-blur-xl p-6 rounded-3xl shadow-sm border border-slate-200/60 transition-all">
         <div className="flex items-center gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-lg shadow-indigo-200">
             <Package size={24} />
@@ -291,8 +291,7 @@ export function ProductForm({ productId }: ProductFormProps) {
             setCategoryId={setCategoryId}
             subcategoryId={subcategoryId}
             setSubcategoryId={setSubcategoryId}
-            itemTypeId={itemTypeId}
-            setItemTypeId={setItemTypeId}
+
             categories={categories || []}
             setVariants={setVariants}
           />

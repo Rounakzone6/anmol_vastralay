@@ -24,7 +24,6 @@ export class ProductQueries {
       ...(input?.includeInactive ? {} : { isActive: true }),
       ...(input?.categoryId ? { categoryId: input.categoryId } : {}),
       ...(input?.subcategoryId ? { subcategoryId: input.subcategoryId } : {}),
-      ...(input?.itemTypeId ? { itemTypeId: input.itemTypeId } : {}),
       ...(input?.categorySlug
         ? { category: { slug: input.categorySlug } }
         : {}),

@@ -24,6 +24,7 @@ import {
   Headset
 } from 'lucide-react';
 import { StockNotification } from '@/components/stock-notification';
+import { GlobalNotificationToasts } from '@/components/global-notification-toasts';
 
 const links = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -54,13 +55,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const SidebarContent = () => (
     <>
       <div className="px-6 py-8">
-        <Link href="/dashboard" className="flex items-center gap-2" onClick={closeMobileMenu}>
-          <div className="h-8 w-8 rounded-lg bg-violet-600 flex items-center justify-center shadow-md shadow-violet-200">
-            <span className="text-white font-bold text-lg leading-none">A</span>
-          </div>
-          <span className="text-xl font-bold tracking-tight text-slate-900">Anmol Admin</span>
-        </Link>
-        <div className="mt-6 flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700 font-bold">
             {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || user?.phone?.[0]}
           </div>
@@ -121,6 +116,16 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans flex-col lg:flex-row print:bg-white print:block">
+      {/* Mobile Top Bar */}
+      <div className="lg:hidden print:hidden flex items-center justify-center p-4 border-b border-slate-200 bg-white/80 backdrop-blur-md sticky top-0 z-40">
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg bg-violet-600 flex items-center justify-center shadow-md shadow-violet-200">
+            <span className="text-white font-bold text-lg leading-none">A</span>
+          </div>
+          <span className="text-xl font-bold tracking-tight text-slate-900">Anmol Admin</span>
+        </Link>
+      </div>
+
       {/* Mobile Bottom Navigation Bar */}
       <div className="lg:hidden print:hidden fixed bottom-0 left-0 right-0 z-[60] bg-white/95 backdrop-blur-xl border-t border-slate-200 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] pb-safe">
         <nav className="flex justify-around items-center h-16">
@@ -183,8 +188,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <SidebarContent />
       </aside>
 
-      <main className={`flex-1 w-full lg:w-auto p-4 sm:p-6 lg:p-12 overflow-x-hidden pb-24 lg:pb-12 print:p-0 print:overflow-visible ${pathname === '/pos' ? 'bg-slate-900' : ''}`}>
+      <main className={`flex-1 w-full lg:w-auto p-4 sm:p-6 lg:p-12 pb-24 lg:pb-12 print:p-0 print:overflow-visible ${pathname === '/pos' ? 'bg-slate-900' : ''}`}>
         <div className={`mx-auto print:max-w-none ${pathname === '/pos' ? 'max-w-none' : 'max-w-6xl'}`}>
+          <GlobalNotificationToasts />
           {pathname !== '/pos' && <div className="print:hidden"><StockNotification /></div>}
           {children}
         </div>

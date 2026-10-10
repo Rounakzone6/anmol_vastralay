@@ -18,7 +18,7 @@ export default function CollectionsClient({
   const [debouncedSearch, setDebouncedSearch] = useState(initialSearchTerm);
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | undefined>(undefined);
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | undefined>(undefined);
-  const [selectedItemTypeId, setSelectedItemTypeId] = useState<string | undefined>(undefined);
+
   const [filterOpen, setFilterOpen] = useState(false);
 
   // Debounce search input
@@ -44,10 +44,10 @@ export default function CollectionsClient({
       search: debouncedSearch || undefined,
       categorySlug: selectedCategorySlug || undefined,
       subcategoryId: selectedSubcategoryId || undefined,
-      itemTypeId: selectedItemTypeId || undefined,
+      subcategoryId: selectedSubcategoryId || undefined,
     },
     {
-      initialData: (!selectedCategorySlug && !selectedSubcategoryId && !selectedItemTypeId && debouncedSearch === initialSearchTerm) ? initialData : undefined,
+      initialData: (!selectedCategorySlug && !selectedSubcategoryId && debouncedSearch === initialSearchTerm) ? initialData : undefined,
       getNextPageParam: (lastPage: any) =>
         lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
     }
@@ -77,7 +77,7 @@ export default function CollectionsClient({
   );
   const activeSubcategories = activeCategory?.subcategories || [];
   const activeSubcategory = activeSubcategories.find((s: any) => s.id === selectedSubcategoryId);
-  const activeItemTypes = activeSubcategory?.itemTypes || [];
+
 
   const hasFilters = !!(searchTerm || selectedCategorySlug);
   const totalProducts = data?.pages[0]?.total;
@@ -86,7 +86,6 @@ export default function CollectionsClient({
     setSearchTerm('');
     setSelectedCategorySlug(undefined);
     setSelectedSubcategoryId(undefined);
-    setSelectedItemTypeId(undefined);
   };
 
   return (
@@ -183,7 +182,6 @@ export default function CollectionsClient({
                     onClick={() => {
                       setSelectedCategorySlug(cat.slug || cat.id);
                       setSelectedSubcategoryId(undefined);
-                      setSelectedItemTypeId(undefined);
                     }}
                     className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 border ${
                       selectedCategorySlug === (cat.slug || cat.id)
@@ -203,7 +201,7 @@ export default function CollectionsClient({
                   style={{ scrollbarWidth: 'none' }}
                 >
                   <button
-                    onClick={() => { setSelectedSubcategoryId(undefined); setSelectedItemTypeId(undefined); }}
+                    onClick={() => { setSelectedSubcategoryId(undefined); }}
                     className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
                       !selectedSubcategoryId
                         ? 'bg-gray-800 text-white border-gray-800'
@@ -215,7 +213,7 @@ export default function CollectionsClient({
                   {activeSubcategories.map((sub: any) => (
                     <button
                       key={sub.id}
-                      onClick={() => { setSelectedSubcategoryId(sub.id); setSelectedItemTypeId(undefined); }}
+                      onClick={() => { setSelectedSubcategoryId(sub.id); }}
                       className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
                         selectedSubcategoryId === sub.id
                           ? 'bg-gray-800 text-white border-gray-800'
@@ -228,37 +226,7 @@ export default function CollectionsClient({
                 </div>
               )}
 
-              {/* Item type pills */}
-              {activeItemTypes.length > 0 && (
-                <div
-                  className="flex flex-nowrap sm:flex-wrap items-center gap-2 overflow-x-auto pt-2 border-t border-gray-100"
-                  style={{ scrollbarWidth: 'none' }}
-                >
-                  <button
-                    onClick={() => setSelectedItemTypeId(undefined)}
-                    className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
-                      !selectedItemTypeId
-                        ? 'bg-violet-600 text-white border-violet-600'
-                        : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    All {activeSubcategory?.name}
-                  </button>
-                  {activeItemTypes.map((item: any) => (
-                    <button
-                      key={item.id}
-                      onClick={() => setSelectedItemTypeId(item.id)}
-                      className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all border ${
-                        selectedItemTypeId === item.id
-                          ? 'bg-violet-600 text-white border-violet-600'
-                          : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
-                      }`}
-                    >
-                      {item.name}
-                    </button>
-                  ))}
-                </div>
-              )}
+
             </div>
           </div>
         </div>

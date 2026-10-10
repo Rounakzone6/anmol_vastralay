@@ -69,6 +69,11 @@ model User {
   reviews      Review[]
   tickets      SupportTicket[]
 
+  createdCategories Category[] @relation("CategoryCreatedBy")
+  updatedCategories Category[] @relation("CategoryUpdatedBy")
+  createdProducts   Product[]  @relation("ProductCreatedBy")
+  updatedProducts   Product[]  @relation("ProductUpdatedBy")
+
   @@index([role, createdAt])
 }
 
@@ -104,6 +109,12 @@ model Category {
   sortOrder   Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  
+  createdById String?
+  updatedById String?
+  createdBy   User?         @relation("CategoryCreatedBy", fields: [createdById], references: [id])
+  updatedBy   User?         @relation("CategoryUpdatedBy", fields: [updatedById], references: [id])
+
   products      Product[]
   subcategories Subcategory[]
 
@@ -123,29 +134,12 @@ model Subcategory {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   
-  itemTypes   ItemType[]
   products    Product[]
 
   @@index([categoryId, isActive])
 }
 
-model ItemType {
-  id            String      @id @default(cuid())
-  name          String
-  slug          String      @unique
-  description   String?
-  metaTitle     String?
-  metaDescription String?
-  isActive      Boolean     @default(true)
-  subcategoryId String
-  subcategory   Subcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
 
-  products      Product[]
-
-  @@index([subcategoryId, isActive])
-}
 
 model Product {
   id              String           @id @default(cuid())
@@ -159,8 +153,6 @@ model Product {
   category        Category         @relation(fields: [categoryId], references: [id])
   subcategoryId   String?
   subcategory     Subcategory?     @relation(fields: [subcategoryId], references: [id])
-  itemTypeId      String?
-  itemType        ItemType?        @relation(fields: [itemTypeId], references: [id])
   kind            ProductKind      @default(STANDARD)
   netPrice        Decimal          @db.Decimal(10, 2)
   discountPercent Decimal          @default(0) @db.Decimal(5, 2)
@@ -171,6 +163,12 @@ model Product {
   variants        ProductVariant[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+
+  createdById     String?
+  updatedById     String?
+  createdBy       User?            @relation("ProductCreatedBy", fields: [createdById], references: [id])
+  updatedBy       User?            @relation("ProductUpdatedBy", fields: [updatedById], references: [id])
+
   cartItems       CartItem[]
   orderItems      OrderItem[]
   interactions    ProductInteraction[]
@@ -179,7 +177,6 @@ model Product {
   @@index([isActive, updatedAt])
   @@index([categoryId, isActive, updatedAt])
   @@index([subcategoryId, isActive, updatedAt])
-  @@index([itemTypeId, isActive, updatedAt])
   @@index([kind, isActive, updatedAt])
 }
 

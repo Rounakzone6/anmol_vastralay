@@ -21,12 +21,13 @@ type ProductBasicInfoProps = {
 
 export function ProductBasicInfo({ name, setName, brand, setBrand, metaTitle, setMetaTitle, metaDescription, setMetaDescription, description, setDescription, imageUrl, categoryId, categories }: ProductBasicInfoProps) {
   const generateAiDetails = trpc.product.generateAiDetails.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       if (data.name) setName(data.name);
+      if (data.brand) setBrand(data.brand);
       if (data.description) setDescription(data.description);
       if (data.metaTitle) setMetaTitle(data.metaTitle);
       if (data.metaDescription) setMetaDescription(data.metaDescription);
-      toast.success('AI successfully generated product details!');
+      toast.success('AI successfully generated and updated all details!');
     },
     onError: (error) => {
       toast.error('AI generation failed: ' + error.message);
@@ -34,13 +35,19 @@ export function ProductBasicInfo({ name, setName, brand, setBrand, metaTitle, se
   });
 
   const handleGenerate = () => {
-    if (!imageUrl) {
-      toast.error('Please upload a product image first before using AI.');
+    if (!imageUrl && !name?.trim() && !description?.trim()) {
+      toast.error('Please upload a product image or enter a title/description first before using AI.');
       return;
     }
     const catName = categories?.find(c => c.id === categoryId)?.name || '';
-    toast.info('Analyzing image and generating details...');
-    generateAiDetails.mutate({ imageUrl, categoryName: catName });
+    toast.info('Analyzing details and generating product information...');
+    generateAiDetails.mutate({
+      imageUrl: imageUrl || undefined,
+      categoryName: catName,
+      name: name?.trim() || undefined,
+      brand: brand?.trim() || undefined,
+      description: description?.trim() || undefined,
+    });
   };
 
   return (
@@ -58,7 +65,7 @@ export function ProductBasicInfo({ name, setName, brand, setBrand, metaTitle, se
         <Button 
           type="button" 
           onClick={handleGenerate}
-          disabled={generateAiDetails.isPending || !imageUrl}
+          disabled={generateAiDetails.isPending || (!imageUrl && !name?.trim() && !description?.trim())}
           className="bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-700 hover:to-pink-700 text-white rounded-xl shadow-md transition-all font-bold gap-2"
         >
           {generateAiDetails.isPending ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}

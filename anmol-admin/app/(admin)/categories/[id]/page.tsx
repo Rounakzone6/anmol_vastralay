@@ -28,18 +28,6 @@ export default function CategoryDetailsPage({ params }: { params: Promise<{ id: 
     onSuccess: () => utils.category.list.invalidate(),
   });
 
-  const createItemType = trpc.category.createItemType.useMutation({
-    onSuccess: () => {
-      utils.category.list.invalidate();
-      setNewItemTypeSubId(null);
-      setItemName('');
-      setItemDesc('');
-    }
-  });
-
-  const deleteItemType = trpc.category.deleteItemType.useMutation({
-    onSuccess: () => utils.category.list.invalidate(),
-  });
 
   const [showSubForm, setShowSubForm] = useState(false);
   const [subName, setSubName] = useState('');
@@ -47,9 +35,7 @@ export default function CategoryDetailsPage({ params }: { params: Promise<{ id: 
   const [subMetaTitle, setSubMetaTitle] = useState('');
   const [subMetaDesc, setSubMetaDesc] = useState('');
 
-  const [newItemTypeSubId, setNewItemTypeSubId] = useState<string | null>(null);
-  const [itemName, setItemName] = useState('');
-  const [itemDesc, setItemDesc] = useState('');
+
 
   if (!category) return (
     <div className="p-12 flex flex-col items-center justify-center text-slate-400">
@@ -67,7 +53,7 @@ export default function CategoryDetailsPage({ params }: { params: Promise<{ id: 
       
       <PageHeader
         title={`Manage: ${category.name}`}
-        description="Add subcategories (e.g., Vest) and item types (e.g., Whitevest)"
+        description="Add subcategories (e.g., Vest)"
         action={
           <Button onClick={() => setShowSubForm(!showSubForm)}>
             <Plus size={16} className="mr-2" />
@@ -133,9 +119,6 @@ export default function CategoryDetailsPage({ params }: { params: Promise<{ id: 
                 {sub.description && <p className="text-sm text-slate-500">{sub.description}</p>}
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" className="text-sm px-3 py-1.5 h-8" onClick={() => setNewItemTypeSubId(sub.id)}>
-                  <Plus size={14} className="mr-1" /> Add Item Type
-                </Button>
                 <Button variant="danger" className="text-sm px-3 py-1.5 h-8" onClick={() => {
                   if (confirm(`Delete subcategory ${sub.name}?`)) {
                     deleteSubcategory.mutate({ id: sub.id });
@@ -145,52 +128,6 @@ export default function CategoryDetailsPage({ params }: { params: Promise<{ id: 
                 </Button>
               </div>
             </div>
-
-            {newItemTypeSubId === sub.id && (
-              <div className="p-4 bg-violet-50/50 border-b border-violet-100">
-                <form className="flex gap-4 items-end" onSubmit={(e) => {
-                  e.preventDefault();
-                  createItemType.mutate({ name: itemName, description: itemDesc, subcategoryId: sub.id });
-                }}>
-                  <div className="flex-1">
-                    <Label className="text-xs">Item Type Name</Label>
-                    <Input className="h-8 text-sm" value={itemName} onChange={(e) => setItemName(e.target.value)} required placeholder="e.g., Whitevest" />
-                  </div>
-                  <div className="flex-1">
-                    <Label className="text-xs">Description</Label>
-                    <Input className="h-8 text-sm" value={itemDesc} onChange={(e) => setItemDesc(e.target.value)} placeholder="Optional" />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button type="button" variant="ghost" onClick={() => setNewItemTypeSubId(null)}>Cancel</Button>
-                    <Button type="submit" disabled={createItemType.isPending}>Save</Button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {sub.itemTypes?.length > 0 ? (
-              <ul className="divide-y divide-slate-100">
-                {sub.itemTypes.map((item: any) => (
-                  <li key={item.id} className="p-4 flex items-center justify-between hover:bg-slate-50/50">
-                    <div>
-                      <p className="font-medium text-slate-900">{item.name}</p>
-                      {item.description && <p className="text-xs text-slate-500">{item.description}</p>}
-                    </div>
-                    <Button variant="ghost" className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-2 py-1 h-auto" onClick={() => {
-                      if (confirm(`Delete item type ${item.name}?`)) {
-                        deleteItemType.mutate({ id: item.id });
-                      }
-                    }}>
-                      <Trash2 size={14} />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="p-6 text-center text-sm text-slate-500">
-                No item types added to this subcategory yet.
-              </div>
-            )}
           </Card>
         ))}
         

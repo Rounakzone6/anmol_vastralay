@@ -139,7 +139,7 @@ export default function POSPage() {
         <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {isLoading ? (
             <div className="col-span-full flex justify-center py-10"><div className="animate-spin h-8 w-8 border-4 border-violet-500 border-t-transparent rounded-full" /></div>
-          ) : products.map(product => (
+          ) : products.map((product: any) => (
             <div key={product.id} className="bg-slate-700/30 rounded-2xl p-4 hover:bg-slate-700/60 transition cursor-pointer border border-slate-600/50 flex flex-col justify-between group">
               <div>
                 <div className="aspect-square bg-slate-800 rounded-xl mb-3 overflow-hidden">

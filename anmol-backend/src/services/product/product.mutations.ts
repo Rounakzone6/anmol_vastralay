@@ -62,7 +62,7 @@ export class ProductMutations {
     }
   }
 
-  async create(input: z.infer<typeof productBaseSchema>) {
+  async create(input: z.infer<typeof productBaseSchema>, userId: string) {
     const category = await this.prisma.category.findUnique({
       where: { id: input.categoryId },
     });
@@ -89,6 +89,15 @@ export class ProductMutations {
         return Boolean(row);
       }));
 
+    let authorId: string | null = null;
+    if (userId) {
+      const validUser = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      });
+      authorId = validUser?.id ?? null;
+    }
+
     const product = await this.prisma.product.create({
       data: {
         name: input.name,
@@ -96,7 +105,10 @@ export class ProductMutations {
         brand: input.brand,
         categoryId: input.categoryId,
         subcategoryId: input.subcategoryId || null,
-        itemTypeId: input.itemTypeId || null,
+        description: input.description,
+        metaTitle: input.metaTitle,
+        metaDescription: input.metaDescription,
+
         kind: input.kind,
         netPrice: input.netPrice,
         discountPercent: input.discountPercent,
@@ -116,6 +128,8 @@ export class ProductMutations {
               })),
             }
           : undefined,
+        createdById: authorId,
+        updatedById: authorId,
         images: {
           create: imageUrls.map((img, i) => ({
             url: img.url,
@@ -130,7 +144,7 @@ export class ProductMutations {
     return mapProduct(product);
   }
 
-  async update(input: z.infer<typeof UpdateProductSchema>) {
+  async update(input: z.infer<typeof UpdateProductSchema>, userId: string) {
     const existing = await this.prisma.product.findUnique({
       where: { id: input.id },
       include: { variants: true, images: true },
@@ -185,6 +199,15 @@ export class ProductMutations {
       if (clash) badRequest('Slug already in use');
     }
 
+    let updaterId: string | null = null;
+    if (userId) {
+      const validUser = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      });
+      updaterId = validUser?.id ?? null;
+    }
+
     await this.prisma.$transaction(async (tx) => {
       await tx.product.update({
         where: { id: input.id },
@@ -195,14 +218,17 @@ export class ProductMutations {
           categoryId: input.categoryId,
           subcategoryId:
             input.subcategoryId !== undefined ? input.subcategoryId : undefined,
-          itemTypeId:
-            input.itemTypeId !== undefined ? input.itemTypeId : undefined,
+          description: input.description,
+          metaTitle: input.metaTitle,
+          metaDescription: input.metaDescription,
+
           kind: input.kind,
           netPrice: input.netPrice,
           discountPercent: input.discountPercent,
           allowsExtraSaya,
           extraSayaPrice:
             allowsExtraSaya && extraSayaPrice != null ? extraSayaPrice : null,
+          updatedById: updaterId,
         },
       });
 
@@ -259,10 +285,24 @@ export class ProductMutations {
   async delete(input: z.infer<typeof DeleteProductSchema>) {
     const existing = await this.prisma.product.findUnique({
       where: { id: input.id },
+      include: { images: true },
     });
     if (!existing) notFound('Product');
 
     if (input.hard) {
+      // Clean up images from Cloudinary to save space on free tier
+      if (existing.images && existing.images.length > 0) {
+        for (const img of existing.images) {
+          if (img.publicId) {
+            try {
+              await this.cloudinary.deleteImage(img.publicId);
+            } catch {
+              // ignore cloudinary cleanup errors if image is already deleted
+            }
+          }
+        }
+      }
+      
       await this.prisma.product.delete({ where: { id: input.id } });
       return { success: true };
     }

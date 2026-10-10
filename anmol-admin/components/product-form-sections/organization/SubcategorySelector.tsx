@@ -7,7 +7,7 @@ type SubcategorySelectorProps = {
   categoryId: string;
   subcategoryId: string;
   setSubcategoryId: (v: string) => void;
-  setItemTypeId: (v: string) => void;
+
   subcategories: any[];
 };
 
@@ -15,7 +15,6 @@ export function SubcategorySelector({
   categoryId,
   subcategoryId,
   setSubcategoryId,
-  setItemTypeId,
   subcategories,
 }: SubcategorySelectorProps) {
   const utils = trpc.useUtils();
@@ -36,7 +35,6 @@ export function SubcategorySelector({
     onSuccess: () => {
       utils.category.list.invalidate();
       setSubcategoryId('');
-      setItemTypeId('');
     },
   });
 
@@ -77,7 +75,6 @@ export function SubcategorySelector({
         value={subcategoryId}
         onChange={(e) => {
           setSubcategoryId(e.target.value);
-          setItemTypeId('');
         }}
         className="rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white shadow-inner font-medium"
       >
@@ -111,7 +108,6 @@ export function SubcategorySelector({
                   type="button"
                   onClick={() => {
                     setSubcategoryId(s.id);
-                    setItemTypeId('');
                   }}
                   className="flex-1 text-left font-medium flex items-center gap-2"
                 >

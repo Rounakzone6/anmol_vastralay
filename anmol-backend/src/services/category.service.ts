@@ -27,11 +27,8 @@ export class CategoryService {
       return this.prisma.category.findMany({
         where,
         orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          imageUrl: true,
+        include: {
+          subcategories: true,
         },
       });
     }
@@ -41,11 +38,7 @@ export class CategoryService {
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       include: {
         _count: { select: { products: true } },
-        subcategories: {
-          include: {
-            itemTypes: true,
-          },
-        },
+        subcategories: true,
       },
     });
   }
@@ -62,9 +55,7 @@ export class CategoryService {
         isActive: true,
         sortOrder: true,
         _count: { select: { products: true } },
-        subcategories: {
-          include: { itemTypes: true },
-        },
+        subcategories: true,
       },
     });
     if (!category) notFound('Category');
@@ -86,7 +77,7 @@ export class CategoryService {
     return category;
   }
 
-  async create(input: z.infer<typeof CreateCategorySchema>) {
+  async create(input: z.infer<typeof CreateCategorySchema>, userId: string) {
     const slug =
       input.slug?.trim() ||
       (await uniqueSlug(input.name, async (s) => {
@@ -100,17 +91,28 @@ export class CategoryService {
       badRequest('Slug must be lowercase letters, numbers, and hyphens only');
     }
 
+    let authorId: string | null = null;
+    if (userId) {
+      const validUser = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      });
+      authorId = validUser?.id ?? null;
+    }
+
     return this.prisma.category.create({
       data: {
         name: input.name,
         slug,
         description: input.description,
         imageUrl: input.imageUrl,
+        createdById: authorId,
+        updatedById: authorId,
       },
     });
   }
 
-  async update(input: z.infer<typeof UpdateCategorySchema>) {
+  async update(input: z.infer<typeof UpdateCategorySchema>, userId: string) {
     const existing = await this.prisma.category.findUnique({
       where: { id: input.id },
     });
@@ -125,6 +127,15 @@ export class CategoryService {
       if (clash) badRequest('Slug already in use');
     }
 
+    let updaterId: string | null = null;
+    if (userId) {
+      const validUser = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      });
+      updaterId = validUser?.id ?? null;
+    }
+
     return this.prisma.category.update({
       where: { id: input.id },
       data: {
@@ -133,6 +144,7 @@ export class CategoryService {
         description: input.description,
         imageUrl: input.imageUrl,
         isActive: input.isActive,
+        updatedById: updaterId,
       },
     });
   }
@@ -235,46 +247,6 @@ export class CategoryService {
 
   async deleteSubcategory(id: string) {
     await this.prisma.subcategory.delete({ where: { id } });
-    return { success: true };
-  }
-
-  // --- ITEMTYPE ---
-  async createItemType(
-    input: z.infer<
-      typeof import('../models/category.model').CreateItemTypeSchema
-    >,
-  ) {
-    const slug = await uniqueSlug(input.name, async (s) => {
-      const row = await this.prisma.itemType.findUnique({ where: { slug: s } });
-      return Boolean(row);
-    });
-    return this.prisma.itemType.create({
-      data: {
-        name: input.name,
-        slug,
-        subcategoryId: input.subcategoryId,
-        description: input.description,
-      },
-    });
-  }
-
-  async updateItemType(
-    input: z.infer<
-      typeof import('../models/category.model').UpdateItemTypeSchema
-    >,
-  ) {
-    return this.prisma.itemType.update({
-      where: { id: input.id },
-      data: {
-        name: input.name,
-        description: input.description,
-        isActive: input.isActive,
-      },
-    });
-  }
-
-  async deleteItemType(id: string) {
-    await this.prisma.itemType.delete({ where: { id } });
     return { success: true };
   }
 }
