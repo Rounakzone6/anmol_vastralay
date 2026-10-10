@@ -98,7 +98,7 @@ export class EmailService {
 
       if (!response.ok) {
         const errorData = await response.text();
-        throw new Error(\`Brevo API Error: \${response.status} \${errorData}\`);
+        throw new Error(`Brevo API Error: ${response.status} ${errorData}`);
       }
 
       this.logger.log(`Email sent: ${message.subject} -> ${message.to}`);
