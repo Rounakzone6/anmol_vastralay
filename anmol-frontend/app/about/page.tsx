@@ -16,11 +16,11 @@ const owners = [
 ];
 
 const galleryImages = [
-  { src: '/banners/banner_women.png', alt: 'Women clothing collection placeholder' },
-  { src: '/banners/banner_saree.png', alt: 'Saree collection placeholder' },
-  { src: '/banners/banner_men.png', alt: 'Men clothing collection placeholder' },
-  { src: '/banners/banner_kids.png', alt: 'Kids clothing collection placeholder' },
-  { src: '/banners/banner_innerwear.png', alt: 'Clothing shelves placeholder' },
+  { src: '/banners/dussehra_festival.jpg', alt: 'Dussehra & festive Banarasi saree collection' },
+  { src: '/banners/karwa_chauth.jpg', alt: 'Karwa Chauth royal bridal lehenga collection' },
+  { src: '/banners/diwali_women_girls.jpg', alt: 'Diwali festive women & girls ethnic couture' },
+  { src: '/banners/diwali_men_boys.jpg', alt: 'Diwali royal menswear & sherwani collection' },
+  { src: '/banners/chhath_puja.jpg', alt: 'Chhath Puja sacred handloom weaves' },
 ];
 
 const collections = [

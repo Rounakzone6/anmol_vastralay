@@ -73,13 +73,25 @@ export function ProductImageUpload({
     }
   }
 
+  function setSlotUrl(slot: number, url: string) {
+    if (!url.trim()) return;
+    const next = [...value];
+    while (next.length < 4) next.push(null);
+    next[slot] = {
+      url: url.trim(),
+      preview: url.trim(),
+      altText: '',
+    };
+    onChange(next.slice(0, 4));
+  }
+
   const slots = Array.from({ length: 4 }, (_, i) => value[i] ?? null);
 
   return (
     <section className="rounded-xl border border-zinc-200 bg-white p-6">
       <h2 className="text-lg font-semibold">Product images</h2>
       <p className="mt-1 text-sm text-zinc-500">
-        Upload up to 4 photos. The first image is shown on the shop (required).
+        Upload up to 4 photos or paste direct image URLs. The first image is shown on the shop (required).
       </p>
       {(error || localError) && (
         <p className="mt-2 text-sm text-red-600">{error || localError}</p>
@@ -106,27 +118,43 @@ export function ProductImageUpload({
                 </button>
               </div>
             ) : (
-              <label className="mt-2 flex aspect-[3/4] cursor-pointer flex-col items-center justify-center rounded-md bg-zinc-50 text-center text-xs text-zinc-500 hover:bg-zinc-100">
-                {uploadingSlot === i ? (
-                  <div className="flex flex-col items-center">
-                    <Spinner size={20} className="mb-2" />
-                    <span>Uploading…</span>
-                  </div>
-                ) : (
-                  <span>Click to upload</span>
-                )}
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/jpg"
-                  className="hidden"
-                  disabled={uploadingSlot !== null}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) void handleFile(i, file);
-                    e.target.value = '';
+              <div className="mt-2 flex aspect-[3/4] flex-col items-center justify-center rounded-md bg-zinc-50 text-center text-xs text-zinc-500 hover:bg-zinc-100 p-2">
+                <label className="flex flex-col items-center justify-center cursor-pointer w-full h-full">
+                  {uploadingSlot === i ? (
+                    <div className="flex flex-col items-center">
+                      <Spinner size={20} className="mb-2" />
+                      <span>Uploading…</span>
+                    </div>
+                  ) : (
+                    <span>Click to upload</span>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/jpg"
+                    className="hidden"
+                    disabled={uploadingSlot !== null}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void handleFile(i, file);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="mt-1 text-[11px] font-medium text-violet-600 hover:text-violet-800 hover:underline"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const url = window.prompt('Paste direct image URL (https://...):');
+                    if (url && url.trim().startsWith('http')) {
+                      setSlotUrl(i, url.trim());
+                    }
                   }}
-                />
-              </label>
+                >
+                  🔗 Or paste URL
+                </button>
+              </div>
             )}
             {slot ? (
               <div className="mt-2 text-center text-xs">

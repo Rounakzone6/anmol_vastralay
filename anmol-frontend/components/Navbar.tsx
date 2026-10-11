@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Menu, X, Search, ShoppingCart, Heart, LogOut, User, MapPin, Package, ChevronDown, Shield, Home, Grid } from "lucide-react";
 import { useAuth } from "@/lib/useAuth";
 import { trpc } from "@/lib/trpc";
+import AnnouncementBar from "@/components/AnnouncementBar";
 
 const ProfileAvatar = ({ size = 36, profileImg, displayName, initials }: { size?: number, profileImg?: string | null, displayName: string, initials: string }) => (
   profileImg ? (
@@ -81,9 +82,9 @@ const Navbar = () => {
   const profileImg = meData?.profileImage || user?.profileImage;
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white shadow-sm">
-      {/* Top Banner */}
-      <div className="h-2 bg-[#091827]" />
+    <nav className="sticky top-0 z-50 w-full border-b border-[#e6dbcc] bg-[#fcfaf7]/95 backdrop-blur-md shadow-xs">
+      {/* Top Luxury Announcement Marquee */}
+      <AnnouncementBar />
 
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between gap-4">
@@ -91,32 +92,34 @@ const Navbar = () => {
           {/* Logo Section */}
           <div className="shrink-0 flex items-center">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-full overflow-hidden shadow-sm transition-transform duration-300 group-hover:scale-105 group-hover:shadow-md">
+              <div className="relative w-11 h-11 sm:w-13 sm:h-13 flex-shrink-0 rounded-full overflow-hidden shadow-sm border border-[#c59b27]/40 transition-transform duration-300 group-hover:scale-105 group-hover:shadow-md">
                 <Image
                   src="/logo.png"
                   alt="Anmol Vastralay Logo"
                   fill
-                  sizes="48px"
+                  sizes="52px"
                   className="object-cover"
                   priority
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-xl font-extrabold tracking-wide text-[#85142b] sm:text-2xl group-hover:text-[#b01e3f] transition-colors">
+                <span className="font-serif-luxury text-xl font-bold tracking-tight text-[#85142b] sm:text-2xl group-hover:text-[#6c1023] transition-colors leading-none">
                   अनमोल वस्त्रालय
                 </span>
-                <span className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase sm:text-xs">
-                  Anmol Vastralay
+                <span className="text-[10px] font-bold tracking-widest text-[#c59b27] uppercase mt-1">
+                  Royal Ethnic Luxury
                 </span>
               </div>
             </Link>
           </div>
 
           {/* Desktop Nav Links */}
-          <div className="hidden lg:flex items-center space-x-6 mx-4 font-medium text-sm text-gray-700">
-            <Link href="/" className="hover:text-[#85142b] transition-colors">Home</Link>
-            <Link href="/collections" className="hover:text-[#85142b] transition-colors">Collections</Link>
-            <Link href="/about" className="hover:text-[#85142b] transition-colors">About</Link>
+          <div className="hidden lg:flex items-center space-x-6 mx-2 font-medium text-xs tracking-wider uppercase text-gray-800">
+            <Link href="/collections/sarees" className="hover:text-[#85142b] transition-colors font-bold">Sarees</Link>
+            <Link href="/collections/lehengas" className="hover:text-[#85142b] transition-colors font-bold">Lehengas</Link>
+            <Link href="/collections/kurtis-suits" className="hover:text-[#85142b] transition-colors font-bold">Kurtis & Suits</Link>
+            <Link href="/collections" className="hover:text-[#85142b] transition-colors">All Collections</Link>
+            <Link href="/about" className="hover:text-[#85142b] transition-colors">Heritage</Link>
           </div>
 
           {/* Desktop Search Bar */}

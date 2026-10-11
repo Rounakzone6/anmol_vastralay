@@ -14,6 +14,7 @@ import {
 import { OverviewTab } from '@/app/profile/components/OverviewTab';
 import { AddressesTab } from '@/app/profile/components/AddressesTab';
 import { SecurityTab } from '@/app/profile/components/SecurityTab';
+import HeritageProfileLoader from '@/components/loaders/HeritageProfileLoader';
 
 type TabKey = 'overview' | 'addresses' | 'security';
 
@@ -46,11 +47,7 @@ function ProfileContent() {
   const profile = profileQuery.data;
 
   if (!isClient || !isHydrated || !isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin h-8 w-8 border-4 border-[#85142b] border-t-transparent rounded-full" />
-      </div>
-    );
+    return <HeritageProfileLoader />;
   }
 
   const tabs: { key: TabKey; label: string; icon: React.ElementType }[] = [
@@ -148,11 +145,7 @@ function ProfileContent() {
 
 export default function ProfilePage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin h-8 w-8 border-4 border-[#85142b] border-t-transparent rounded-full" />
-      </div>
-    }>
+    <Suspense fallback={<HeritageProfileLoader />}>
       <ProfileContent />
     </Suspense>
   );

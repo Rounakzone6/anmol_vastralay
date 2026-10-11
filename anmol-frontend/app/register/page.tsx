@@ -8,6 +8,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/lib/useAuth';
 import { Eye, EyeOff, Mail, Phone, User, Lock, ArrowRight, ShieldCheck, Truck, Gift, Sparkles, KeyRound } from 'lucide-react';
+import DiyaButtonLoader from '@/components/loaders/DiyaButtonLoader';
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -297,10 +298,7 @@ export default function RegisterPage() {
                 className="group relative flex w-full items-center justify-center gap-2 rounded-lg bg-[#85142b] px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#6c1023] focus:outline-none focus:ring-2 focus:ring-[#85142b]/50 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] mt-1"
               >
                 {isPending ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                    Sending Code...
-                  </span>
+                  <DiyaButtonLoader text="Sending Code..." />
                 ) : (
                   <>
                     Create Account
@@ -342,10 +340,7 @@ export default function RegisterPage() {
                 className="group relative flex w-full items-center justify-center gap-2 rounded-lg bg-[#85142b] px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#6c1023] focus:outline-none focus:ring-2 focus:ring-[#85142b]/50 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] mt-1"
               >
                 {isPending ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                    Verifying...
-                  </span>
+                  <DiyaButtonLoader text="Verifying..." />
                 ) : (
                   <>
                     Verify & Sign In

@@ -105,13 +105,29 @@ export class AiService {
       }
 
       const parsed = JSON.parse(jsonMatch[0]);
+
+      let metaTitle = (parsed.metaTitle || '').trim();
+      if (metaTitle.length > 60) {
+        const cut = metaTitle.slice(0, 57).replace(/\s+\S*$/, '');
+        metaTitle = (cut || metaTitle.slice(0, 57)).trim() + '...';
+        if (metaTitle.length > 60) metaTitle = metaTitle.slice(0, 60);
+      }
+
+      let metaDescription = (parsed.metaDescription || '').trim();
+      if (metaDescription.length > 160) {
+        const cut = metaDescription.slice(0, 155).replace(/\s+\S*$/, '');
+        metaDescription = (cut || metaDescription.slice(0, 155)).trim();
+        if (!metaDescription.endsWith('.')) metaDescription += '.';
+        if (metaDescription.length > 160) metaDescription = metaDescription.slice(0, 160);
+      }
+
       return {
         name: parsed.name || name || '',
         brand: parsed.brand || brand || '',
         shortDescription: parsed.shortDescription || '',
         description: parsed.description || description || '',
-        metaTitle: parsed.metaTitle || '',
-        metaDescription: parsed.metaDescription || '',
+        metaTitle,
+        metaDescription,
       };
     } catch (error: any) {
       console.error('Error generating product details:', error);
@@ -121,52 +137,77 @@ export class AiService {
 
   async generateCategoryDetails(input: { name: string; description: string }) {
     const { name, description } = input;
-    try {
-      const prompt = `
-        You are an expert e-commerce copywriter and SEO specialist for an Indian clothing and ethnic wear store named "Anmol Vastralay".
-        Your task is to generate complete, high-converting, professional, and SEO-optimized category details.
+    const prompt = `
+      You are an expert e-commerce copywriter and SEO specialist for an Indian clothing and ethnic wear store named "Anmol Vastralay".
+      Your task is to generate complete, high-converting, professional, and SEO-optimized category details.
 
-        Available inputs:
-        - Category Name: "${name}"
-        - Brief Description/Notes: "${description}"
+      Available inputs:
+      - Category Name: "${name}"
+      - Brief Description/Notes: "${description}"
 
-        Requirements:
-        1. "description":
-           - Generate a rich, engaging category description (1-2 paragraphs).
-           - Expand on the brief description provided, highlighting the types of products (like sarees, lehengas, suits, etc.) customers can expect in this category.
-           - Emphasize quality, occasions (festive, wedding, daily wear), and the cultural richness of Anmol Vastralay.
-        2. "metaTitle":
-           - Highly optimized SEO title for Google Search (max 60 chars), incorporating the category name and store keyword (e.g. "Buy [Category] Online | Anmol Vastralay").
-        3. "metaDescription":
-           - Highly optimized SEO meta description (max 160 chars) highlighting the best features of this category and reasons to shop.
+      Requirements:
+      1. "description":
+         - Generate a rich, engaging category description (1-2 paragraphs).
+         - Expand on the brief description provided, highlighting the types of products (like sarees, lehengas, suits, etc.) customers can expect in this category.
+         - Emphasize quality, occasions (festive, wedding, daily wear), and the cultural richness of Anmol Vastralay.
+      2. "metaTitle":
+         - Highly optimized SEO title for Google Search (max 60 chars), incorporating the category name and store keyword (e.g. "Buy [Category] Online | Anmol Vastralay").
+      3. "metaDescription":
+         - Highly optimized SEO meta description for Google Search.
+         - STRICT REQUIREMENT: Keep length strictly between 120 and 150 characters. Under NO circumstance exceed 155 characters. Highlight reasons to shop and key features concisely.
 
-        Return ONLY a valid JSON object with the exact keys: "description", "metaTitle", "metaDescription".
-        Do NOT wrap in markdown code blocks or backticks. Return raw JSON only.
-      `;
+      Return ONLY a valid JSON object with the exact keys: "description", "metaTitle", "metaDescription".
+      Do NOT wrap in markdown code blocks or backticks. Return raw JSON only.
+    `;
 
-      const response = await this.groq.chat.completions.create({
-        messages: [{ role: 'user', content: prompt }],
-        model: 'mixtral-8x7b-32768',
-        temperature: 0.7,
-      });
+    const candidateModels = ['qwen/qwen3.8-27b', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
+    let lastError: any = null;
 
-      const text = response.choices[0]?.message?.content || '{}';
+    for (const model of candidateModels) {
+      try {
+        const response = await this.groq.chat.completions.create({
+          messages: [{ role: 'user', content: prompt }],
+          model,
+          response_format: { type: 'json_object' },
+          temperature: 0.7,
+        });
 
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('AI did not return valid JSON');
+        const text = response.choices[0]?.message?.content || '{}';
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          throw new Error('AI did not return valid JSON');
+        }
+
+        const parsed = JSON.parse(jsonMatch[0]);
+
+        let metaTitle = (parsed.metaTitle || '').trim();
+        if (metaTitle.length > 60) {
+          const cut = metaTitle.slice(0, 57).replace(/\s+\S*$/, '');
+          metaTitle = (cut || metaTitle.slice(0, 57)).trim() + '...';
+          if (metaTitle.length > 60) metaTitle = metaTitle.slice(0, 60);
+        }
+
+        let metaDescription = (parsed.metaDescription || '').trim();
+        if (metaDescription.length > 160) {
+          const cut = metaDescription.slice(0, 155).replace(/\s+\S*$/, '');
+          metaDescription = (cut || metaDescription.slice(0, 155)).trim();
+          if (!metaDescription.endsWith('.')) metaDescription += '.';
+          if (metaDescription.length > 160) metaDescription = metaDescription.slice(0, 160);
+        }
+
+        return {
+          description: parsed.description || description || '',
+          metaTitle,
+          metaDescription,
+        };
+      } catch (error: any) {
+        console.warn(`Groq model ${model} failed for category details:`, error?.message || error);
+        lastError = error;
       }
-
-      const parsed = JSON.parse(jsonMatch[0]);
-      return {
-        description: parsed.description || description || '',
-        metaTitle: parsed.metaTitle || '',
-        metaDescription: parsed.metaDescription || '',
-      };
-    } catch (error: any) {
-      console.error('Error generating category details:', error);
-      throw new Error(error.message || 'Failed to generate category details with AI');
     }
+
+    console.error('All candidate models failed for category details:', lastError);
+    throw new Error(lastError?.message || 'Failed to generate category details with AI');
   }
 
   async generateDemandForecast(salesData: string) {
@@ -248,26 +289,31 @@ export class AiService {
   }
 
   async polishCampaignMessage(draftMessage: string) {
-    try {
-      const completion = await this.groq.chat.completions.create({
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert copywriter for an Indian ethnic fashion store. Your job is to polish, improve, and add excitement (using emojis) to WhatsApp broadcast messages sent to customers. Keep the response concise, engaging, and directly ready to be sent (no quotes or extra text). Retain the original intent but make it sound professional and catchy.'
-          },
-          {
-            role: 'user',
-            content: `Please polish this WhatsApp broadcast message:\n\n${draftMessage}`
-          }
-        ],
-        model: 'llama3-8b-8192',
-        temperature: 0.7,
-      });
+    const candidateModels = ['qwen/qwen3.8-27b', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
+    for (const model of candidateModels) {
+      try {
+        const completion = await this.groq.chat.completions.create({
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are an expert copywriter for an Indian ethnic fashion store. Your job is to polish, improve, and add excitement (using emojis) to WhatsApp broadcast messages sent to customers. Keep the response concise, engaging, and directly ready to be sent (no quotes or extra text). Retain the original intent but make it sound professional and catchy.',
+            },
+            {
+              role: 'user',
+              content: `Please polish this WhatsApp broadcast message:\n\n${draftMessage}`,
+            },
+          ],
+          model,
+          temperature: 0.7,
+        });
 
-      return completion.choices[0]?.message?.content?.trim() || draftMessage;
-    } catch (error) {
-      console.error('Error polishing campaign message with Groq:', error);
-      return draftMessage; // fallback to original if API fails
+        const content = completion.choices[0]?.message?.content?.trim();
+        if (content) return content;
+      } catch (error: any) {
+        console.warn(`Groq model ${model} failed for campaign polish:`, error?.message || error);
+      }
     }
+    return draftMessage; // fallback to original if API fails
   }
 }

@@ -11,8 +11,16 @@ export async function POST(req: Request) {
   try {
     const { messages } = await req.json();
 
+    const baseModel = groq('qwen/qwen3.8-27b');
+    const model = new Proxy(baseModel, {
+      get(target: any, prop: string | symbol) {
+        if (prop === 'specificationVersion') return 'v3';
+        return target[prop];
+      },
+    });
+
     const result = streamText({
-      model: groq('llama-3.3-70b-versatile') as any,
+      model: model as any,
       messages,
       system: `You are a helpful, polite, and professional AI customer support assistant for an Indian clothing store named "Anmol Vastralay".
 You MUST ALWAYS reply in Hinglish (a mix of Hindi and English written in English script).

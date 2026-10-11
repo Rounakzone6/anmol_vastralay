@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Package, ChevronRight, MapPin, Loader2, Download } from 'lucide-react';
+import { Package, ChevronRight, MapPin, Download } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/lib/useAuth';
+import RoyalParcelLoader from '@/components/loaders/RoyalParcelLoader';
 
 export default function OrdersPage() {
   const { isAuthenticated, isHydrated } = useAuth();
@@ -17,12 +18,7 @@ export default function OrdersPage() {
   });
 
   if (!isHydrated) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center">
-        <Loader2 className="w-10 h-10 text-[#85142b] animate-spin mb-4" />
-        <p className="text-gray-500 font-medium">Checking authentication...</p>
-      </div>
-    );
+    return <RoyalParcelLoader message="Verifying Royal Credentials..." subtitle="Connecting with your order vault" />;
   }
 
   if (!isAuthenticated) {
@@ -37,12 +33,7 @@ export default function OrdersPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center">
-        <Loader2 className="w-10 h-10 text-[#85142b] animate-spin mb-4" />
-        <p className="text-gray-500 font-medium">Loading your orders...</p>
-      </div>
-    );
+    return <RoyalParcelLoader message="Retrieving Your Royal Orders..." subtitle="Loading tracking milestones and invoices" />;
   }
 
   if (!orders || orders.length === 0) {

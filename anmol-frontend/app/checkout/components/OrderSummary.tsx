@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { ShieldCheck, Loader2 } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
+import DiyaButtonLoader from '@/components/loaders/DiyaButtonLoader';
 
 export function OrderSummary({
   cart,
@@ -82,10 +83,7 @@ export function OrderSummary({
             className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-xl shadow-lg text-base font-bold text-white bg-[#85142b] hover:bg-[#6c1023] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#85142b] disabled:opacity-70 transition-all transform hover:-translate-y-0.5"
           >
             {createOrder.isPending || verifyPayment.isPending ? (
-              <>
-                <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
-                Processing securely...
-              </>
+              <DiyaButtonLoader text="Securing order..." />
             ) : (
               paymentMethod === 'COD' ? 'Confirm Order (COD)' : `Pay ₹${subtotal.toFixed(2)} Securely`
             )}

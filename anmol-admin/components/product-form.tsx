@@ -157,50 +157,87 @@ export function ProductForm({ productId }: ProductFormProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setImageError(null);
-    const imageUrls = buildImageUrls();
-    if (imageUrls.length === 0) {
-      setImageError('Please upload the main product image (image 1)');
+
+    if (!name.trim()) {
+      toast.error('Please enter a product name');
       return;
     }
 
+    if (!categoryId) {
+      toast.error('Please select a category');
+      return;
+    }
+
+    const priceNum = Number(netPrice);
+    if (!netPrice || isNaN(priceNum) || priceNum <= 0) {
+      toast.error('Please enter a valid price greater than ₹0');
+      return;
+    }
+
+    const imageUrls = buildImageUrls();
+    if (imageUrls.length === 0) {
+      setImageError('Please upload the main product image (image 1)');
+      toast.error('Please upload at least the main product image (image 1)');
+      return;
+    }
+
+    const filteredVariants = variants.filter((v) => v.color.trim());
+    let mappedVariants: any[] = [];
+
+    if (filteredVariants.length === 0) {
+      mappedVariants = [
+        {
+          color: 'Standard',
+          size: kind === 'SAREE' ? undefined : 'Free Size',
+          stockQty: 10,
+        },
+      ];
+    } else {
+      mappedVariants = filteredVariants.flatMap((v) => {
+        const color = v.color.trim();
+        if (kind === 'SAREE') {
+          return [{ color, stockQty: Number(v.stockQtys.trim()) || 0 }];
+        } else {
+          const sizesArr = v.sizes.split(',').map((s) => s.trim()).filter(Boolean);
+          const stocksArr = v.stockQtys.split(',').map((s) => s.trim()).filter(Boolean);
+
+          if (sizesArr.length === 0) {
+            return [
+              {
+                color,
+                size: 'Free Size',
+                stockQty: Number(stocksArr[0]) || 0,
+              },
+            ];
+          }
+
+          return sizesArr.map((size, idx) => ({
+            color,
+            size,
+            stockQty: Number(stocksArr[idx]) || 0,
+          }));
+        }
+      });
+    }
+
     const payload = {
-      name,
-      brand: brand || undefined,
+      name: name.trim(),
+      brand: brand?.trim() || undefined,
       categoryId,
       subcategoryId: subcategoryId || undefined,
 
       kind,
-      description: description || undefined,
-      metaTitle: metaTitle || undefined,
-      metaDescription: metaDescription || undefined,
-      netPrice: Number(netPrice),
-      discountPercent: Number(discountPercent),
+      description: description?.trim() || undefined,
+      metaTitle: metaTitle?.trim() || undefined,
+      metaDescription: metaDescription?.trim() || undefined,
+      netPrice: priceNum,
+      discountPercent: Number(discountPercent) || 0,
       allowsExtraSaya: kind === 'SAREE' ? allowsExtraSaya : false,
       extraSayaPrice:
         kind === 'SAREE' && allowsExtraSaya && extraSayaPrice
           ? Number(extraSayaPrice)
           : undefined,
-      variants: variants
-        .filter((v) => v.color.trim())
-        .flatMap((v) => {
-          const color = v.color.trim();
-          if (kind === 'SAREE') {
-            return [{ color, stockQty: Number(v.stockQtys.trim()) || 0 }];
-          } else {
-            const sizesArr = v.sizes.split(',').map((s) => s.trim()).filter(Boolean);
-            const stocksArr = v.stockQtys.split(',').map((s) => s.trim()).filter(Boolean);
-            
-            if (sizesArr.length === 0) {
-              return [{ color, stockQty: Number(stocksArr[0]) || 0 }];
-            }
-            
-            return sizesArr.map((size, idx) => ({
-              color,
-              size,
-              stockQty: Number(stocksArr[idx]) || 0
-            }));
-          }
-        }),
+      variants: mappedVariants,
       imageUrls,
     };
 

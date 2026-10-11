@@ -1,6 +1,7 @@
 import { PrismaService } from '@backend/services/prisma.service';
 import { CloudinaryService } from '@backend/services/cloudinary.service';
 import { badRequest, notFound } from '@backend/config/trpc.config';
+import { redis } from '@backend/config/redis.config';
 import { uniqueSlug } from '@backend/utils/slug';
 import { ProductKind } from '@prisma/client';
 import { z } from 'zod';
@@ -30,6 +31,17 @@ export class ProductMutations {
     private readonly prisma: PrismaService,
     private readonly cloudinary: CloudinaryService,
   ) {}
+
+  private async invalidateCache(): Promise<void> {
+    try {
+      const keys = await redis.keys('product:*');
+      if (keys.length > 0) {
+        await redis.del(...keys);
+      }
+    } catch (err) {
+      console.error('Failed to invalidate product cache:', err);
+    }
+  }
 
   private validateProductVariants(
     kind: ProductKind,
@@ -141,6 +153,7 @@ export class ProductMutations {
       include: productInclude,
     });
 
+    await this.invalidateCache();
     return mapProduct(product);
   }
 
@@ -279,6 +292,7 @@ export class ProductMutations {
       where: { id: input.id },
       include: productInclude,
     });
+    await this.invalidateCache();
     return mapProduct(product!);
   }
 
@@ -304,6 +318,7 @@ export class ProductMutations {
       }
       
       await this.prisma.product.delete({ where: { id: input.id } });
+      await this.invalidateCache();
       return { success: true };
     }
 
@@ -311,6 +326,7 @@ export class ProductMutations {
       where: { id: input.id },
       data: { isActive: false },
     });
+    await this.invalidateCache();
     return { success: true };
   }
 
@@ -319,10 +335,12 @@ export class ProductMutations {
       where: { id: input.id },
     });
     if (!existing) notFound('Product');
-    return this.prisma.product.update({
+    const updated = await this.prisma.product.update({
       where: { id: input.id },
       data: { isActive: input.isActive },
     });
+    await this.invalidateCache();
+    return updated;
   }
 
   async upsertVariant(input: z.infer<typeof UpsertVariantSchema>) {
@@ -341,7 +359,7 @@ export class ProductMutations {
     const sizeKey = variantSizeKey(product.kind, input.size);
 
     if (input.variantId) {
-      return this.prisma.productVariant.update({
+      const updated = await this.prisma.productVariant.update({
         where: { id: input.variantId },
         data: {
           color: input.color,
@@ -351,9 +369,11 @@ export class ProductMutations {
           sku: input.sku,
         },
       });
+      await this.invalidateCache();
+      return updated;
     }
 
-    return this.prisma.productVariant.create({
+    const created = await this.prisma.productVariant.create({
       data: {
         productId: input.productId,
         color: input.color,
@@ -363,6 +383,8 @@ export class ProductMutations {
         sku: input.sku,
       },
     });
+    await this.invalidateCache();
+    return created;
   }
 
   async deleteVariant(input: z.infer<typeof DeleteVariantSchema>) {
@@ -373,6 +395,7 @@ export class ProductMutations {
     await this.prisma.productVariant.delete({
       where: { id: input.variantId },
     });
+    await this.invalidateCache();
     return { success: true };
   }
 
@@ -383,10 +406,12 @@ export class ProductMutations {
     if (!variant) notFound('Variant');
 
     const stockQty = Math.max(0, variant.stockQty + input.delta);
-    return this.prisma.productVariant.update({
+    const updated = await this.prisma.productVariant.update({
       where: { id: input.variantId },
       data: { stockQty },
     });
+    await this.invalidateCache();
+    return updated;
   }
 
   async uploadImage(input: z.infer<typeof UploadImageSchema>) {
@@ -406,7 +431,7 @@ export class ProductMutations {
       badRequest(`Maximum ${MAX_PRODUCT_IMAGES} images per product`);
     }
 
-    return this.prisma.productImage.create({
+    const image = await this.prisma.productImage.create({
       data: {
         productId: input.productId,
         url: input.url,
@@ -414,6 +439,8 @@ export class ProductMutations {
         sortOrder: input.sortOrder ?? count,
       },
     });
+    await this.invalidateCache();
+    return image;
   }
 
   async removeImage(input: z.infer<typeof RemoveImageSchema>) {
@@ -427,6 +454,7 @@ export class ProductMutations {
     }
 
     await this.prisma.productImage.delete({ where: { id: input.imageId } });
+    await this.invalidateCache();
     return { success: true };
   }
 }

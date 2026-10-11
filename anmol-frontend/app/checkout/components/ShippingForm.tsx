@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, Truck, LocateFixed } from 'lucide-react';
+import { Truck, LocateFixed, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import { calculateDistance } from '@/lib/location';
 
@@ -126,8 +126,9 @@ export function ShippingForm({
           </p>
         )}
         {isLoadingAddresses ? (
-          <div className="flex items-center justify-center py-4">
-            <Loader2 className="w-6 h-6 text-[#85142b] animate-spin" />
+          <div className="flex items-center gap-3 py-4 px-4 rounded-xl border border-[#ede4d5] bg-[#faf5eb] animate-pulse my-3">
+            <MapPin className="w-5 h-5 text-[#c59b27] animate-bounce" />
+            <span className="text-xs font-semibold text-[#85142b] tracking-wider uppercase">Loading your saved delivery addresses...</span>
           </div>
         ) : addresses && addresses.length > 0 ? (
           <div className="space-y-4 mb-6">

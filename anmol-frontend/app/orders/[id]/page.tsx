@@ -3,9 +3,11 @@
 import { use, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Check, ChevronDown, Download, Loader2, MapPin, PackageCheck, Receipt, Truck } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Download, MapPin, PackageCheck, Receipt, Truck } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/lib/useAuth';
+import RoyalParcelLoader from '@/components/loaders/RoyalParcelLoader';
+import DiyaButtonLoader from '@/components/loaders/DiyaButtonLoader';
 
 export default function OrderDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -20,7 +22,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
   });
 
   if (!isHydrated) {
-    return <div className="p-8 text-center text-gray-500">Checking authentication...</div>;
+    return <RoyalParcelLoader message="Verifying Royal Credentials..." subtitle="Connecting with order tracking vault" />;
   }
 
   if (!isAuthenticated) {
@@ -35,7 +37,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
   }
 
   if (isLoading) {
-    return <div className="p-8 text-center text-gray-500">Loading order details...</div>;
+    return <RoyalParcelLoader message="Tracking Your Royal Order..." subtitle="Retrieving live transit milestones & manifest" />;
   }
 
   if (error || !order) {
@@ -80,8 +82,14 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
               disabled={generateInvoice.isPending}
               className="inline-flex items-center gap-2 rounded-md border border-[#85142b] px-4 py-2 text-sm font-semibold text-[#85142b] transition hover:bg-[#fff6f7] disabled:cursor-wait disabled:opacity-60"
             >
-              {generateInvoice.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-              {order.invoiceUrl ? 'Download invoice' : 'Generate invoice'}
+              {generateInvoice.isPending ? (
+                <DiyaButtonLoader text="Generating..." textColor="text-[#85142b]" />
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  {order.invoiceUrl ? 'Download invoice' : 'Generate invoice'}
+                </>
+              )}
             </button>
             <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium capitalize
             ${order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : ''}

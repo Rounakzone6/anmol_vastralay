@@ -2,9 +2,10 @@
 
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { Bot, Send, Loader2, ShoppingBag, MessageSquare, X } from 'lucide-react';
+import { Bot, Send, ShoppingBag, MessageSquare, X, Sparkles } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
+import ChatbotStylistLoader from '@/components/loaders/ChatbotStylistLoader';
 
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -186,9 +187,8 @@ export default function ChatbotWidget() {
                           }
                         } else {
                           return (
-                            <div key={index} className="flex items-center text-xs text-[#85142b] font-medium my-1 bg-[#85142b]/5 p-2 rounded">
-                              <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
-                              Searching...
+                            <div key={index} className="my-2">
+                              <ChatbotStylistLoader />
                             </div>
                           );
                         }
@@ -200,15 +200,8 @@ export default function ChatbotWidget() {
               ))
             )}
             {isLoading && messages.length > 0 && messages[messages.length - 1].role === 'user' && (
-              <div className="flex gap-2 justify-start">
-                <div className="w-6 h-6 rounded-full bg-[#85142b] flex items-center justify-center shrink-0 mt-1 shadow-sm">
-                  <Bot className="w-3 h-3 text-white" />
-                </div>
-                <div className="max-w-[85%] rounded-2xl px-4 py-3.5 shadow-sm bg-white text-gray-800 rounded-tl-sm border border-gray-100 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
-                </div>
+              <div className="my-2">
+                <ChatbotStylistLoader />
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -221,15 +214,15 @@ export default function ChatbotWidget() {
                 className="w-full bg-gray-100 border-none rounded-full pl-4 pr-12 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#85142b]/30"
                 value={input}
                 onChange={handleInputChange}
-                placeholder="Type your message..."
+                placeholder="Ask about sarees, lehengas, festive wear..."
                 disabled={isLoading}
               />
               <button
                 type="submit"
                 disabled={isLoading || !input?.trim()}
-                className="absolute right-1 w-8 h-8 bg-[#85142b] text-white rounded-full flex items-center justify-center hover:bg-[#6c1023] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="absolute right-1 w-8 h-8 bg-[#85142b] text-white rounded-full flex items-center justify-center hover:bg-[#6c1023] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
               >
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 ml-0.5" />}
+                {isLoading ? <Sparkles className="w-4 h-4 text-[#f3dfa2] animate-spin-slow" /> : <Send className="w-4 h-4 ml-0.5" />}
               </button>
             </form>
           </div>

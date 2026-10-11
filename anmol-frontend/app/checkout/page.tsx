@@ -6,10 +6,12 @@ import Link from 'next/link';
 import Script from 'next/script';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/lib/useAuth';
-import { ShieldCheck, Truck, ArrowLeft, Loader2 } from 'lucide-react';
+import { ShieldCheck, Truck, ArrowLeft } from 'lucide-react';
 import { ShippingForm } from '@/app/checkout/components/ShippingForm';
 import { PaymentOptions } from '@/app/checkout/components/PaymentOptions';
 import { OrderSummary } from '@/app/checkout/components/OrderSummary';
+import VaultOrderLoader from '@/components/loaders/VaultOrderLoader';
+import DiyaButtonLoader from '@/components/loaders/DiyaButtonLoader';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -110,12 +112,7 @@ export default function CheckoutPage() {
   });
 
   if (!isHydrated) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center bg-gray-50">
-        <Loader2 className="w-10 h-10 text-[#85142b] animate-spin mb-4" />
-        <p className="text-gray-500 font-medium">Checking authentication...</p>
-      </div>
-    );
+    return <VaultOrderLoader message="Checking Royal Authentication..." subtitle="Securing your checkout credentials" />;
   }
 
   if (!isAuthenticated) {
@@ -134,12 +131,7 @@ export default function CheckoutPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center bg-gray-50">
-        <Loader2 className="w-10 h-10 text-[#85142b] animate-spin mb-4" />
-        <p className="text-gray-500 font-medium">Preparing your checkout...</p>
-      </div>
-    );
+    return <VaultOrderLoader message="Preparing Your Royal Checkout..." subtitle="Calculating festive discounts and taxes" />;
   }
 
   if (!cart || cart.items.length === 0) {
@@ -224,10 +216,7 @@ export default function CheckoutPage() {
                   className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-xl shadow-lg text-base font-bold text-white bg-[#85142b] hover:bg-[#6c1023] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#85142b] disabled:opacity-70 transition-all transform hover:-translate-y-0.5"
                 >
                   {createOrder.isPending || verifyPayment.isPending ? (
-                    <>
-                      <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
-                      Processing securely...
-                    </>
+                    <DiyaButtonLoader text="Securing order..." />
                   ) : (
                     paymentMethod === 'COD' ? 'Confirm Order (COD)' : `Pay ₹${subtotal.toFixed(2)} Securely`
                   )}

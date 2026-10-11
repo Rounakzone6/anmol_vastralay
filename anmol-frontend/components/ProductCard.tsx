@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
-import { Heart, Star } from 'lucide-react';
+import { Heart, Star, Eye } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -14,8 +14,8 @@ interface Product {
   discountPercent?: number | string;
   images: { url: string; altText?: string }[];
   brand?: string;
-  category?: { name: string };
-  variants?: { color?: string; size?: string; stockQty?: number }[];
+  category?: { name: string; slug?: string };
+  variants?: { id?: string; color?: string; size?: string; stockQty?: number; sku?: string }[];
   averageRating?: number;
   reviewCount?: number;
   createdAt?: Date | string;
@@ -30,191 +30,153 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  const netPrice = Number(product.netPrice);
+  const netPrice = Number(product.netPrice || 0);
   const discountPct = Number(product.discountPercent || 0);
   const mrp = discountPct > 0
-    ? Number(product.mrp || netPrice * (1 + discountPct / 100))
+    ? Number(product.mrp || Math.round(netPrice * (1 + discountPct / 100)))
     : null;
+  const savings = mrp ? mrp - netPrice : 0;
 
   const isNew = product.createdAt 
-    ? (new Date().getTime() - new Date(product.createdAt).getTime()) < 14 * 24 * 60 * 60 * 1000
+    ? (new Date().getTime() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000
     : false;
-  const colors = product.variants
-    ? Array.from(new Set(product.variants.map((v) => v.color).filter(Boolean)))
-    : [];
 
-  const totalStock = product.variants
+  const totalStock = product.variants && product.variants.length > 0
     ? product.variants.reduce((acc, v) => acc + (v.stockQty || 0), 0)
     : 999;
   const isOutOfStock = totalStock === 0;
 
   const href = `/product/${product.slug || product.id}`;
   
-  const currentImageObj = isHovered && product.images?.length > 1 
-    ? product.images[1]
-    : product.images?.[0];
-    
-  const currentImage = currentImageObj?.url || '';
-  const currentAlt = currentImageObj?.altText || `${product.name} - ${product.category?.name || 'Anmol Vastralay'}`;
+  const primaryImage = product.images?.[0]?.url || '/banners/banner_saree.png';
+  const secondaryImage = product.images?.[1]?.url || primaryImage;
+
+  const toggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsWishlisted(!isWishlisted);
+  };
 
   return (
     <article
-      className="group relative flex flex-col w-full bg-white rounded-2xl p-3 transition-all duration-300 hover:shadow-2xl border border-transparent hover:border-gray-100"
+      className="group relative flex flex-col w-full bg-white rounded-2xl overflow-hidden border border-[#e8ded1]/80 hover:border-[#c59b27]/60 shadow-xs hover:shadow-xl transition-all duration-500 ease-out"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Image Container */}
-      <div className="relative w-full aspect-square overflow-hidden bg-[#faf9f7] rounded-xl mb-4 group-hover:bg-white transition-colors duration-300">
-        <Link href={href} className="block w-full h-full">
-          {currentImage ? (
+      {/* 3:4 Fashion Lookbook Image Frame */}
+      <div className="relative w-full aspect-[3/4] overflow-hidden bg-[#f4efe8]">
+        <Link href={href} className="block w-full h-full relative" aria-label={product.name}>
+          {/* Primary Image */}
+          <Image
+            src={primaryImage}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            loading={index < 4 ? 'eager' : 'lazy'}
+            className={`object-cover object-top transition-all duration-700 ease-out ${
+              isHovered && secondaryImage !== primaryImage
+                ? 'opacity-0 scale-105'
+                : 'opacity-100 group-hover:scale-105'
+            }`}
+          />
+
+          {/* Secondary Hover Image (if available) */}
+          {secondaryImage && secondaryImage !== primaryImage && (
             <Image
-              src={currentImage}
-              alt={currentAlt}
+              src={secondaryImage}
+              alt={`${product.name} alternate view`}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-contain p-4 transition-transform duration-700 ease-in-out group-hover:scale-110"
+              className={`object-cover object-top transition-all duration-700 ease-out absolute inset-0 ${
+                isHovered ? 'opacity-100 scale-105' : 'opacity-0 scale-100'
+              }`}
             />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-              No Image
-            </div>
           )}
         </Link>
 
         {/* Badges Overlay */}
-        <div className="absolute top-2 left-2 flex flex-col gap-1.5 z-10 pointer-events-none">
+        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-20 pointer-events-none">
           {isOutOfStock ? (
-            <span className="bg-black/80 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">
+            <span className="bg-black/85 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">
               Sold Out
             </span>
           ) : (
             <>
-              {isNew && !discountPct && (
-                <span className="bg-[#85142b] text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider shadow-sm">
-                  New
+              {discountPct > 0 && (
+                <span className="bg-gradient-to-r from-[#85142b] to-[#a01a35] text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-md border border-[#f3dfa2]/30">
+                  {Math.round(discountPct)}% OFF
                 </span>
               )}
-              {discountPct > 0 && (
-                <span className="bg-green-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider shadow-sm">
-                  -{Math.round(discountPct)}%
+              {isNew && (
+                <span className="bg-[#12090e]/85 text-[#f3dfa2] text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border border-[#c59b27]/40 shadow-sm">
+                  New Arrival
                 </span>
               )}
             </>
           )}
         </div>
 
-        {/* Wishlist Button - Absolute top right */}
+        {/* Wishlist Button */}
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsWishlisted((w) => !w);
-          }}
-          className="absolute top-2 right-2 p-2 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all duration-300 z-10 shadow hover:shadow-md opacity-0 group-hover:opacity-100 sm:opacity-100 translate-y-1 group-hover:translate-y-0 sm:translate-y-0"
-          aria-label="Wishlist"
+          onClick={toggleWishlist}
+          aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          className={`absolute top-2.5 right-2.5 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-md backdrop-blur-md cursor-pointer ${
+            isWishlisted
+              ? 'bg-[#85142b] text-white scale-110'
+              : 'bg-white/85 text-gray-700 hover:bg-[#85142b] hover:text-white'
+          }`}
         >
-          <Heart
-            size={18}
-            className={`transition-colors ${isWishlisted ? 'fill-[#85142b] text-[#85142b]' : 'text-gray-500'}`}
-          />
+          <Heart size={16} fill={isWishlisted ? 'currentColor' : 'none'} />
         </button>
 
-        {/* Quick Add Overlay (Appears on Hover) - Premium touch */}
-        <div className="absolute bottom-0 left-0 right-0 p-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out hidden lg:block">
-          <button 
-            className="w-full bg-white/95 backdrop-blur-md rounded-lg text-[#85142b] font-bold text-xs py-3 uppercase tracking-wider shadow-lg hover:bg-[#85142b] hover:text-white transition-colors"
-            onClick={(e) => {
-              e.preventDefault();
-              // Add to cart logic could go here
-            }}
+        {/* Slide-Up Quick View on Hover */}
+        <div className="absolute inset-x-3 bottom-3 z-20 transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 ease-out">
+          <Link
+            href={href}
+            className="w-full py-2.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg backdrop-blur-md bg-[#15070e]/95 text-[#f3dfa2] hover:bg-[#85142b] hover:text-white border border-[#c59b27]/30 transition-all duration-200"
           >
-            Quick View
-          </button>
+            <Eye size={14} /> Quick View Details
+          </Link>
         </div>
       </div>
 
-      {/* Info Section */}
-      <div className="flex flex-col px-1 flex-1">
-        <Link href={href} className="group-hover:opacity-80 transition-opacity">
-          {product.brand && (
-            <p className="text-xs sm:text-sm font-extrabold uppercase tracking-widest text-[#85142b] mb-1 line-clamp-1">
-              {product.brand}
-            </p>
-          )}
-          <h3 className="text-sm sm:text-base text-gray-800 font-semibold line-clamp-2 mb-2" title={product.name}>
+      {/* Product Content Details */}
+      <div className="flex flex-col flex-1 p-3.5 sm:p-4 bg-white">
+        {/* Category & Rating */}
+        <div className="flex items-center justify-between gap-2 mb-1.5">
+          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[#c59b27] line-clamp-1">
+            {product.category?.name || product.brand || 'Ethnic Wear'}
+          </span>
+          <div className="flex items-center gap-1 text-[11px] text-amber-500 font-semibold">
+            <Star size={12} fill="currentColor" />
+            <span>4.9</span>
+          </div>
+        </div>
+
+        {/* Product Name */}
+        <Link href={href} className="group-hover:text-[#85142b] transition-colors mb-2">
+          <h3 className="font-serif-luxury text-sm sm:text-base font-semibold text-[#1c1417] leading-snug line-clamp-2">
             {product.name}
           </h3>
         </Link>
-        
-        <div className="flex items-baseline gap-2 mb-3 mt-auto pt-2">
-          <span className="text-base sm:text-xl font-black text-gray-900 tracking-tight">
+
+        {/* Price & Savings */}
+        <div className="mt-auto pt-2 flex items-baseline flex-wrap gap-2">
+          <span className="text-base sm:text-lg font-extrabold text-[#1c1417]">
             ₹{netPrice.toLocaleString('en-IN')}
           </span>
           {mrp && (
-            <span className="text-xs sm:text-sm text-gray-400 line-through font-medium">
-              ₹{Math.round(mrp).toLocaleString('en-IN')}
+            <span className="text-xs text-gray-400 line-through">
+              ₹{mrp.toLocaleString('en-IN')}
             </span>
           )}
-          {discountPct > 0 && (
-            <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-md hidden sm:inline-block">
-              {Math.round(discountPct)}% OFF
+          {savings > 0 && (
+            <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+              Save ₹{savings.toLocaleString('en-IN')}
             </span>
           )}
-        </div>
-
-        {/* Ratings (Mock) & Colors */}
-        <div className="flex items-center justify-between mt-1 border-t border-gray-50 pt-3">
-           {/* Dynamic Rating */}
-           {product.reviewCount && product.reviewCount > 0 ? (
-             <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
-               <Star size={12} className="fill-yellow-400 text-yellow-400" />
-               <span className="text-xs font-bold text-gray-700">
-                 {product.averageRating ? product.averageRating.toFixed(1) : "0.0"}
-               </span>
-               <span className="text-[10px] text-gray-400 border-l border-gray-300 pl-1.5 ml-0.5">
-                 {product.reviewCount}
-               </span>
-             </div>
-           ) : (
-             <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
-               <Star size={12} className="text-gray-300" />
-               <span className="text-xs font-medium text-gray-500">No reviews</span>
-             </div>
-           )}
-
-           {/* Color Dots */}
-           {colors.length > 0 && (
-             <div className="flex gap-1 items-center">
-               {colors.slice(0, 3).map((color, i) => (
-                 <span
-                   key={i}
-                   className="w-3.5 h-3.5 rounded-full border border-gray-200 shadow-sm"
-                   style={{ backgroundColor: getColorHex(color as string) }}
-                   title={color as string}
-                 />
-               ))}
-               {colors.length > 3 && (
-                 <span className="text-[10px] text-gray-500 font-medium pl-1">+{colors.length - 3}</span>
-               )}
-             </div>
-           )}
         </div>
       </div>
     </article>
   );
-}
-
-// ── Helper: map color names to approximate hex ──────────────────────────────
-function getColorHex(colorName: string): string {
-  const map: Record<string, string> = {
-    red: '#ef4444', blue: '#3b82f6', green: '#22c55e', yellow: '#eab308',
-    black: '#1a1a1a', white: '#f5f5f5', pink: '#ec4899', purple: '#a855f7',
-    orange: '#f97316', brown: '#92400e', grey: '#9ca3af', gray: '#9ca3af',
-    maroon: '#85142b', navy: '#1e3a5f', beige: '#d4c5a9', cream: '#fffdd0',
-    teal: '#14b8a6', cyan: '#06b6d4', gold: '#d4af37', silver: '#c0c0c0',
-    violet: '#7c3aed', indigo: '#4f46e5', magenta: '#d946ef', peach: '#ffcba4',
-    lavender: '#e6e6fa', olive: '#808000', khaki: '#c3b091', coral: '#ff7f50',
-  };
-  const key = colorName.toLowerCase().trim();
-  return map[key] || '#d1d5db';
 }

@@ -5,10 +5,23 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ChatbotWidgetWrapper from '@/components/ChatbotWidgetWrapper';
 import { PhonePrompt } from '@/components/PhonePrompt';
-import { Inter } from 'next/font/google';
+import { Inter, Cormorant_Garamond, Plus_Jakarta_Sans } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-cormorant',
+  display: 'swap',
+});
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800'],
+  variable: '--font-jakarta',
+  display: 'swap',
+});
 import { fetchPublicTrpc } from '@/lib/server-data';
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_NAME, SITE_URL, jsonLd, organizationJsonLd } from '@/lib/seo';
 
@@ -27,9 +40,9 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     images: [
       {
-        url: '/category-icons/cat_saree_1781796874870.png',
-        width: 800,
-        height: 600,
+        url: '/category-icons/cat_festive_saree.jpg',
+        width: 1024,
+        height: 1024,
       },
     ],
     locale: 'en_IN',
@@ -41,9 +54,12 @@ export const metadata: Metadata = {
     description: 'Premium ethnic wear and modern fashion for everyone.',
   },
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', type: 'image/png' },
+    ],
     shortcut: '/favicon.ico',
-    apple: '/logo.png',
+    apple: '/apple-icon.png',
   },
   robots: {
     index: true,
@@ -65,7 +81,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="en-IN" className={inter.className}>
+    <html lang="en-IN" className={`${inter.className} ${cormorant.variable} ${plusJakarta.variable}`}>
       <body>
         <script
           type="application/ld+json"

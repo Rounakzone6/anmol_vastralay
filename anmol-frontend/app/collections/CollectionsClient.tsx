@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { trpc } from '@/lib/trpc';
-import { Search, FilterX, Loader2, SlidersHorizontal, ChevronDown, X } from 'lucide-react';
+import { Search, FilterX, SlidersHorizontal, ChevronDown, X } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
+import { SilkSpindleScrollLoader } from '@/components/loaders/SilkLoomLoader';
 
 export default function CollectionsClient({ 
   initialSearchTerm = '',
@@ -299,12 +300,7 @@ export default function CollectionsClient({
               {/* Infinite scroll trigger */}
               {hasNextPage && (
                 <div ref={loadMoreRef} className="col-span-full mt-12 flex justify-center items-center">
-                  {isFetchingNextPage && (
-                    <div className="flex items-center gap-2 text-gray-400">
-                      <Loader2 className="w-5 h-5 animate-spin text-[#85142b]" />
-                      <span className="text-sm font-medium">Loading more…</span>
-                    </div>
-                  )}
+                  {isFetchingNextPage && <SilkSpindleScrollLoader />}
                 </div>
               )}
 
