@@ -113,10 +113,18 @@ export class PaymentService {
 
         for (const item of orderItems) {
           if (item.variantId) {
-            await tx.productVariant.update({
-              where: { id: item.variantId },
+            const updated = await tx.productVariant.updateMany({
+              where: {
+                id: item.variantId,
+                stockQty: { gte: item.quantity },
+              },
               data: { stockQty: { decrement: item.quantity } },
             });
+            if (updated.count === 0) {
+              console.warn(
+                `[CP Concurrency] Stock shortage detected during payment confirmation for variant: ${item.variantId}`,
+              );
+            }
           }
         }
       }

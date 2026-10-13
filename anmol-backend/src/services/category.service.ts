@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@backend/services/prisma.service';
+import { CacheService } from '@backend/services/cache.service';
 import { badRequest, notFound } from '@backend/config/trpc.config';
 import { slugify, uniqueSlug } from '@backend/utils/slug';
 import { DEFAULT_CATEGORIES } from '@backend/utils/default-categories';
@@ -13,68 +14,82 @@ import {
 
 @Injectable()
 export class CategoryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: CacheService,
+  ) {}
+
+  private async invalidateCache(): Promise<void> {
+    await this.cache.delPattern('category:*');
+  }
 
   async list(input?: z.infer<typeof ListCategorySchema>) {
-    const where = {
-      ...(input?.includeInactive ? {} : { isActive: true }),
-      ...(input?.search
-        ? { name: { contains: input.search, mode: 'insensitive' as const } }
-        : {}),
-    };
+    const cacheKey = `category:list:${JSON.stringify(input || {})}`;
+    return this.cache.remember(cacheKey, 1800, async () => {
+      const where = {
+        ...(input?.includeInactive ? {} : { isActive: true }),
+        ...(input?.search
+          ? { name: { contains: input.search, mode: 'insensitive' as const } }
+          : {}),
+      };
 
-    if (!input?.includeInactive) {
+      if (!input?.includeInactive) {
+        return this.prisma.category.findMany({
+          where,
+          orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+          include: {
+            subcategories: true,
+          },
+        });
+      }
+
       return this.prisma.category.findMany({
         where,
         orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
         include: {
+          _count: { select: { products: true } },
           subcategories: true,
         },
       });
-    }
-
-    return this.prisma.category.findMany({
-      where,
-      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-      include: {
-        _count: { select: { products: true } },
-        subcategories: true,
-      },
     });
   }
 
   async getById(id: string) {
-    const category = await this.prisma.category.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        description: true,
-        imageUrl: true,
-        isActive: true,
-        sortOrder: true,
-        _count: { select: { products: true } },
-        subcategories: true,
-      },
+    return this.cache.remember(`category:id:${id}`, 1800, async () => {
+      const category = await this.prisma.category.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          imageUrl: true,
+          isActive: true,
+          sortOrder: true,
+          _count: { select: { products: true } },
+          subcategories: true,
+        },
+      });
+      if (!category) notFound('Category');
+      return category;
     });
-    if (!category) notFound('Category');
-    return category;
   }
 
   async getBySlug(slug: string) {
-    const category = await this.prisma.category.findUnique({
-      where: { slug },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        description: true,
-        imageUrl: true,
-      },
+    return this.cache.remember(`category:slug:${slug}`, 1800, async () => {
+      const category = await this.prisma.category.findUnique({
+        where: { slug },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          imageUrl: true,
+        },
+      });
+      if (!category) notFound('Category');
+      return category;
     });
-    if (!category) notFound('Category');
-    return category;
   }
 
   async create(input: z.infer<typeof CreateCategorySchema>, userId: string) {
@@ -100,7 +115,7 @@ export class CategoryService {
       authorId = validUser?.id ?? null;
     }
 
-    return this.prisma.category.create({
+    const created = await this.prisma.category.create({
       data: {
         name: input.name,
         slug,
@@ -110,6 +125,9 @@ export class CategoryService {
         updatedById: authorId,
       },
     });
+
+    await this.invalidateCache();
+    return created;
   }
 
   async update(input: z.infer<typeof UpdateCategorySchema>, userId: string) {
@@ -136,7 +154,7 @@ export class CategoryService {
       updaterId = validUser?.id ?? null;
     }
 
-    return this.prisma.category.update({
+    const updated = await this.prisma.category.update({
       where: { id: input.id },
       data: {
         name: input.name,
@@ -147,6 +165,9 @@ export class CategoryService {
         updatedById: updaterId,
       },
     });
+
+    await this.invalidateCache();
+    return updated;
   }
 
   async delete(input: z.infer<typeof DeleteCategorySchema>) {
@@ -163,6 +184,7 @@ export class CategoryService {
         );
       }
       await this.prisma.category.delete({ where: { id: input.id } });
+      await this.invalidateCache();
       return { success: true, mode: 'deleted' as const };
     }
 
@@ -170,6 +192,7 @@ export class CategoryService {
       where: { id: input.id },
       data: { isActive: false },
     });
+    await this.invalidateCache();
     return { success: true, mode: 'hidden' as const };
   }
 
@@ -189,6 +212,7 @@ export class CategoryService {
         },
       });
     }
+    await this.invalidateCache();
     return { count: DEFAULT_CATEGORIES.length };
   }
 
@@ -205,6 +229,7 @@ export class CategoryService {
         }),
       ),
     );
+    await this.invalidateCache();
     return { success: true };
   }
 
@@ -220,7 +245,7 @@ export class CategoryService {
       });
       return Boolean(row);
     });
-    return this.prisma.subcategory.create({
+    const subcat = await this.prisma.subcategory.create({
       data: {
         name: input.name,
         slug,
@@ -228,6 +253,8 @@ export class CategoryService {
         description: input.description,
       },
     });
+    await this.invalidateCache();
+    return subcat;
   }
 
   async updateSubcategory(
@@ -235,7 +262,7 @@ export class CategoryService {
       typeof import('../models/category.model').UpdateSubcategorySchema
     >,
   ) {
-    return this.prisma.subcategory.update({
+    const subcat = await this.prisma.subcategory.update({
       where: { id: input.id },
       data: {
         name: input.name,
@@ -243,10 +270,13 @@ export class CategoryService {
         isActive: input.isActive,
       },
     });
+    await this.invalidateCache();
+    return subcat;
   }
 
   async deleteSubcategory(id: string) {
     await this.prisma.subcategory.delete({ where: { id } });
+    await this.invalidateCache();
     return { success: true };
   }
 }

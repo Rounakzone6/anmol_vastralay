@@ -9,7 +9,19 @@ import { trpc } from '@/lib/trpc';
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 60 * 1000, // 1 minute: data remains fresh, avoiding redundant network trips
+            gcTime: 10 * 60 * 1000, // 10 minutes: cache retention in memory
+            refetchOnWindowFocus: false, // Prevents background re-fetching on tab switches
+            retry: 1, // Single retry on transient network errors
+          },
+        },
+      }),
+  );
   const [trpcClient] = useState(() =>
     trpc.createClient({
       links: [

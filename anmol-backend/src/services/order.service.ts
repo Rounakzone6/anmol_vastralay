@@ -41,9 +41,22 @@ export class OrderService {
       throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cart is empty' });
     }
 
-    // 2. Calculate total amount
+    // 2. Calculate total amount and verify stock availability on Primary DB (CP Consistency)
     let totalAmount = 0;
     for (const item of cart.items) {
+      if (item.variantId) {
+        const variant = await this.prisma.$primary().productVariant.findUnique({
+          where: { id: item.variantId },
+          select: { stockQty: true, product: { select: { name: true } } },
+        });
+        if (!variant || variant.stockQty < item.quantity) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `Insufficient stock for "${variant?.product?.name || 'Item'}". Available: ${variant?.stockQty ?? 0}, Requested: ${item.quantity}`,
+          });
+        }
+      }
+
       // using product netPrice
       const price = Number(item.product.netPrice);
       totalAmount += price * item.quantity;
@@ -105,13 +118,23 @@ export class OrderService {
           },
         });
 
-        // Deduct inventory for COD orders immediately
+        // Deduct inventory for COD orders atomically with conditional stock check (Strict CP)
         for (const item of cart.items) {
           if (item.variantId) {
-            await tx.productVariant.update({
-              where: { id: item.variantId },
+            const updated = await tx.productVariant.updateMany({
+              where: {
+                id: item.variantId,
+                stockQty: { gte: item.quantity },
+              },
               data: { stockQty: { decrement: item.quantity } },
             });
+
+            if (updated.count === 0) {
+              throw new TRPCError({
+                code: 'CONFLICT',
+                message: `Stock was claimed by another customer for "${item.product.name}". Order aborted.`,
+              });
+            }
           }
         }
       }

@@ -6,6 +6,8 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthModule } from '@backend/modules/auth.module';
 import { CloudinaryModule } from '@backend/modules/cloudinary.module';
 import { PrismaModule } from '@backend/modules/prisma.module';
+import { CacheModule } from '@backend/modules/cache.module';
+import { HealthModule } from '@backend/modules/health.module';
 import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { ExpressAdapter } from '@bull-board/express';
@@ -36,6 +38,7 @@ import { RetargetingService } from '@backend/services/retargeting.service';
 
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { DeliveryAssignmentService } from '@backend/services/delivery-assignment.service';
+import { IdempotencyService } from '@backend/services/idempotency.service';
 
 @Module({
   imports: [
@@ -47,6 +50,8 @@ import { DeliveryAssignmentService } from '@backend/services/delivery-assignment
       limit: 100, // 100 requests per minute
     }]),
     PrismaModule,
+    CacheModule,
+    HealthModule,
     CloudinaryModule,
     EmailModule,
     AuthModule,
@@ -97,6 +102,7 @@ import { DeliveryAssignmentService } from '@backend/services/delivery-assignment
     NotificationQueueService,
     NotificationProcessor,
     AbandonedCartCron,
+    IdempotencyService,
   ],
 })
 export class AppModule {}

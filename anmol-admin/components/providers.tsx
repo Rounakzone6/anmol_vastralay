@@ -8,7 +8,19 @@ import { clearToken, getToken } from '@/lib/auth';
 import { trpc } from '@/lib/trpc';
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 30 * 1000, // 30 seconds fresh cache
+            gcTime: 5 * 60 * 1000, // 5 minutes in memory
+            refetchOnWindowFocus: false,
+            retry: 1,
+          },
+        },
+      }),
+  );
   const [trpcClient] = useState(() =>
     trpc.createClient({
       links: [

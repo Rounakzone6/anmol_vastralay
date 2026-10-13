@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@backend/services/prisma.service';
 import { CloudinaryService } from '@backend/services/cloudinary.service';
+import { CacheService } from '@backend/services/cache.service';
 import { notFound } from '@backend/config/trpc.config';
 import { z } from 'zod';
 import {
@@ -13,24 +14,32 @@ export class BannerService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cloudinary: CloudinaryService,
+    private readonly cache: CacheService,
   ) {}
 
+  private async invalidateCache(): Promise<void> {
+    await this.cache.delPattern('banner:*');
+  }
+
   async getBanners(placement?: 'HERO' | 'PROMO' | 'CATEGORY') {
-    return this.prisma.banner.findMany({
-      where: {
-        isActive: true,
-        ...(placement ? { placement } : {}),
-      },
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        subtitle: true,
-        buttonText: true,
-        imageUrl: true,
-        placement: true,
-        linkUrl: true,
-      },
+    const cacheKey = `banner:list:${placement || 'all'}`;
+    return this.cache.remember(cacheKey, 1800, async () => {
+      return this.prisma.banner.findMany({
+        where: {
+          isActive: true,
+          ...(placement ? { placement } : {}),
+        },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          subtitle: true,
+          buttonText: true,
+          imageUrl: true,
+          placement: true,
+          linkUrl: true,
+        },
+      });
     });
   }
 
@@ -129,6 +138,7 @@ export class BannerService {
       data: [...heroBanners, ...categoryBanners],
     });
 
+    await this.invalidateCache();
     return { count: 10 };
   }
 
@@ -139,7 +149,7 @@ export class BannerService {
       'anmol/banners',
     );
 
-    return this.prisma.banner.create({
+    const created = await this.prisma.banner.create({
       data: {
         title: input.title,
         subtitle: input.subtitle || null,
@@ -151,6 +161,9 @@ export class BannerService {
         isActive: input.isActive,
       },
     });
+
+    await this.invalidateCache();
+    return created;
   }
 
   async updateBanner(input: z.infer<typeof UpdateBannerSchema>) {
@@ -181,7 +194,7 @@ export class BannerService {
       }
     }
 
-    return this.prisma.banner.update({
+    const updated = await this.prisma.banner.update({
       where: { id: input.id },
       data: {
         title: input.title ?? existing.title,
@@ -203,6 +216,9 @@ export class BannerService {
         isActive: input.isActive ?? existing.isActive,
       },
     });
+
+    await this.invalidateCache();
+    return updated;
   }
 
   async deleteBanner(id: string) {
@@ -215,8 +231,11 @@ export class BannerService {
       });
     }
 
-    return this.prisma.banner.delete({
+    const deleted = await this.prisma.banner.delete({
       where: { id },
     });
+
+    await this.invalidateCache();
+    return deleted;
   }
 }

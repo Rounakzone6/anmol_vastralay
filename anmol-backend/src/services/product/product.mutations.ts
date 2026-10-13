@@ -34,10 +34,14 @@ export class ProductMutations {
 
   private async invalidateCache(): Promise<void> {
     try {
-      const keys = await redis.keys('product:*');
-      if (keys.length > 0) {
-        await redis.del(...keys);
-      }
+      const stream = redis.scanStream({ match: 'product:*', count: 100 });
+      stream.on('data', async (keys: string[]) => {
+        if (keys.length > 0) {
+          const pipeline = redis.pipeline();
+          keys.forEach((k) => pipeline.del(k));
+          await pipeline.exec();
+        }
+      });
     } catch (err) {
       console.error('Failed to invalidate product cache:', err);
     }

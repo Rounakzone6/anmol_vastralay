@@ -19,6 +19,9 @@ import { BannerService } from './services/banner.service';
 import { ReviewService } from './services/review.service';
 import { WhatsappWebService } from './services/whatsapp-web.service';
 import { AiService } from './services/ai.service';
+import { HealthService } from './services/health.service';
+import { MetricsService } from './services/metrics.service';
+import { randomUUID } from 'node:crypto';
 
 import { createAppRouter } from './routers';
 
@@ -31,11 +34,15 @@ function getBearerToken(req: Request): string | undefined {
   return header.slice(7);
 }
 
-// Request logging middleware
+// Request logging middleware with Correlation ID
 function requestLogger(req: Request, res: Response, next: NextFunction) {
   const start = Date.now();
   const method = req.method;
   const path = req.path;
+  const correlationId =
+    (req as any).correlationId ||
+    (req.headers['x-correlation-id'] as string) ||
+    '-';
 
   res.on('finish', () => {
     const duration = Date.now() - start;
@@ -43,7 +50,7 @@ function requestLogger(req: Request, res: Response, next: NextFunction) {
     const statusColor = statusCode >= 400 ? '❌' : '✓';
     if (process.env.NODE_ENV !== 'production' || statusCode >= 400) {
       logger.log(
-        `${statusColor} ${method} ${path} → ${statusCode} (${duration}ms)`,
+        `${statusColor} [${correlationId}] ${method} ${path} → ${statusCode} (${duration}ms)`,
       );
     }
   });
@@ -53,10 +60,11 @@ function requestLogger(req: Request, res: Response, next: NextFunction) {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
-  app.getHttpAdapter().getInstance().set('trust proxy', 1);
   const prisma = app.get(PrismaService);
   const cloudinary = app.get(CloudinaryService);
   const auth = app.get(AuthService);
+  const healthService = app.get(HealthService);
+  const metricsService = app.get(MetricsService);
 
   const services = {
     category: app.get(CategoryService),
@@ -74,7 +82,65 @@ async function bootstrap() {
 
   const appRouter = createAppRouter(auth);
 
+  // Trust reverse proxy headers (Nginx, ALB, Cloudflare) for accurate client IP tracking and rate limiting
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.set('trust proxy', 1);
+
   app.use(helmet());
+
+  // 1. Correlation ID Middleware (Distributed Tracing across client/proxy/backend)
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const incomingId = (req.headers['x-correlation-id'] ||
+      req.headers['x-request-id']) as string | undefined;
+    const correlationId = incomingId || randomUUID();
+    (req as any).correlationId = correlationId;
+    res.setHeader('x-correlation-id', correlationId);
+    res.setHeader('x-request-id', correlationId);
+    next();
+  });
+
+  // 2. Prometheus HTTP Metrics Middleware (RED Method: Rate, Errors, Duration)
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.path === '/metrics') {
+      return next();
+    }
+
+    metricsService.httpActiveRequests.inc();
+    const start = process.hrtime();
+
+    res.on('finish', () => {
+      metricsService.httpActiveRequests.dec();
+
+      const diff = process.hrtime(start);
+      const durationInSeconds = diff[0] + diff[1] / 1e9;
+
+      let route = req.baseUrl || req.path || 'unknown';
+      if (route.startsWith('/trpc')) {
+        route = '/trpc';
+      } else if (route.startsWith('/admin')) {
+        route = '/admin';
+      }
+
+      const statusCode = res.statusCode.toString();
+      metricsService.httpRequestsTotal.inc({
+        method: req.method,
+        route,
+        status_code: statusCode,
+      });
+
+      metricsService.httpRequestDurationSeconds.observe(
+        {
+          method: req.method,
+          route,
+          status_code: statusCode,
+        },
+        durationInSeconds,
+      );
+    });
+
+    next();
+  });
+
   app.use(requestLogger);
 
   // Apply Rate Limiting (to prevent brute-force and IP-based DDoS)
@@ -131,13 +197,36 @@ async function bootstrap() {
 
   const http = app.getHttpAdapter().getInstance();
 
-  // Health check endpoint
-  http.get('/health', (_req, res) => {
-    res.json({
-      status: 'ok',
+  // Observability: Prometheus Metrics Scraping Endpoint
+  http.get('/metrics', async (_req, res) => {
+    try {
+      res.set('Content-Type', metricsService.getContentType());
+      res.end(await metricsService.getMetrics());
+    } catch (err: any) {
+      res.status(500).end(err?.message || 'Failed to collect Prometheus metrics');
+    }
+  });
+
+  // Observability: Deep Health Check (Probes Primary DB, Read Replicas, Redis, Memory)
+  http.get('/health', async (_req, res) => {
+    const report = await healthService.getDeepHealth();
+    const statusCode = report.status === 'unhealthy' ? 503 : 200;
+    res.status(statusCode).json(report);
+  });
+
+  // Observability: Fast Kubernetes/Docker Liveness Probe
+  http.get('/health/live', (_req, res) => {
+    res.status(200).json(healthService.getLiveness());
+  });
+
+  // Observability: Kubernetes/Load Balancer Readiness Probe
+  http.get('/health/ready', async (_req, res) => {
+    const report = await healthService.getDeepHealth();
+    const isReady = report.components.primaryDatabase.status === 'up';
+    res.status(isReady ? 200 : 503).json({
+      status: isReady ? 'ready' : 'not_ready',
       timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      environment: process.env.NODE_ENV || 'development',
+      details: report.components,
     });
   });
 
@@ -148,6 +237,9 @@ async function bootstrap() {
       version: '0.0.1',
       endpoints: {
         health: '/health',
+        liveness: '/health/live',
+        readiness: '/health/ready',
+        metrics: '/metrics',
         trpc: '/trpc',
       },
       services: {
@@ -163,7 +255,10 @@ async function bootstrap() {
 
   logger.log(`✓ API Server running on port ${port}`);
   logger.log(`✓ tRPC Playground: ${backendurl}/trpc`);
-  logger.log(`✓ Health Check: ${backendurl}/health`);
+  logger.log(`✓ Prometheus Metrics: ${backendurl}/metrics`);
+  logger.log(`✓ Deep Health Check: ${backendurl}/health`);
+  logger.log(`✓ Liveness Probe: ${backendurl}/health/live`);
+  logger.log(`✓ Readiness Probe: ${backendurl}/health/ready`);
   logger.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
   logger.log(
     `✓ Database: ${process.env.DATABASE_URL?.split('@')[1] || 'not configured'}`,

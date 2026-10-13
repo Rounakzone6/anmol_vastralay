@@ -19,6 +19,39 @@ services:
       timeout: 5s
       retries: 5
 
+  # PostgreSQL Read Replica (for testing read-write splitting and load balancing locally)
+  postgres-replica:
+    image: postgres:16-alpine
+    container_name: anmol-db-replica
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: anmol_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_replica_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis In-Memory Cache & Message Queue
+  redis:
+    image: redis:7-alpine
+    container_name: anmol-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Backend API
   backend:
     build:
@@ -29,6 +62,8 @@ services:
       NODE_ENV: development
       PORT: 3001
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/anmol_db
+      DATABASE_READ_URL: postgresql://postgres:postgres@postgres-replica:5432/anmol_db
+      REDIS_URL: redis://redis:6379
       JWT_SECRET: dev-secret-key-change-in-production
       FRONTEND_URL: http://localhost:3000
       ADMIN_URL: http://localhost:3002
@@ -42,12 +77,37 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      postgres-replica:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Nginx Load Balancer (Horizontal Scaling Gateway)
+  load-balancer:
+    image: nginx:alpine
+    container_name: anmol-load-balancer
+    ports:
+      - "80:80"
+      - "8080:80"
+    volumes:
+      - ./anmol-backend/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+    restart: always
 
   # Gemini/RAG AI service
   ai-service:
@@ -109,17 +169,22 @@ services:
 
 volumes:
   postgres_data:
+  postgres_replica_data:
+  redis_data:
 
 # Usage:
-#   docker-compose up          # Start all services
-#   docker-compose down        # Stop all services
-#   docker-compose logs -f     # View all logs
-#   docker-compose logs -f backend  # View backend logs
+#   docker-compose up                # Start all services
+#   docker-compose up -d --scale backend=3  # Scale backend horizontally to 3 instances
+#   docker-compose down              # Stop all services
+#   docker-compose logs -f           # View all logs
+#   docker-compose logs -f backend   # View backend logs
 #
-# Services:
-#   Backend API: http://localhost:3001/health
-#   Admin Panel: http://localhost:3002
-#   PostgreSQL: localhost:5432 (postgres / postgres)
+# Services & Load Balancer:
+#   Load Balancer (HTTP): http://localhost:80 (or http://localhost:8080)
+#   Direct Backend API:   http://localhost:3001/health
+#   Admin Panel:          http://localhost:3002
+#   Primary PostgreSQL:   localhost:5432 (postgres / postgres)
+#   Replica PostgreSQL:   localhost:5433 (postgres / postgres)
 #
 # Environment:
 #   Copy .env to root directory for Cloudinary & Razorpay keys

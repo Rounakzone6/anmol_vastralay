@@ -8,14 +8,29 @@ import {
   productPublicSelect,
 } from '@backend/models/product.model';
 
+async function safeCacheGet<T>(key: string): Promise<T | null> {
+  try {
+    const data = await redis.get(key);
+    return data ? (JSON.parse(data) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function safeCacheSet(key: string, data: any, ttl = 600): Promise<void> {
+  try {
+    await redis.set(key, JSON.stringify(data), 'EX', ttl);
+  } catch {}
+}
+
 export class ProductQueries {
   constructor(private readonly prisma: PrismaService) {}
 
   async list(input?: z.infer<typeof ListProductSchema>) {
     const cacheKey = `product:list:${JSON.stringify(input || {})}`;
-    const cachedData = await redis.get(cacheKey);
+    const cachedData = await safeCacheGet<any>(cacheKey);
     if (cachedData) {
-      return JSON.parse(cachedData);
+      return cachedData;
     }
 
     const page = input?.cursor ?? input?.page ?? 1;
@@ -61,15 +76,15 @@ export class ProductQueries {
     };
 
     // Cache for 10 minutes
-    await redis.set(cacheKey, JSON.stringify(result), 'EX', 600);
+    await safeCacheSet(cacheKey, result, 600);
 
     return result;
   }
 
   async getById(id: string) {
     const cacheKey = `product:id:${id}`;
-    const cachedData = await redis.get(cacheKey);
-    if (cachedData) return JSON.parse(cachedData);
+    const cachedData = await safeCacheGet<any>(cacheKey);
+    if (cachedData) return cachedData;
 
     const product = await this.prisma.product.findUnique({
       where: { id },
@@ -77,14 +92,14 @@ export class ProductQueries {
     });
     if (!product) notFound('Product');
     const result = mapProduct(product);
-    await redis.set(cacheKey, JSON.stringify(result), 'EX', 600);
+    await safeCacheSet(cacheKey, result, 600);
     return result;
   }
 
   async getBySlug(slug: string) {
     const cacheKey = `product:slug:${slug}`;
-    const cachedData = await redis.get(cacheKey);
-    if (cachedData) return JSON.parse(cachedData);
+    const cachedData = await safeCacheGet<any>(cacheKey);
+    if (cachedData) return cachedData;
 
     const product = await this.prisma.product.findUnique({
       where: { slug },
@@ -92,7 +107,7 @@ export class ProductQueries {
     });
     if (!product) notFound('Product');
     const result = mapProduct(product);
-    await redis.set(cacheKey, JSON.stringify(result), 'EX', 600);
+    await safeCacheSet(cacheKey, result, 600);
     return result;
   }
 

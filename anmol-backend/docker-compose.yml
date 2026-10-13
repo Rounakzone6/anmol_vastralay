@@ -19,6 +19,39 @@ services:
       timeout: 5s
       retries: 5
 
+  # PostgreSQL Read Replica (for testing read-write splitting locally)
+  postgres-replica:
+    image: postgres:16-alpine
+    container_name: anmol-db-replica
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: anmol_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_replica_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis In-Memory Cache & Message Queue
+  redis:
+    image: redis:7-alpine
+    container_name: anmol-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # pgAdmin - Database GUI (Optional)
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -30,11 +63,15 @@ services:
       - "5050:80"
     depends_on:
       - postgres
+      - postgres-replica
+      - redis
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
 volumes:
   postgres_data:
+  postgres_replica_data:
+  redis_data:
   pgadmin_data:
 
 # Usage:
@@ -43,8 +80,12 @@ volumes:
 #   docker-compose logs -f     # View logs
 #
 # Access:
-#   PostgreSQL: localhost:5432 (postgres / postgres)
-#   pgAdmin:    http://localhost:5050 (admin@example.com / admin)
+#   Primary PostgreSQL: localhost:5432 (postgres / postgres)
+#   Replica PostgreSQL: localhost:5433 (postgres / postgres)
+#   Redis:              localhost:6379
+#   pgAdmin:            http://localhost:5050 (admin@example.com / admin)
 #
 # Connect in .env:
-#   DATABASE_URL=postgresql://postgres:postgres@postgres:5432/anmol_db
+#   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/anmol_db
+#   DATABASE_READ_URL=postgresql://postgres:postgres@localhost:5433/anmol_db
+#   REDIS_URL=redis://localhost:6379
