@@ -74,28 +74,26 @@ export class HealthService {
       overallStatus = 'unhealthy';
     }
 
-    // 2. Check Read Replica Database
-    let replicaDbHealth: ComponentHealth = { status: 'unconfigured' };
-    if (process.env.DATABASE_READ_URL || process.env.DATABASE_READ_REPLICAS) {
-      try {
-        const start = Date.now();
-        const replicaClient =
-          typeof (this.prisma as any).$replica === 'function'
-            ? (this.prisma as any).$replica()
-            : this.prisma;
-        await replicaClient.$queryRawUnsafe('SELECT 1');
-        replicaDbHealth = {
-          status: 'up',
-          latencyMs: Date.now() - start,
-        };
-      } catch (err: any) {
-        this.logger.warn(`Read replica healthcheck failed: ${err?.message}`);
-        replicaDbHealth = {
-          status: 'down',
-          error: err?.message,
-        };
-        if (overallStatus === 'healthy') overallStatus = 'degraded';
-      }
+    // 2. Check Read Pool / Read Replica Database
+    let replicaDbHealth: ComponentHealth = { status: 'down' };
+    try {
+      const start = Date.now();
+      const replicaClient =
+        typeof (this.prisma as any).$replica === 'function'
+          ? (this.prisma as any).$replica()
+          : this.prisma;
+      await replicaClient.$queryRawUnsafe('SELECT 1');
+      replicaDbHealth = {
+        status: 'up',
+        latencyMs: Date.now() - start,
+      };
+    } catch (err: any) {
+      this.logger.warn(`Read pool healthcheck failed: ${err?.message}`);
+      replicaDbHealth = {
+        status: 'down',
+        error: err?.message,
+      };
+      if (overallStatus === 'healthy') overallStatus = 'degraded';
     }
 
     // 3. Check Redis Cache & Queue

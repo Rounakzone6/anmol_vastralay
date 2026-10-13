@@ -49,9 +49,15 @@ export class PrismaService
       );
     }
 
-    // Filter out empty URLs or any identical to the primary database
+    // If no external replicas are configured, split reads and writes on the same database server
+    // by creating a dedicated read connection pool. This prevents heavy write locks/transactions
+    // from starving read queries (product browsing, categories, etc.)
+    if (replicaUrls.length === 0 && primaryUrl) {
+      replicaUrls.push(primaryUrl);
+    }
+
     const uniqueReplicaUrls = Array.from(
-      new Set(replicaUrls.filter((u) => u && u !== primaryUrl)),
+      new Set(replicaUrls.filter(Boolean)),
     );
 
     if (uniqueReplicaUrls.length > 0) {
@@ -114,12 +120,20 @@ export class PrismaService
       await this.$connect();
     }
 
-    if (this.replicaPools.length > 0) {
+    const hasExternalReplica =
+      this.replicaPools.length > 0 &&
+      Boolean(process.env.DATABASE_READ_URL || process.env.DATABASE_READ_REPLICAS);
+
+    if (hasExternalReplica) {
       this.logger.log(
-        `✅ Database Load Balancer Active: 1 Primary (Writes) + ${this.replicaPools.length} Read Replica(s) (Reads balanced)`,
+        `✅ Database Load Balancer Active: 1 Write Pool (Primary) + ${this.replicaPools.length} External Read Replica(s)`,
+      );
+    } else if (this.replicaPools.length > 0) {
+      this.logger.log(
+        '✅ Database Read/Write Split Active: 1 Dedicated Write Pool + 1 Dedicated Read Pool (Same Database Server)',
       );
     } else {
-      this.logger.log('✅ Database connected via pg adapter (Single primary mode)');
+      this.logger.log('✅ Database connected via pg adapter');
     }
   }
 
