@@ -17,6 +17,15 @@ export default function CartPage() {
     enabled: isAuthenticated,
   });
 
+  const { data: myMembership } = trpc.membership.getMyMembership.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const { data: plan } = trpc.membership.getPlan.useQuery();
+
+  const isMember = !!myMembership?.isMember;
+  const deliveryCharge = isMember ? 0 : (plan?.deliveryCharge ?? 20);
+  const planPrice = plan?.price ?? 1;
+
   const updateQuantity = trpc.cart.updateQuantity.useMutation({
     onSuccess: () => utils.cart.getCart.invalidate(),
   });
@@ -151,13 +160,35 @@ export default function CartPage() {
             </div>
             <div className="flex items-center justify-between border-t border-gray-200 pt-4">
               <dt className="flex items-center">Shipping estimate</dt>
-              <dd className="text-gray-900 font-medium">Free</dd>
+              <dd>
+                {isMember ? (
+                  <span className="text-emerald-600 font-bold flex items-center gap-1">
+                    Free <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">VIP Perk 👑</span>
+                  </span>
+                ) : (
+                  <span className="text-gray-900 font-medium">₹{deliveryCharge.toFixed(2)}</span>
+                )}
+              </dd>
             </div>
             <div className="flex items-center justify-between border-t border-gray-200 pt-4 text-base font-medium text-gray-900">
               <dt>Order total</dt>
-              <dd>₹{subtotal.toFixed(2)}</dd>
+              <dd className="font-bold text-[#85142b]">
+                ₹{(subtotal + (isMember ? 0 : deliveryCharge)).toFixed(2)}
+              </dd>
             </div>
           </dl>
+
+          {!isMember && (
+            <div className="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs">
+              <p className="font-bold text-amber-900">👑 Get Free Delivery on all orders!</p>
+              <p className="text-amber-800 mt-0.5">
+                Join Anmol VIP Royal Club for just ₹{planPrice}/yr.
+              </p>
+              <Link href="/membership" className="mt-1.5 inline-block font-semibold text-[#85142b] underline">
+                View VIP Benefits &rarr;
+              </Link>
+            </div>
+          )}
 
           <div className="mt-6">
             <Link

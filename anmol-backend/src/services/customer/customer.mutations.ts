@@ -2,6 +2,7 @@ import { PrismaService } from '@backend/services/prisma.service';
 import { CloudinaryService } from '@backend/services/cloudinary.service';
 import { AuthService } from '@backend/services/auth.service';
 import { OtpService } from '@backend/services/otp.service';
+import { WhatsappWebService } from '@backend/services/whatsapp-web.service';
 import { z } from 'zod';
 import * as bcrypt from 'bcryptjs';
 import {
@@ -21,6 +22,7 @@ export class CustomerMutations {
     private readonly cloudinary: CloudinaryService,
     private readonly auth: AuthService,
     private readonly otp: OtpService,
+    private readonly whatsappWeb?: WhatsappWebService,
   ) {}
 
   async updateProfile(
@@ -32,6 +34,34 @@ export class CustomerMutations {
     if (input.gender !== undefined) data.gender = input.gender;
     if (input.dateOfBirth !== undefined) {
       data.dateOfBirth = input.dateOfBirth ? new Date(input.dateOfBirth) : null;
+    }
+
+    if (input.phone !== undefined) {
+      let trimmedPhone = input.phone?.trim() || null;
+      if (trimmedPhone) {
+        trimmedPhone = trimmedPhone.replace(/[\s-]/g, '');
+        if (/^\d{10}$/.test(trimmedPhone)) {
+          trimmedPhone = `+91${trimmedPhone}`;
+        }
+      }
+
+      const currentUser = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { phone: true },
+      });
+
+      if (currentUser?.phone !== trimmedPhone) {
+        if (trimmedPhone) {
+          const existing = await this.prisma.user.findFirst({
+            where: { phone: trimmedPhone, id: { not: userId } },
+          });
+          if (existing) {
+            badRequest('This phone number is already registered to another account');
+          }
+        }
+        data.phone = trimmedPhone;
+        data.phoneVerified = false; // Reset verification status if phone changed
+      }
     }
 
     return this.prisma.user.update({
@@ -196,7 +226,7 @@ export class CustomerMutations {
       where: { userId, type: input.type, verified: false },
     });
 
-    // Generate 6-digit OTP
+    // Generate real 6-digit OTP
     const code = String(Math.floor(100000 + Math.random() * 900000));
 
     await this.prisma.otpCode.create({
@@ -212,16 +242,34 @@ export class CustomerMutations {
     // Send OTP via the appropriate channel
     let sent = false;
     if (input.type === 'PHONE') {
-      sent = await this.otp.sendSmsOtp(input.target, code);
+      const message = `🛍️ *Anmol Vastralay*\n\nHello! Your verification OTP code is:\n\n🔐 *${code}*\n\nThis code is valid for 10 minutes. Please do not share this code with anyone.\n\nThank you,\nTeam Anmol Vastralay`;
+
+      if (this.whatsappWeb) {
+        sent = await this.whatsappWeb.sendMessage(input.target, message);
+      }
+
+      if (!sent) {
+        const status = this.whatsappWeb ? await this.whatsappWeb.getStatus() : null;
+        if (!status?.isReady) {
+          badRequest('WhatsApp Web is currently not connected. Please connect WhatsApp via QR code in the Admin Panel.');
+        } else {
+          badRequest('Failed to deliver OTP to your WhatsApp number. Please check the number and try again.');
+        }
+      }
     } else {
       sent = await this.otp.sendEmailOtp(input.target, code);
+      if (!sent) {
+        badRequest('Failed to deliver Email OTP. Please check your email address.');
+      }
     }
 
-    if (!sent) {
-      badRequest('Failed to send OTP. Please try again.');
-    }
-
-    return { success: true, message: `OTP sent to ${input.target}` };
+    return {
+      success: true,
+      message:
+        input.type === 'PHONE'
+          ? `OTP sent to your WhatsApp (${input.target})`
+          : `OTP sent to ${input.target}`,
+    };
   }
 
   async verifyOtp(userId: string, input: z.infer<typeof VerifyOtpSchema>) {

@@ -97,9 +97,9 @@ export class OtpService {
    * Send OTP via SMS using Twilio
    */
   async sendSmsOtp(phone: string, code: string): Promise<boolean> {
-    if (!this.twilioClient) {
-      this.logger.log(`[DEV SMS OTP] To ${phone}: ******`);
-      return true; // Silently succeed in dev
+    if (!this.twilioClient || !this.twilioPhone) {
+      this.logger.error('Twilio SMS is not configured.');
+      return false;
     }
 
     try {
@@ -108,10 +108,10 @@ export class OtpService {
         from: this.twilioPhone,
         to: phone,
       });
-      this.logger.log(`SMS OTP sent to ${phone}`);
+      this.logger.log(`SMS OTP sent successfully to ${phone}`);
       return true;
-    } catch (err) {
-      this.logger.error(`Failed to send SMS to ${phone}:`, err);
+    } catch (err: any) {
+      this.logger.error(`Failed to send SMS to ${phone}: ${err?.message || err}`);
       return false;
     }
   }

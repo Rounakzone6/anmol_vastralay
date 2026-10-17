@@ -55,10 +55,12 @@ model User {
   gender          Gender?
   dateOfBirth     DateTime?
   emailVerified   Boolean   @default(false)
-  phoneVerified   Boolean   @default(false)
-  role            UserRole  @default(STAFF)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  phoneVerified        Boolean   @default(false)
+  role                 UserRole  @default(STAFF)
+  isMember             Boolean   @default(false)
+  membershipExpiresAt  DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   addresses    Address[]
   cart         Cart?
@@ -68,6 +70,7 @@ model User {
   otpCodes     OtpCode[]
   reviews      Review[]
   tickets      SupportTicket[]
+  memberships  UserMembership[]
 
   createdCategories Category[] @relation("CategoryCreatedBy")
   updatedCategories Category[] @relation("CategoryUpdatedBy")
@@ -488,4 +491,35 @@ model TicketMessage {
   createdAt DateTime      @default(now())
 
   @@index([ticketId, createdAt])
+}
+
+model MembershipPlan {
+  id             String           @id @default(cuid())
+  name           String           @default("Anmol Royal Club")
+  price          Decimal          @default(1.00) @db.Decimal(10, 2)
+  durationDays   Int              @default(365)
+  deliveryCharge Decimal          @default(20.00) @db.Decimal(10, 2)
+  benefits       String[]         @default(["Free Delivery on ALL orders (Save ₹20/order)", "Priority 24h Express Dispatch", "VIP Early Access to Festive Sales", "Dedicated WhatsApp Styling Support", "Special Birthday Surprise Gift Voucher"])
+  isActive       Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  memberships    UserMembership[]
+}
+
+model UserMembership {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId        String
+  plan          MembershipPlan @relation(fields: [planId], references: [id])
+  amount        Decimal        @db.Decimal(10, 2)
+  paymentMethod String?        @default("RAZORPAY")
+  transactionId String?
+  status        String         @default("ACTIVE")
+  startDate     DateTime       @default(now())
+  endDate       DateTime
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([userId, status, endDate])
 }

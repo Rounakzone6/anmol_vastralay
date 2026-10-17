@@ -19,6 +19,7 @@ import { BannerService } from './services/banner.service';
 import { ReviewService } from './services/review.service';
 import { WhatsappWebService } from './services/whatsapp-web.service';
 import { AiService } from './services/ai.service';
+import { MembershipService } from './services/membership.service';
 import { HealthService } from './services/health.service';
 import { MetricsService } from './services/metrics.service';
 import { randomUUID } from 'node:crypto';
@@ -78,6 +79,7 @@ async function bootstrap() {
     review: app.get(ReviewService),
     whatsapp: app.get(WhatsappWebService),
     ai: app.get(AiService),
+    membership: app.get(MembershipService),
   };
 
   const appRouter = createAppRouter(auth);

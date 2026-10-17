@@ -15,6 +15,7 @@ import { whatsappRouter } from '@backend/routers/whatsapp.router';
 import { dashboardRouter } from '@backend/routers/dashboard.router';
 import { posRouter } from '@backend/routers/pos.router';
 import { ticketRouter } from '@backend/routers/ticket.router';
+import { membershipRouter } from '@backend/routers/membership.router';
 
 export function createAppRouter(auth: AuthService) {
   return router({
@@ -33,6 +34,7 @@ export function createAppRouter(auth: AuthService) {
     dashboard: dashboardRouter,
     pos: posRouter,
     ticket: ticketRouter,
+    membership: membershipRouter,
   });
 }
 

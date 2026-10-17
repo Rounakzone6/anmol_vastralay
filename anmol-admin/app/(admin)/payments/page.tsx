@@ -52,10 +52,25 @@ function PaymentDetailsModal({ payment, onClose }: { payment: any; onClose: () =
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="rounded-xl bg-slate-50 p-4 border border-slate-100">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-1">
-                <Hash className="h-4 w-4 text-slate-400" /> Transaction ID
+              <div className="flex items-center justify-between text-sm font-semibold text-slate-700 mb-1">
+                <span className="flex items-center gap-2">
+                  <Hash className="h-4 w-4 text-slate-400" /> Razorpay Txn ID
+                </span>
+                {payment.transactionId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(payment.transactionId);
+                      alert(`Copied: ${payment.transactionId}`);
+                    }}
+                    className="text-xs text-violet-600 hover:underline font-normal"
+                  >
+                    Copy
+                  </button>
+                )}
               </div>
-              <p className="font-mono text-sm text-slate-900 break-all">{payment.transactionId || 'N/A'}</p>
+              <p className="font-mono text-sm font-bold text-slate-900 break-all">{payment.transactionId || 'N/A'}</p>
+              <p className="text-[11px] text-slate-400 mt-1">Use this ID for Razorpay disputes, tickets & bank settlement tracking</p>
             </div>
 
             <div className="rounded-xl bg-slate-50 p-4 border border-slate-100">

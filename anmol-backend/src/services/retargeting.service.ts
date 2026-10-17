@@ -85,7 +85,7 @@ export class RetargetingService {
       // Create a targeted AI message
       const prompt = `
         You are the marketing assistant for 'Anmol Vastralay'.
-        Write a very short, friendly WhatsApp message (in Hinglish) to a loyal customer named ${name || 'Customer'}.
+        Write a very short, friendly WhatsApp message in English to a loyal customer named ${name || 'Customer'}.
         We noticed they haven't bought anything in a while. 
         Offer them a special 15% discount code "COMEBACK15" to use on their next purchase.
         Keep it warm, concise, and under 3 sentences. No markdown formatting.

@@ -21,7 +21,8 @@ import {
   Truck,
   MessageCircle,
   LineChart,
-  Headset
+  Headset,
+  Crown,
 } from 'lucide-react';
 import { StockNotification } from '@/components/stock-notification';
 import { GlobalNotificationToasts } from '@/components/global-notification-toasts';
@@ -33,6 +34,7 @@ const links = [
   { href: '/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/payments', label: 'Payments', icon: CreditCard },
   { href: '/customers', label: 'Customers', icon: Users },
+  { href: '/membership', label: 'VIP Membership', icon: Crown, adminOnly: true },
   { href: '/support', label: 'Support (Helpdesk)', icon: Headset },
   { href: '/categories', label: 'Categories', icon: Tags },
   { href: '/products', label: 'Products', icon: Package },

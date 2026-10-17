@@ -1,6 +1,6 @@
 import { Badge, Spinner } from '@/components/ui';
 import { formatCurrency } from '@/lib/format';
-import { CheckCircle2, Clock, CreditCard } from 'lucide-react';
+import { CheckCircle2, Clock, CreditCard, Copy } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 type RecentPaymentsListProps = {
@@ -60,8 +60,25 @@ export function RecentPaymentsList({ payments, onlinePayments }: RecentPaymentsL
                   <td className="px-6 py-4 text-slate-700 font-medium whitespace-nowrap">
                     {formatCurrency(Number(payment.amount))}
                   </td>
-                  <td className="px-6 py-4 font-mono text-xs text-slate-600 whitespace-nowrap">
-                    {payment.transactionId || 'N/A'}
+                  <td className="px-6 py-4 font-mono text-xs text-slate-700 whitespace-nowrap">
+                    {payment.transactionId ? (
+                      <div className="flex items-center gap-1.5 group/id">
+                        <span className="font-semibold text-slate-800">{payment.transactionId}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(payment.transactionId);
+                            alert(`Copied Razorpay ID: ${payment.transactionId}`);
+                          }}
+                          title="Copy Transaction ID for Razorpay Case/Support"
+                          className="p-1 text-slate-400 hover:text-violet-600 rounded hover:bg-slate-100 transition-colors opacity-70 group-hover/id:opacity-100"
+                        >
+                          <Copy size={13} />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-slate-400">N/A</span>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <Badge variant="default" className="bg-blue-100/80 text-blue-700 font-medium border-blue-200/60 whitespace-nowrap">

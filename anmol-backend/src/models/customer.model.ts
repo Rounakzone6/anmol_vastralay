@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const UpdateProfileSchema = z.object({
   name: z.string().min(2).optional(),
+  phone: z.string().optional().nullable(),
   gender: z.enum(['MALE', 'FEMALE', 'OTHER']).optional().nullable(),
   dateOfBirth: z.string().optional().nullable(), // ISO date string
 });

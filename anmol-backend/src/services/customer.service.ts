@@ -3,6 +3,7 @@ import { PrismaService } from '@backend/services/prisma.service';
 import { CloudinaryService } from '@backend/services/cloudinary.service';
 import { AuthService } from '@backend/services/auth.service';
 import { OtpService } from '@backend/services/otp.service';
+import { WhatsappWebService } from '@backend/services/whatsapp-web.service';
 import { z } from 'zod';
 import { CustomerQueries } from '@backend/services/customer/customer.queries';
 import { CustomerMutations } from '@backend/services/customer/customer.mutations';
@@ -26,6 +27,7 @@ export class CustomerService {
     private readonly cloudinary: CloudinaryService,
     private readonly auth: AuthService,
     private readonly otp: OtpService,
+    private readonly whatsappWeb: WhatsappWebService,
   ) {
     this.queries = new CustomerQueries(this.prisma);
     this.mutations = new CustomerMutations(
@@ -33,6 +35,7 @@ export class CustomerService {
       this.cloudinary,
       this.auth,
       this.otp,
+      this.whatsappWeb,
     );
   }
 

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, Search, ShoppingCart, Heart, LogOut, User, MapPin, Package, ChevronDown, Shield, Home, Grid } from "lucide-react";
+import { Menu, X, Search, ShoppingCart, Heart, LogOut, User, MapPin, Package, ChevronDown, Shield, Home, Grid, Crown } from "lucide-react";
 import { useAuth } from "@/lib/useAuth";
 import { trpc } from "@/lib/trpc";
 import AnnouncementBar from "@/components/AnnouncementBar";
@@ -120,6 +120,13 @@ const Navbar = () => {
             <Link href="/collections/kurtis-suits" className="hover:text-[#85142b] transition-colors font-bold">Kurtis & Suits</Link>
             <Link href="/collections" className="hover:text-[#85142b] transition-colors">All Collections</Link>
             <Link href="/about" className="hover:text-[#85142b] transition-colors">Heritage</Link>
+            <Link
+              href="/membership"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 text-[#85142b] font-bold text-[11px] shadow-xs hover:border-amber-400 hover:shadow-sm transition-all"
+            >
+              <Crown size={13} className="text-amber-600" />
+              <span>VIP Club</span>
+            </Link>
           </div>
 
           {/* Desktop Search Bar */}
@@ -196,6 +203,14 @@ const Navbar = () => {
                         >
                           <MapPin size={16} className="text-gray-400" />
                           My Addresses
+                        </Link>
+                        <Link
+                          href="/membership"
+                          onClick={() => setShowProfileDropdown(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-amber-900 bg-amber-50/60 hover:bg-amber-100/70 transition-colors"
+                        >
+                          <Crown size={16} className="text-amber-600" />
+                          VIP Membership
                         </Link>
                         <Link
                           href="/profile?tab=security"
@@ -327,6 +342,14 @@ const Navbar = () => {
             <Link href="/" onClick={() => setIsOpen(false)} className="block rounded-xl px-4 py-3 font-medium text-gray-700 hover:bg-gray-50 hover:text-[#85142b]">Home</Link>
             <Link href="/collections" onClick={() => setIsOpen(false)} className="block rounded-xl px-4 py-3 font-medium text-gray-700 hover:bg-gray-50 hover:text-[#85142b]">Collections</Link>
             <Link href="/about" onClick={() => setIsOpen(false)} className="block rounded-xl px-4 py-3 font-medium text-gray-700 hover:bg-gray-50 hover:text-[#85142b]">About Us</Link>
+            <Link
+              href="/membership"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 rounded-xl px-4 py-3 font-bold text-amber-900 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200"
+            >
+              <Crown size={18} className="text-amber-600" />
+              <span>Anmol VIP Royal Club</span>
+            </Link>
             <hr className="border-gray-100 my-2" />
             {isClient && isAuthenticated ? (
               <>

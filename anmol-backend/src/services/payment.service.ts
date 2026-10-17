@@ -70,8 +70,13 @@ export class PaymentService {
       });
     }
 
-    const payment = await this.prisma.payment.findUnique({
-      where: { transactionId: input.razorpay_order_id },
+    const payment = await this.prisma.payment.findFirst({
+      where: {
+        OR: [
+          { transactionId: input.razorpay_order_id },
+          { transactionId: input.razorpay_payment_id },
+        ],
+      },
     });
 
     if (!payment || payment.userId !== userId) {
@@ -83,7 +88,10 @@ export class PaymentService {
     const result = await this.prisma.$transaction(async (tx) => {
       const claimedPayment = await tx.payment.updateMany({
         where: { id: payment.id, status: 'PENDING' },
-        data: { status: 'COMPLETED' },
+        data: {
+          status: 'COMPLETED',
+          transactionId: input.razorpay_payment_id, // Store actual pay_... transaction ID for Razorpay disputes/tracking
+        },
       });
 
       if (claimedPayment.count === 0) {

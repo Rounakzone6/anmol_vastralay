@@ -66,16 +66,30 @@ export class WebhookController {
         const razorpayOrderId = paymentEntity.order_id;
 
         if (razorpayOrderId) {
+          const razorpayPaymentId = paymentEntity.id; // e.g. pay_xxx
           await this.prisma.$transaction(async (tx) => {
-            // Update payment status to COMPLETED
+            // Update payment status to COMPLETED and record actual Payment ID
             await tx.payment.updateMany({
-              where: { transactionId: razorpayOrderId },
-              data: { status: 'COMPLETED' },
+              where: {
+                OR: [
+                  { transactionId: razorpayOrderId },
+                  { transactionId: razorpayPaymentId },
+                ],
+              },
+              data: {
+                status: 'COMPLETED',
+                ...(razorpayPaymentId ? { transactionId: razorpayPaymentId } : {}),
+              },
             });
 
             // Safely update the parent order status to PROCESSING and deduct inventory
             const payments = await tx.payment.findMany({
-              where: { transactionId: razorpayOrderId },
+              where: {
+                OR: [
+                  { transactionId: razorpayOrderId },
+                  ...(razorpayPaymentId ? [{ transactionId: razorpayPaymentId }] : []),
+                ],
+              },
               select: { orderId: true },
             });
 

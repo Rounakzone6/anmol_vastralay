@@ -11,7 +11,12 @@ export function OrderSummary({
   createOrder,
   verifyPayment,
   paymentMethod,
+  isMember = false,
+  deliveryCharge = 20,
+  planPrice = 1,
 }: any) {
+  const finalTotal = subtotal + (isMember ? 0 : deliveryCharge);
+
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden sticky top-24">
       <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
@@ -60,6 +65,28 @@ export function OrderSummary({
         </ul>
       </div>
       
+      {/* VIP Upsell Banner if non-member */}
+      {!isMember && (
+        <div className="mx-6 my-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl text-xs flex items-center justify-between gap-2 shadow-xs">
+          <div className="space-y-0.5">
+            <p className="font-bold text-amber-900 flex items-center gap-1">
+              <span>👑</span> Anmol VIP Royal Club
+            </p>
+            <p className="text-amber-800 text-[11px]">
+              Save ₹{deliveryCharge} & get Free Delivery on ALL orders for just ₹{planPrice}/yr!
+            </p>
+          </div>
+          <a
+            href="/membership"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 px-2.5 py-1.5 rounded-lg bg-[#85142b] text-white font-bold text-[11px] hover:bg-[#6c1023] transition-colors"
+          >
+            Join VIP
+          </a>
+        </div>
+      )}
+
       {/* Totals */}
       <div className="bg-gray-50 px-6 py-6 border-t border-gray-100">
         <div className="flex items-center justify-between text-sm mb-3 text-gray-600">
@@ -68,11 +95,18 @@ export function OrderSummary({
         </div>
         <div className="flex items-center justify-between text-sm mb-4 text-gray-600">
           <p>Shipping</p>
-          <p className="font-bold text-green-600">Free</p>
+          {isMember ? (
+            <p className="font-bold text-emerald-600 flex items-center gap-1">
+              <span>Free</span>
+              <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-semibold">VIP Perk 👑</span>
+            </p>
+          ) : (
+            <p className="font-semibold text-gray-900">₹{deliveryCharge.toFixed(2)}</p>
+          )}
         </div>
         <div className="flex items-center justify-between border-t border-gray-200 pt-4">
           <p className="text-base font-bold text-gray-900">Total</p>
-          <p className="text-2xl font-extrabold text-[#85142b]">₹{subtotal.toFixed(2)}</p>
+          <p className="text-2xl font-extrabold text-[#85142b]">₹{finalTotal.toFixed(2)}</p>
         </div>
         
         {/* Desktop Submit Button */}
@@ -85,7 +119,7 @@ export function OrderSummary({
             {createOrder.isPending || verifyPayment.isPending ? (
               <DiyaButtonLoader text="Securing order..." />
             ) : (
-              paymentMethod === 'COD' ? 'Confirm Order (COD)' : `Pay ₹${subtotal.toFixed(2)} Securely`
+              paymentMethod === 'COD' ? 'Confirm Order (COD)' : `Pay ₹${finalTotal.toFixed(2)} Securely`
             )}
           </button>
           <div className="mt-4 flex items-center justify-center space-x-2 text-xs text-gray-500">

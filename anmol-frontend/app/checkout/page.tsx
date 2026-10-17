@@ -31,6 +31,14 @@ export default function CheckoutPage() {
     enabled: isAuthenticated,
   });
 
+  const { data: myMembership } = trpc.membership.getMyMembership.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const { data: plan } = trpc.membership.getPlan.useQuery();
+
+  const isMember = !!myMembership?.isMember;
+  const deliveryCharge = isMember ? 0 : (plan?.deliveryCharge ?? 20);
+
   const formatAddress = (addr: any) => {
     const parts: string[] = [];
     if (addr.fullName) parts.push(addr.fullName);
@@ -218,7 +226,9 @@ export default function CheckoutPage() {
                   {createOrder.isPending || verifyPayment.isPending ? (
                     <DiyaButtonLoader text="Securing order..." />
                   ) : (
-                    paymentMethod === 'COD' ? 'Confirm Order (COD)' : `Pay ₹${subtotal.toFixed(2)} Securely`
+                    paymentMethod === 'COD'
+                      ? 'Confirm Order (COD)'
+                      : `Pay ₹${(subtotal + deliveryCharge).toFixed(2)} Securely`
                   )}
                 </button>
               </div>
@@ -235,6 +245,9 @@ export default function CheckoutPage() {
               createOrder={createOrder}
               verifyPayment={verifyPayment}
               paymentMethod={paymentMethod}
+              isMember={isMember}
+              deliveryCharge={deliveryCharge}
+              planPrice={plan?.price ?? 1}
             />
           </div>
         </div>

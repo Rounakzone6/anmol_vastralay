@@ -38,6 +38,7 @@ import { RetargetingService } from '@backend/services/retargeting.service';
 
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { DeliveryAssignmentService } from '@backend/services/delivery-assignment.service';
+import { MembershipService } from '@backend/services/membership.service';
 import { IdempotencyService } from '@backend/services/idempotency.service';
 
 @Module({
@@ -103,6 +104,7 @@ import { IdempotencyService } from '@backend/services/idempotency.service';
     NotificationProcessor,
     AbandonedCartCron,
     IdempotencyService,
+    MembershipService,
   ],
 })
 export class AppModule {}

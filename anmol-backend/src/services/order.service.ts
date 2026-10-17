@@ -62,6 +62,31 @@ export class OrderService {
       totalAmount += price * item.quantity;
     }
 
+    // 2.1 Check customer membership status:
+    // Members get Free Delivery (₹0).
+    // Non-members pay delivery fee configured in MembershipPlan (default ₹20).
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { isMember: true, membershipExpiresAt: true },
+    });
+
+    const isMember = Boolean(
+      user?.isMember &&
+      user.membershipExpiresAt &&
+      user.membershipExpiresAt > new Date()
+    );
+
+    let deliveryFee = 0;
+    if (!isMember) {
+      const plan = await this.prisma.membershipPlan.findFirst({
+        where: { isActive: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      deliveryFee = Number(plan?.deliveryCharge ?? 20);
+    }
+
+    totalAmount += deliveryFee;
+
     // 3. Create order in transaction
     const result = await this.prisma.$transaction(async (tx) => {
       const order = await tx.order.create({

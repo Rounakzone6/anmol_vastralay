@@ -4,11 +4,12 @@ import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { trpc } from '@/lib/trpc';
-import { Camera, Pencil, CheckCircle2, Package, MapPin, X, AlertCircle } from 'lucide-react';
+import { Camera, Pencil, CheckCircle2, Package, MapPin, X, AlertCircle, Crown, Truck, ArrowRight, Sparkles } from 'lucide-react';
 
 export function OverviewTab({ profile, refetch, updateUser }: { profile: any; refetch: () => void; updateUser: (u: any) => void }) {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(profile?.name || '');
+  const [phone, setPhone] = useState(profile?.phone || '');
   const [gender, setGender] = useState(profile?.gender || '');
   const [dateOfBirth, setDateOfBirth] = useState(
     profile?.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : ''
@@ -16,11 +17,25 @@ export function OverviewTab({ profile, refetch, updateUser }: { profile: any; re
   const [showOtpModal, setShowOtpModal] = useState<{ type: 'EMAIL' | 'PHONE'; target: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (profile) {
+      setName(profile.name || '');
+      setPhone(profile.phone || '');
+      setGender(profile.gender || '');
+      setDateOfBirth(
+        profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : ''
+      );
+    }
+  }, [profile]);
+
   const updateMutation = trpc.customer.updateProfile.useMutation({
     onSuccess: (data) => {
       refetch();
       updateUser(data);
       setIsEditing(false);
+    },
+    onError: (err) => {
+      alert(err.message || 'Failed to update profile');
     },
   });
 
@@ -32,9 +47,20 @@ export function OverviewTab({ profile, refetch, updateUser }: { profile: any; re
     onSuccess: () => refetch(),
   });
 
+  const handleCancel = () => {
+    setName(profile?.name || '');
+    setPhone(profile?.phone || '');
+    setGender(profile?.gender || '');
+    setDateOfBirth(
+      profile?.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : ''
+    );
+    setIsEditing(false);
+  };
+
   const handleSave = () => {
     updateMutation.mutate({
       name: name || undefined,
+      phone: phone !== undefined ? (phone.trim() || null) : undefined,
       gender: gender || null,
       dateOfBirth: dateOfBirth || null,
     });
@@ -63,6 +89,64 @@ export function OverviewTab({ profile, refetch, updateUser }: { profile: any; re
 
   return (
     <div className="space-y-6">
+      {/* VIP Royal Club Membership Card */}
+      {profile?.isMember ? (
+        <div className="bg-gradient-to-r from-[#23050d] via-[#4d1023] to-[#23050d] text-white rounded-2xl p-6 border-2 border-amber-300/40 shadow-lg relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold border border-amber-300/30">
+                <Crown className="w-3.5 h-3.5" />
+                <span>ACTIVE VIP ROYAL MEMBER</span>
+              </div>
+              <h3 className="text-xl font-serif font-bold text-[#f3dfa2]">
+                Unlimited Free Delivery Active
+              </h3>
+              <p className="text-xs text-rose-100/80">
+                Valid until:{' '}
+                {profile.membershipExpiresAt
+                  ? new Date(profile.membershipExpiresAt).toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })
+                  : 'Active'}
+              </p>
+            </div>
+            <Link
+              href="/membership"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-200 text-slate-900 font-bold text-xs shadow-md hover:brightness-105 transition-all shrink-0"
+            >
+              <span>VIP Perks & Details</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200 rounded-2xl p-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-900">
+                <Crown className="w-4 h-4 text-amber-600" />
+                <span>Join Anmol VIP Royal Club</span>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">
+                Get Unlimited 100% Free Delivery on All Orders
+              </h3>
+              <p className="text-xs text-slate-600">
+                Non-members pay standard delivery charges. Join today for only ₹1/year!
+              </p>
+            </div>
+            <Link
+              href="/membership"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#85142b] text-white font-bold text-xs hover:bg-[#6c1023] transition-colors shadow-sm shrink-0"
+            >
+              <span>Join for ₹1</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Profile Image Card */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Profile Photo</h3>
@@ -131,7 +215,7 @@ export function OverviewTab({ profile, refetch, updateUser }: { profile: any; re
           ) : (
             <div className="flex gap-2">
               <button
-                onClick={() => setIsEditing(false)}
+                onClick={handleCancel}
                 className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 Cancel
@@ -189,23 +273,33 @@ export function OverviewTab({ profile, refetch, updateUser }: { profile: any; re
           {/* Phone */}
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1.5">Phone</label>
-            <div className="flex items-center gap-2">
-              <p className="text-sm text-gray-900 py-2.5 flex-1">{profile?.phone || '—'}</p>
-              {profile?.phone && (
-                profile?.phoneVerified ? (
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                    <CheckCircle2 size={12} /> Verified
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => setShowOtpModal({ type: 'PHONE', target: profile.phone! })}
-                    className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full hover:bg-amber-100 transition-colors"
-                  >
-                    Verify
-                  </button>
-                )
-              )}
-            </div>
+            {isEditing ? (
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[#85142b] focus:ring-1 focus:ring-[#85142b]/20 focus:outline-none"
+                placeholder="+91..."
+              />
+            ) : (
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-gray-900 py-2.5 flex-1">{profile?.phone || '—'}</p>
+                {profile?.phone && (
+                  profile?.phoneVerified ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                      <CheckCircle2 size={12} /> Verified
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setShowOtpModal({ type: 'PHONE', target: profile.phone! })}
+                      className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full hover:bg-amber-100 transition-colors"
+                    >
+                      Verify
+                    </button>
+                  )
+                )}
+              </div>
+            )}
           </div>
 
           {/* Gender */}
@@ -350,7 +444,7 @@ function OtpModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h3 className="font-semibold text-gray-900">
-            Verify {type === 'EMAIL' ? 'Email' : 'Phone'}
+            {type === 'PHONE' ? 'Verify Phone via WhatsApp 💬' : 'Verify Email'}
           </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X size={20} />
@@ -360,8 +454,12 @@ function OtpModal({
         <div className="px-6 py-5 space-y-4">
           <p className="text-sm text-gray-600">
             {!sent
-              ? `We'll send a 6-digit OTP to ${target}`
-              : `Enter the 6-digit OTP sent to ${target}`}
+              ? type === 'PHONE'
+                ? `We'll send a 6-digit OTP directly to your WhatsApp (${target})`
+                : `We'll send a 6-digit OTP to ${target}`
+              : type === 'PHONE'
+                ? `Enter the 6-digit OTP sent to your WhatsApp (${target})`
+                : `Enter the 6-digit OTP sent to ${target}`}
           </p>
 
           {error && (
@@ -374,9 +472,13 @@ function OtpModal({
             <button
               onClick={handleSendOtp}
               disabled={sendMutation.isPending}
-              className="w-full py-3 rounded-lg bg-[#85142b] text-white text-sm font-semibold hover:bg-[#6c1023] transition-colors disabled:opacity-50"
+              className="w-full py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
             >
-              {sendMutation.isPending ? 'Sending...' : 'Send OTP'}
+              {sendMutation.isPending
+                ? 'Sending OTP...'
+                : type === 'PHONE'
+                  ? 'Send OTP via WhatsApp'
+                  : 'Send OTP'}
             </button>
           ) : (
             <>
@@ -405,10 +507,6 @@ function OtpModal({
               </button>
             </>
           )}
-
-          <p className="text-xs text-gray-400 text-center">
-            {process.env.NODE_ENV === 'development' && 'Dev mode: OTP is 123456'}
-          </p>
         </div>
       </div>
     </div>

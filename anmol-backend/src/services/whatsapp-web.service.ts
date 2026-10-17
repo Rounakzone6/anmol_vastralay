@@ -207,7 +207,9 @@ export class WhatsappWebService implements OnModuleInit, OnModuleDestroy {
 
     try {
       let cleanedPhone = phone.replace(/[^0-9]/g, '');
-      if (cleanedPhone.length === 10) {
+      if (cleanedPhone.startsWith('0') && cleanedPhone.length === 11) {
+        cleanedPhone = '91' + cleanedPhone.slice(1);
+      } else if (cleanedPhone.length === 10) {
         cleanedPhone = '91' + cleanedPhone;
       }
       
@@ -232,7 +234,9 @@ export class WhatsappWebService implements OnModuleInit, OnModuleDestroy {
 
     try {
       let cleanedPhone = phone.replace(/[^0-9]/g, '');
-      if (cleanedPhone.length === 10) {
+      if (cleanedPhone.startsWith('0') && cleanedPhone.length === 11) {
+        cleanedPhone = '91' + cleanedPhone.slice(1);
+      } else if (cleanedPhone.length === 10) {
         cleanedPhone = '91' + cleanedPhone;
       }
       
