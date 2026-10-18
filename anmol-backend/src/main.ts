@@ -158,12 +158,19 @@ async function bootstrap() {
     origin: (origin, callback) => {
       const allowedOrigins = [
         'http://localhost:3000',
+        'http://localhost:3001',
         'http://localhost:3002',
+        'https://anmolvastralay.vercel.app',
+        'https://admin-anmolvastralay.vercel.app',
         process.env.FRONTEND_URL,
         process.env.ADMIN_URL,
       ].filter(Boolean);
 
-      const isVercelPreview = origin && /^https:\/\/(anmol-vastralay|anmol-admin|admin-anmolvastralay)(-[a-zA-Z0-9-]+)?\.vercel\.app$/.test(origin);
+      const isVercelPreview =
+        origin &&
+        /^https:\/\/(anmolvastralay|admin-anmolvastralay)(-[a-zA-Z0-9-]+)?\.vercel\.app$/.test(
+          origin,
+        );
 
       if (!origin || allowedOrigins.includes(origin) || isVercelPreview) {
         callback(null, true);
