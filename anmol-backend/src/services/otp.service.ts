@@ -141,8 +141,27 @@ export class OtpService {
       </div>
     `;
 
-    // 1. Primary: Resend
-    if (this.resendClient) {
+    const isResendSandbox = this.resendFromEmail.includes('resend.dev');
+    const isOwnerEmail = email.toLowerCase() === 'anmolvastralayofficial@gmail.com';
+
+    // 1. If SMTP is configured and Resend is only in test/sandbox mode for non-owner recipients, use SMTP directly
+    if (this.smtpTransport && isResendSandbox && !isOwnerEmail) {
+      try {
+        await this.smtpTransport.sendMail({
+          to: email,
+          from: this.smtpFromEmail,
+          subject: otpSubject,
+          html: otpHtml,
+        });
+        this.logger.log(`SMTP OTP email sent to ${email}`);
+        return true;
+      } catch (err: any) {
+        this.logger.error(`Failed to send SMTP email to ${email}:`, err?.message || err);
+      }
+    }
+
+    // 2. Try Resend if available and either not in sandbox or recipient is owner
+    if (this.resendClient && (!isResendSandbox || isOwnerEmail)) {
       try {
         const { data, error } = await this.resendClient.emails.send({
           from: this.resendFromEmail,
@@ -157,12 +176,12 @@ export class OtpService {
           this.logger.log(`Resend OTP email sent to ${email} (id: ${data?.id})`);
           return true;
         }
-      } catch (err) {
-        this.logger.error(`Failed to send Resend OTP to ${email}:`, err);
+      } catch (err: any) {
+        this.logger.error(`Failed to send Resend OTP to ${email}:`, err?.message || err);
       }
     }
 
-    // 2. Secondary: SMTP fallback
+    // 3. Secondary/Fallback: SMTP
     if (this.smtpTransport) {
       try {
         await this.smtpTransport.sendMail({
@@ -171,26 +190,22 @@ export class OtpService {
           subject: otpSubject,
           html: otpHtml,
         });
-        this.logger.log(`SMTP OTP email sent to ${email}`);
+        this.logger.log(`SMTP OTP email sent to ${email} (fallback)`);
         return true;
-      } catch (err) {
-        this.logger.error(`Failed to send SMTP email to ${email}:`, err);
+      } catch (err: any) {
+        this.logger.error(`Failed to send SMTP fallback email to ${email}:`, err?.message || err);
       }
     }
 
-    // 3. Fallback if neither configured or failed
-    if (
-      process.env.NODE_ENV === 'production' &&
-      !this.resendClient &&
-      !this.smtpTransport
-    ) {
+    // 4. In production, if email was not delivered, return false
+    if (process.env.NODE_ENV === 'production') {
       this.logger.error(
-        `[ERROR] Email provider not configured. Cannot send OTP to ${email}. Please set RESEND_API_KEY in environment variables.`,
+        `[ERROR] Failed to send OTP to ${email}. Both Resend and SMTP failed or are unconfigured.`,
       );
       return false;
     }
 
     this.logger.log(`[DEV/FALLBACK EMAIL OTP] To ${email}: ${code}`);
-    return true; // Succeed in dev/fallback so testing isn't blocked
+    return true; // Succeed in dev/fallback only for local testing
   }
 }

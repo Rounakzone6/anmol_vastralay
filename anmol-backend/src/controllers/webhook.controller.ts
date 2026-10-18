@@ -2,6 +2,7 @@ import { Controller, Post, Req, Res, Headers, Logger } from '@nestjs/common';
 import type { RawBodyRequest } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import * as crypto from 'crypto';
+import { Webhook } from 'standardwebhooks';
 import { PrismaService } from '@backend/services/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InvoiceService } from '@backend/services/invoice.service';
@@ -179,6 +180,84 @@ export class WebhookController {
     } catch (error: any) {
       this.logger.error(`Webhook error: ${error.message}`);
       return res.status(500).send('Internal Server Error');
+    }
+  }
+
+  @Post('resend')
+  async handleResendWebhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Res() res: Response,
+  ) {
+    try {
+      const signingSecret = process.env.RESEND_SIGNING_SECRET;
+      if (!signingSecret) {
+        this.logger.warn('RESEND_SIGNING_SECRET is not configured. Webhook skipped.');
+        return res.status(200).json({ received: true });
+      }
+
+      const rawBody = req.rawBody?.toString('utf8');
+      if (!rawBody) {
+        this.logger.error('Resend webhook: rawBody is missing');
+        return res.status(400).send('Missing raw body');
+      }
+
+      const svixId = (req.headers['svix-id'] || req.headers['webhook-id']) as string;
+      const svixTimestamp = (req.headers['svix-timestamp'] || req.headers['webhook-timestamp']) as string;
+      const svixSignature = (req.headers['svix-signature'] || req.headers['webhook-signature']) as string;
+
+      if (!svixId || !svixTimestamp || !svixSignature) {
+        this.logger.error('Resend webhook: missing svix signature headers');
+        return res.status(400).send('Missing webhook headers');
+      }
+
+      const wh = new Webhook(signingSecret);
+      const payload = wh.verify(rawBody, {
+        'webhook-id': svixId,
+        'webhook-timestamp': svixTimestamp,
+        'webhook-signature': svixSignature,
+      }) as {
+        type: string;
+        created_at: string;
+        data: {
+          email_id?: string;
+          from?: string;
+          to?: string[];
+          subject?: string;
+          bounce?: { message?: string };
+        };
+      };
+
+      this.logger.log(`✓ Resend webhook verified: event=${payload.type}`);
+
+      switch (payload.type) {
+        case 'email.sent':
+          this.logger.log(
+            `Resend email sent: id=${payload.data?.email_id} to=${payload.data?.to?.join(', ')}`,
+          );
+          break;
+        case 'email.delivered':
+          this.logger.log(
+            `Resend email delivered: id=${payload.data?.email_id} to=${payload.data?.to?.join(', ')}`,
+          );
+          break;
+        case 'email.bounced':
+          this.logger.warn(
+            `Resend email BOUNCED: to=${payload.data?.to?.join(', ')} reason=${payload.data?.bounce?.message || 'unknown'}`,
+          );
+          break;
+        case 'email.complained':
+          this.logger.warn(
+            `Resend email marked as SPAM complaint: to=${payload.data?.to?.join(', ')}`,
+          );
+          break;
+        default:
+          this.logger.log(`Resend event: ${payload.type}`);
+      }
+
+      return res.status(200).json({ received: true });
+    } catch (error: any) {
+      this.logger.error(`Resend webhook verification failed: ${error.message}`);
+      return res.status(400).json({ error: 'Webhook verification failed' });
     }
   }
 }

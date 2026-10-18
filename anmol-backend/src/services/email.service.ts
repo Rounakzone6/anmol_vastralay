@@ -29,11 +29,12 @@ export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private readonly resend: Resend | null = null;
   private readonly transport: Transporter | null = null;
-  private readonly from: string = '';
+  private readonly resendFrom: string = '';
+  private readonly smtpFrom: string = '';
 
   constructor(private readonly config: ConfigService) {
     const resendApiKey = config.get<string>('RESEND_API_KEY');
-    const resendFrom =
+    const resendFromRaw =
       config.get<string>('RESEND_FROM_EMAIL') || 'onboarding@resend.dev';
 
     if (
@@ -42,35 +43,37 @@ export class EmailService {
       !resendApiKey.startsWith('your_')
     ) {
       this.resend = new Resend(resendApiKey);
-      this.from = resendFrom.includes('<')
-        ? resendFrom
-        : `"Anmol Vastralay" <${resendFrom}>`;
+      this.resendFrom = resendFromRaw.includes('<')
+        ? resendFromRaw
+        : `"Anmol Vastralay" <${resendFromRaw}>`;
       this.logger.log('✓ Resend email client configured');
-    } else {
-      // Fallback to SMTP if configured
-      const host = config.get<string>('SMTP_HOST');
-      const port = config.get<number>('SMTP_PORT') || 587;
-      const user = config.get<string>('SMTP_USER');
-      const pass = config.get<string>('SMTP_PASS');
-      const smtpFrom = config.get<string>('SMTP_FROM_EMAIL') || user || '';
+    }
 
-      if (host && user && pass) {
-        this.from = smtpFrom.includes('<')
-          ? smtpFrom
-          : `"Anmol Vastralay" <${smtpFrom}>`;
-        this.transport = nodemailer.createTransport({
-          host,
-          port,
-          secure:
-            config.get<string>('SMTP_SECURE') === 'true' || port === 465,
-          auth: { user, pass },
-        });
-        this.logger.log('✓ SMTP email fallback configured');
-      } else {
-        this.logger.warn(
-          '⚠ Neither Resend nor SMTP configured — transactional emails are disabled or logged in development.',
-        );
-      }
+    // SMTP Configuration
+    const host = config.get<string>('SMTP_HOST');
+    const port = config.get<number>('SMTP_PORT') || 587;
+    const user = config.get<string>('SMTP_USER');
+    const pass = config.get<string>('SMTP_PASS');
+    const smtpFromRaw = config.get<string>('SMTP_FROM_EMAIL') || user || '';
+
+    if (host && user && pass) {
+      this.smtpFrom = smtpFromRaw.includes('<')
+        ? smtpFromRaw
+        : `"Anmol Vastralay" <${smtpFromRaw}>`;
+      this.transport = nodemailer.createTransport({
+        host,
+        port,
+        secure:
+          config.get<string>('SMTP_SECURE') === 'true' || port === 465,
+        auth: { user, pass },
+      });
+      this.logger.log('✓ SMTP email transport configured');
+    }
+
+    if (!this.resend && !this.transport) {
+      this.logger.warn(
+        '⚠ Neither Resend nor SMTP configured — transactional emails are disabled or logged in development.',
+      );
     }
   }
 
@@ -120,11 +123,34 @@ export class EmailService {
   }
 
   private async send(message: EmailPayload): Promise<boolean> {
-    // 1. Try Resend if configured
-    if (this.resend) {
+    const isResendSandbox = this.resendFrom.includes('resend.dev');
+    const isOwnerEmail = message.to.toLowerCase() === 'anmolvastralayofficial@gmail.com';
+
+    // 1. If SMTP is configured and Resend is on sandbox mode for arbitrary recipients, use SMTP directly
+    if (this.transport && isResendSandbox && !isOwnerEmail) {
+      try {
+        await this.transport.sendMail({
+          from: this.smtpFrom,
+          to: message.to,
+          subject: message.subject,
+          html: message.html,
+          attachments: message.attachments,
+        });
+        this.logger.log(`SMTP Email sent: ${message.subject} -> ${message.to}`);
+        return true;
+      } catch (error: any) {
+        this.logger.error(
+          `SMTP Email failed: ${message.subject} -> ${message.to}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      }
+    }
+
+    // 2. Try Resend if configured and allowed
+    if (this.resend && (!isResendSandbox || isOwnerEmail)) {
       try {
         const { data, error } = await this.resend.emails.send({
-          from: this.from,
+          from: this.resendFrom,
           to: message.to,
           subject: message.subject,
           html: message.html,
@@ -139,40 +165,37 @@ export class EmailService {
           this.logger.error(
             `Resend email failed: ${message.subject} -> ${message.to}: ${error.message}`,
           );
-          return false;
+        } else {
+          this.logger.log(
+            `Resend email sent: ${message.subject} -> ${message.to} (id: ${data?.id})`,
+          );
+          return true;
         }
-
-        this.logger.log(
-          `Resend email sent: ${message.subject} -> ${message.to} (id: ${data?.id})`,
-        );
-        return true;
-      } catch (error) {
+      } catch (error: any) {
         this.logger.error(
           `Resend email error: ${message.subject} -> ${message.to}`,
           error instanceof Error ? error.stack : String(error),
         );
-        return false;
       }
     }
 
-    // 2. Fallback to SMTP transport
+    // 3. Fallback to SMTP transport
     if (this.transport) {
       try {
         await this.transport.sendMail({
-          from: this.from,
+          from: this.smtpFrom,
           to: message.to,
           subject: message.subject,
           html: message.html,
           attachments: message.attachments,
         });
-        this.logger.log(`SMTP Email sent: ${message.subject} -> ${message.to}`);
+        this.logger.log(`SMTP Email sent (fallback): ${message.subject} -> ${message.to}`);
         return true;
-      } catch (error) {
+      } catch (error: any) {
         this.logger.error(
-          `SMTP Email failed: ${message.subject} -> ${message.to}`,
+          `SMTP Email failed (fallback): ${message.subject} -> ${message.to}`,
           error instanceof Error ? error.stack : String(error),
         );
-        return false;
       }
     }
 
