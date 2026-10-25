@@ -17,29 +17,33 @@ export class AbandonedCartCron {
   @Cron(CronExpression.EVERY_HOUR)
   async handleAbandonedCarts() {
     this.logger.log('Scanning for abandoned carts...');
-    
+
     // We want carts that haven't been updated in the last 2 hours
     const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
     const maxTimestamp = Date.now() - TWO_HOURS_MS;
 
     try {
       // Get all userIds whose cart was last updated before maxTimestamp
-      const userIds = await redis.zrangebyscore('carts:updated_at', 0, maxTimestamp);
-      
+      const userIds = await redis.zrangebyscore(
+        'carts:updated_at',
+        0,
+        maxTimestamp,
+      );
+
       if (userIds.length === 0) {
         this.logger.log('No abandoned carts found.');
         return;
       }
 
       // Filter out userIds that we already reminded
-      // SISMEMBER in a loop can be slow, but it's fine for small batches. 
+      // SISMEMBER in a loop can be slow, but it's fine for small batches.
       // For large scale, we can fetch all members of `carts:reminded` and do set difference locally, or use a pipeline.
       const pipeline = redis.pipeline();
-      userIds.forEach(userId => pipeline.sismember('carts:reminded', userId));
+      userIds.forEach((userId) => pipeline.sismember('carts:reminded', userId));
       const results = await pipeline.exec();
-      
+
       const toRemind: string[] = [];
-      
+
       if (results) {
         userIds.forEach((userId, index) => {
           const isReminded = results[index][1]; // result[1] is the actual return value of sismember (1 or 0)
@@ -54,12 +58,16 @@ export class AbandonedCartCron {
         return;
       }
 
-      this.logger.log(`Found ${toRemind.length} carts to remind. Enqueueing jobs...`);
+      this.logger.log(
+        `Found ${toRemind.length} carts to remind. Enqueueing jobs...`,
+      );
 
       // Enqueue jobs
       for (const userId of toRemind) {
-        const user = await this.prisma.user.findUnique({ where: { id: userId } });
-        
+        const user = await this.prisma.user.findUnique({
+          where: { id: userId },
+        });
+
         let phone = user?.phone;
         if (!phone) {
           const address = await this.prisma.address.findFirst({
@@ -78,7 +86,7 @@ export class AbandonedCartCron {
           await redis.sadd('carts:reminded', userId);
         }
       }
-      
+
       this.logger.log('Finished enqueueing abandoned cart reminders.');
     } catch (error) {
       this.logger.error('Error processing abandoned carts', error);

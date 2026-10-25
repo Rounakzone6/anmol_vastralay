@@ -25,15 +25,17 @@ export class CartService {
       return { id: `cart-${userId}`, items: [] };
     }
 
-    const itemsToFetch = Object.entries(cartData).map(([field, quantityStr]) => {
-      const [productId, variantId] = field.split('::');
-      return {
-        field,
-        productId,
-        variantId: variantId || null,
-        quantity: parseInt(quantityStr, 10),
-      };
-    });
+    const itemsToFetch = Object.entries(cartData).map(
+      ([field, quantityStr]) => {
+        const [productId, variantId] = field.split('::');
+        return {
+          field,
+          productId,
+          variantId: variantId || null,
+          quantity: parseInt(quantityStr, 10),
+        };
+      },
+    );
 
     const productIds = itemsToFetch.map((i) => i.productId);
     const products = await this.prisma.product.findMany({
@@ -61,21 +63,23 @@ export class CartService {
       const product = productMap.get(item.productId);
       if (!product) return [];
 
-      let variant: typeof product.variants[0] | null = null;
+      let variant: (typeof product.variants)[0] | null = null;
       if (item.variantId) {
         variant = product.variants.find((v) => v.id === item.variantId) || null;
       }
 
       const { variants, ...productWithoutVariants } = product;
 
-      return [{
-        id: item.field,
-        productId: item.productId,
-        variantId: item.variantId,
-        quantity: item.quantity,
-        product: productWithoutVariants,
-        variant,
-      }];
+      return [
+        {
+          id: item.field,
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          product: productWithoutVariants,
+          variant,
+        },
+      ];
     });
 
     return {
@@ -87,14 +91,14 @@ export class CartService {
   async addToCart(userId: string, input: z.infer<typeof AddToCartSchema>) {
     const cartKey = this.getCartKey(userId);
     const field = `${input.productId}::${input.variantId || ''}`;
-    
+
     await redis.hincrby(cartKey, field, input.quantity);
     await redis.expire(cartKey, 30 * 86400);
-    
+
     // Track update time for Abandoned Cart recovery
     await redis.zadd('carts:updated_at', Date.now(), userId);
     await redis.srem('carts:reminded', userId); // Reset reminder status
-    
+
     return { success: true, id: field };
   }
 
@@ -103,7 +107,7 @@ export class CartService {
     input: z.infer<typeof UpdateCartQuantitySchema>,
   ) {
     const cartKey = this.getCartKey(userId);
-    
+
     if (input.quantity <= 0) {
       await redis.hdel(cartKey, input.cartItemId);
       // Track update
@@ -114,11 +118,11 @@ export class CartService {
 
     await redis.hset(cartKey, input.cartItemId, input.quantity);
     await redis.expire(cartKey, 30 * 86400);
-    
+
     // Track update
     await redis.zadd('carts:updated_at', Date.now(), userId);
     await redis.srem('carts:reminded', userId);
-    
+
     return { success: true };
   }
 
@@ -128,22 +132,22 @@ export class CartService {
   ) {
     const cartKey = this.getCartKey(userId);
     await redis.hdel(cartKey, input.cartItemId);
-    
+
     // Track update
     await redis.zadd('carts:updated_at', Date.now(), userId);
     await redis.srem('carts:reminded', userId);
-    
+
     return { success: true };
   }
 
   async clearCart(userId: string) {
     const cartKey = this.getCartKey(userId);
     await redis.del(cartKey);
-    
+
     // Remove from tracking
     await redis.zrem('carts:updated_at', userId);
     await redis.srem('carts:reminded', userId);
-    
+
     return { success: true };
   }
 }

@@ -18,10 +18,10 @@ describe('Observability Services', () => {
   beforeEach(async () => {
     mockPrisma = {
       $primary: jest.fn().mockReturnValue({
-        $queryRawUnsafe: jest.fn().mockResolvedValue([{ 1: 1 }]),
+        $queryRaw: jest.fn().mockResolvedValue([{ 1: 1 }]),
       }),
       $replica: jest.fn().mockReturnValue({
-        $queryRawUnsafe: jest.fn().mockResolvedValue([{ 1: 1 }]),
+        $queryRaw: jest.fn().mockResolvedValue([{ 1: 1 }]),
       }),
     };
 

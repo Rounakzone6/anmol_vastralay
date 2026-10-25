@@ -32,10 +32,14 @@ export class WebhookController {
       // Fail closed in production if secret is not configured
       if (!secret) {
         if (process.env.NODE_ENV === 'production') {
-          this.logger.error('CRITICAL: RAZORPAY_WEBHOOK_SECRET is not configured in production. Rejecting webhook.');
+          this.logger.error(
+            'CRITICAL: RAZORPAY_WEBHOOK_SECRET is not configured in production. Rejecting webhook.',
+          );
           return res.status(500).send('Webhook secret not configured');
         }
-        this.logger.warn('RAZORPAY_WEBHOOK_SECRET is not configured in dev mode');
+        this.logger.warn(
+          'RAZORPAY_WEBHOOK_SECRET is not configured in dev mode',
+        );
         return res.status(200).send('OK');
       }
 
@@ -64,14 +68,24 @@ export class WebhookController {
 
       const payload = req.body;
       const event = payload.event;
-      const eventId = (req.headers['x-razorpay-event-id'] as string) || `${event}:${payload.payload?.payment?.entity?.id || ''}`;
+      const eventId =
+        (req.headers['x-razorpay-event-id'] as string) ||
+        `${event}:${payload.payload?.payment?.entity?.id || ''}`;
 
       // Deduplicate webhook events to prevent duplicate fulfillment or double-inventory deduction
       if (eventId) {
         try {
-          const isNew = await redis.set(`webhook:razorpay:${eventId}`, '1', 'EX', 86400, 'NX');
+          const isNew = await redis.set(
+            `webhook:razorpay:${eventId}`,
+            '1',
+            'EX',
+            86400,
+            'NX',
+          );
           if (!isNew) {
-            this.logger.log(`Duplicate Razorpay webhook event ignored: ${eventId}`);
+            this.logger.log(
+              `Duplicate Razorpay webhook event ignored: ${eventId}`,
+            );
             return res.status(200).send('Already processed');
           }
         } catch (cacheErr) {
@@ -92,15 +106,21 @@ export class WebhookController {
             where: {
               OR: [
                 { transactionId: razorpayOrderId },
-                ...(razorpayPaymentId ? [{ transactionId: razorpayPaymentId }] : []),
+                ...(razorpayPaymentId
+                  ? [{ transactionId: razorpayPaymentId }]
+                  : []),
               ],
             },
             data: {
               status: 'PENDING',
-              ...(razorpayPaymentId ? { transactionId: razorpayPaymentId } : {}),
+              ...(razorpayPaymentId
+                ? { transactionId: razorpayPaymentId }
+                : {}),
             },
           });
-          this.logger.log(`Payment authorized (pending capture) for Razorpay Order: ${razorpayOrderId}`);
+          this.logger.log(
+            `Payment authorized (pending capture) for Razorpay Order: ${razorpayOrderId}`,
+          );
         }
         return res.status(200).send('OK');
       }
@@ -118,12 +138,16 @@ export class WebhookController {
               where: {
                 OR: [
                   { transactionId: razorpayOrderId },
-                  ...(razorpayPaymentId ? [{ transactionId: razorpayPaymentId }] : []),
+                  ...(razorpayPaymentId
+                    ? [{ transactionId: razorpayPaymentId }]
+                    : []),
                 ],
               },
               data: {
                 status: 'COMPLETED',
-                ...(razorpayPaymentId ? { transactionId: razorpayPaymentId } : {}),
+                ...(razorpayPaymentId
+                  ? { transactionId: razorpayPaymentId }
+                  : {}),
               },
             });
 
@@ -132,7 +156,9 @@ export class WebhookController {
               where: {
                 OR: [
                   { transactionId: razorpayOrderId },
-                  ...(razorpayPaymentId ? [{ transactionId: razorpayPaymentId }] : []),
+                  ...(razorpayPaymentId
+                    ? [{ transactionId: razorpayPaymentId }]
+                    : []),
                 ],
               },
               select: { orderId: true },
@@ -171,12 +197,16 @@ export class WebhookController {
                   }
 
                   // Send Email Invoice
-                  this.invoiceService.emailOrderInvoice(order.id).catch((err) => this.logger.error(err));
+                  this.invoiceService
+                    .emailOrderInvoice(order.id)
+                    .catch((err) => this.logger.error(err));
 
                   // Send WhatsApp Invoice
                   (async () => {
                     try {
-                      const user = await this.prisma.user.findUnique({ where: { id: order.userId } });
+                      const user = await this.prisma.user.findUnique({
+                        where: { id: order.userId },
+                      });
                       let phone = user?.phone;
                       if (!phone) {
                         const addr = await this.prisma.address.findFirst({
@@ -187,7 +217,11 @@ export class WebhookController {
                       }
 
                       if (phone) {
-                        const invoice = await this.invoiceService.generateInvoice(undefined, order.id);
+                        const invoice =
+                          await this.invoiceService.generateInvoice(
+                            undefined,
+                            order.id,
+                          );
                         const message = `🛍️ *Payment Received!* 🛍️\n\nThank you for shopping at Anmol Vastralay!\nYour Razorpay payment for order *#${order.id.slice(-8).toUpperCase()}* was successful.\n\nAttached is your invoice. 🧾`;
 
                         await this.whatsappWebService.sendDocument(
@@ -203,12 +237,16 @@ export class WebhookController {
                   })();
 
                   // Emit event for delivery boy assignment
-                  this.eventEmitter.emit('order.processing', { orderId: order.id });
+                  this.eventEmitter.emit('order.processing', {
+                    orderId: order.id,
+                  });
                 }
               }
             }
           });
-          this.logger.log(`Payment marked COMPLETED for Razorpay Order: ${razorpayOrderId}`);
+          this.logger.log(
+            `Payment marked COMPLETED for Razorpay Order: ${razorpayOrderId}`,
+          );
         }
       } else if (event === 'payment.failed') {
         const paymentEntity = payload.payload.payment.entity;
@@ -242,7 +280,9 @@ export class WebhookController {
     try {
       const signingSecret = process.env.RESEND_SIGNING_SECRET;
       if (!signingSecret) {
-        this.logger.warn('RESEND_SIGNING_SECRET is not configured. Webhook skipped.');
+        this.logger.warn(
+          'RESEND_SIGNING_SECRET is not configured. Webhook skipped.',
+        );
         return res.status(200).json({ received: true });
       }
 
@@ -252,9 +292,12 @@ export class WebhookController {
         return res.status(400).send('Missing raw body');
       }
 
-      const svixId = (req.headers['svix-id'] || req.headers['webhook-id']) as string;
-      const svixTimestamp = (req.headers['svix-timestamp'] || req.headers['webhook-timestamp']) as string;
-      const svixSignature = (req.headers['svix-signature'] || req.headers['webhook-signature']) as string;
+      const svixId = (req.headers['svix-id'] ||
+        req.headers['webhook-id']) as string;
+      const svixTimestamp = (req.headers['svix-timestamp'] ||
+        req.headers['webhook-timestamp']) as string;
+      const svixSignature = (req.headers['svix-signature'] ||
+        req.headers['webhook-signature']) as string;
 
       if (!svixId || !svixTimestamp || !svixSignature) {
         this.logger.error('Resend webhook: missing svix signature headers');

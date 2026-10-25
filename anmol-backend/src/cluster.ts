@@ -43,7 +43,9 @@ if (cluster.isPrimary) {
 
   // Graceful shutdown handling
   const shutdown = (signal: string) => {
-    logger.log(`Received ${signal}. Gracefully disconnecting all cluster workers...`);
+    logger.log(
+      `Received ${signal}. Gracefully disconnecting all cluster workers...`,
+    );
     for (const id in cluster.workers) {
       cluster.workers[id]?.process.kill();
     }

@@ -9,7 +9,10 @@ import * as path from 'path';
 @Injectable()
 export class RetargetingService {
   private readonly logger = new Logger(RetargetingService.name);
-  private readonly logFilePath = path.join(process.cwd(), 'retargeting-log.json');
+  private readonly logFilePath = path.join(
+    process.cwd(),
+    'retargeting-log.json',
+  );
 
   constructor(
     private readonly prisma: PrismaService,
@@ -27,16 +30,16 @@ export class RetargetingService {
       const users = await this.prisma.user.findMany({
         where: {
           orders: {
-            some: { status: 'DELIVERED' }
-          }
+            some: { status: 'DELIVERED' },
+          },
         },
         include: {
           orders: {
             where: { status: 'DELIVERED' },
             orderBy: { createdAt: 'asc' },
-            select: { createdAt: true, totalAmount: true }
-          }
-        }
+            select: { createdAt: true, totalAmount: true },
+          },
+        },
       });
 
       const retargetedLogs = this.getRetargetedLogs();
@@ -49,7 +52,8 @@ export class RetargetingService {
         const lastRetargetedStr = retargetedLogs[user.id];
         if (lastRetargetedStr) {
           const lastRetargeted = new Date(lastRetargetedStr);
-          const diffDays = (today.getTime() - lastRetargeted.getTime()) / (1000 * 3600 * 24);
+          const diffDays =
+            (today.getTime() - lastRetargeted.getTime()) / (1000 * 3600 * 24);
           if (diffDays < 30) continue; // Skip, don't spam
         }
 
@@ -57,30 +61,42 @@ export class RetargetingService {
         const firstOrderDate = orders[0].createdAt;
         const lastOrderDate = orders[orders.length - 1].createdAt;
 
-        const totalDaysAsCustomer = (lastOrderDate.getTime() - firstOrderDate.getTime()) / (1000 * 3600 * 24);
+        const totalDaysAsCustomer =
+          (lastOrderDate.getTime() - firstOrderDate.getTime()) /
+          (1000 * 3600 * 24);
         const avgDaysBetweenOrders = totalDaysAsCustomer / (orders.length - 1);
 
-        const daysSinceLastOrder = (today.getTime() - lastOrderDate.getTime()) / (1000 * 3600 * 24);
+        const daysSinceLastOrder =
+          (today.getTime() - lastOrderDate.getTime()) / (1000 * 3600 * 24);
 
         // Churn Condition: If they are late by 1.5x their usual frequency AND it has been at least 30 days.
-        if (daysSinceLastOrder > (avgDaysBetweenOrders * 1.5) && daysSinceLastOrder > 30) {
-          this.logger.log(`User ${user.name || user.phone} is at risk of churning! Avg Frequency: ${avgDaysBetweenOrders.toFixed(1)} days, Last Order: ${daysSinceLastOrder.toFixed(1)} days ago.`);
-          
+        if (
+          daysSinceLastOrder > avgDaysBetweenOrders * 1.5 &&
+          daysSinceLastOrder > 30
+        ) {
+          this.logger.log(
+            `User ${user.name || user.phone} is at risk of churning! Avg Frequency: ${avgDaysBetweenOrders.toFixed(1)} days, Last Order: ${daysSinceLastOrder.toFixed(1)} days ago.`,
+          );
+
           await this.sendRetargetingMessage(user.id, user.phone, user.name);
-          
+
           // Log it so we don't spam
           retargetedLogs[user.id] = today.toISOString();
           this.saveRetargetedLogs(retargetedLogs);
         }
       }
-      
+
       this.logger.log('Churn Prediction Job Completed.');
     } catch (error) {
       this.logger.error('Error during churn prediction job', error);
     }
   }
 
-  private async sendRetargetingMessage(userId: string, phone: string, name: string | null) {
+  private async sendRetargetingMessage(
+    userId: string,
+    phone: string,
+    name: string | null,
+  ) {
     try {
       // Create a targeted AI message
       const prompt = `
@@ -92,9 +108,9 @@ export class RetargetingService {
       `;
 
       // Assuming AiService has a method to just generate text. We can reuse generateChatbotReply or create a new one.
-      // Wait, generateChatbotReply has a specific system prompt. Let's add a generic generateText method to AiService, 
+      // Wait, generateChatbotReply has a specific system prompt. Let's add a generic generateText method to AiService,
       // or we can just use generateChatbotReply (it might act like a chatbot though). Let's use AiService.generateRetargetingMessage
-      
+
       const message = await this.aiService.generateRetargetingMessage(prompt);
 
       // Send via WhatsApp
@@ -103,7 +119,10 @@ export class RetargetingService {
         this.logger.log(`Successfully sent retargeting message to ${phone}`);
       }
     } catch (error) {
-      this.logger.error(`Failed to send retargeting message to ${phone}`, error);
+      this.logger.error(
+        `Failed to send retargeting message to ${phone}`,
+        error,
+      );
     }
   }
 

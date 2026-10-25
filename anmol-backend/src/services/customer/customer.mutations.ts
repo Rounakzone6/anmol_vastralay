@@ -56,7 +56,9 @@ export class CustomerMutations {
             where: { phone: trimmedPhone, id: { not: userId } },
           });
           if (existing) {
-            badRequest('This phone number is already registered to another account');
+            badRequest(
+              'This phone number is already registered to another account',
+            );
           }
         }
         data.phone = trimmedPhone;
@@ -249,17 +251,25 @@ export class CustomerMutations {
       }
 
       if (!sent) {
-        const status = this.whatsappWeb ? await this.whatsappWeb.getStatus() : null;
+        const status = this.whatsappWeb
+          ? await this.whatsappWeb.getStatus()
+          : null;
         if (!status?.isReady) {
-          badRequest('WhatsApp Web is currently not connected. Please connect WhatsApp via QR code in the Admin Panel.');
+          badRequest(
+            'WhatsApp Web is currently not connected. Please connect WhatsApp via QR code in the Admin Panel.',
+          );
         } else {
-          badRequest('Failed to deliver OTP to your WhatsApp number. Please check the number and try again.');
+          badRequest(
+            'Failed to deliver OTP to your WhatsApp number. Please check the number and try again.',
+          );
         }
       }
     } else {
       sent = await this.otp.sendEmailOtp(input.target, code);
       if (!sent) {
-        badRequest('Failed to deliver Email OTP. Please check your email address.');
+        badRequest(
+          'Failed to deliver Email OTP. Please check your email address.',
+        );
       }
     }
 

@@ -45,7 +45,6 @@ export const productRouter = router({
       );
     }),
 
-
   searchSuggestions: publicProcedure
     .input(
       z.object({
@@ -84,10 +83,9 @@ export const productRouter = router({
       }
     }),
 
-  getOutOfStockVariants: staffProcedure
-    .query(async ({ ctx }) => {
-      return ctx.services.product.getOutOfStockVariants();
-    }),
+  getOutOfStockVariants: staffProcedure.query(async ({ ctx }) => {
+    return ctx.services.product.getOutOfStockVariants();
+  }),
 
   create: staffProcedure
     .input(productBaseSchema)
@@ -172,7 +170,8 @@ export const productRouter = router({
         console.error('Error in generateAiDetails:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Failed to generate product details using AI',
+          message:
+            error.message || 'Failed to generate product details using AI',
         });
       }
     }),

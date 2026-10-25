@@ -56,4 +56,3 @@ export const UpdateSubcategorySchema = z.object({
   metaDescription: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
 });
-

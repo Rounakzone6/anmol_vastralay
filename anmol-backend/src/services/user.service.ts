@@ -51,16 +51,21 @@ export class UserService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return customers.map(c => {
+    return customers.map((c) => {
       // Calculate Lifetime Value (LTV)
-      const ltv = c.orders.reduce((sum, order) => sum + Number(order.totalAmount), 0);
-      
+      const ltv = c.orders.reduce(
+        (sum, order) => sum + Number(order.totalAmount),
+        0,
+      );
+
       // Determine Segment
       let segment = 'NEW';
       if (ltv > 10000) {
         segment = 'VIP'; // Spent more than 10k
       } else if (c.orders.length > 0) {
-        const lastOrderDate = Math.max(...c.orders.map(o => o.createdAt.getTime()));
+        const lastOrderDate = Math.max(
+          ...c.orders.map((o) => o.createdAt.getTime()),
+        );
         const threeMonthsAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
         if (lastOrderDate < threeMonthsAgo) {
           segment = 'DORMANT'; // No orders in 3 months
@@ -170,19 +175,27 @@ export class UserService {
     return customer;
   }
 
-  async sendMarketingCampaign(input: { segment: 'ALL' | 'VIP' | 'DORMANT' | 'REGULAR' | 'NEW'; message: string }) {
+  async sendMarketingCampaign(input: {
+    segment: 'ALL' | 'VIP' | 'DORMANT' | 'REGULAR' | 'NEW';
+    message: string;
+  }) {
     const customers = await this.getCustomers();
-    
+
     // Filter customers by segment
-    const targetCustomers = input.segment === 'ALL' 
-      ? customers 
-      : customers.filter(c => c.segment === input.segment);
+    const targetCustomers =
+      input.segment === 'ALL'
+        ? customers
+        : customers.filter((c) => c.segment === input.segment);
 
     // Filter out customers without phones
-    const validCustomers = targetCustomers.filter(c => !!c.phone);
+    const validCustomers = targetCustomers.filter((c) => !!c.phone);
 
     if (validCustomers.length === 0) {
-      return { success: true, count: 0, message: 'No customers found with valid phone numbers in this segment.' };
+      return {
+        success: true,
+        count: 0,
+        message: 'No customers found with valid phone numbers in this segment.',
+      };
     }
 
     // Enqueue jobs with progressive delay (1.5 seconds apart) to prevent WhatsApp spam bans
@@ -196,10 +209,10 @@ export class UserService {
       });
     }
 
-    return { 
-      success: true, 
-      count: validCustomers.length, 
-      message: `Successfully enqueued ${validCustomers.length} messages. They will be sent over the next ${(validCustomers.length * BASE_DELAY_MS) / 1000} seconds.` 
+    return {
+      success: true,
+      count: validCustomers.length,
+      message: `Successfully enqueued ${validCustomers.length} messages. They will be sent over the next ${(validCustomers.length * BASE_DELAY_MS) / 1000} seconds.`,
     };
   }
 }

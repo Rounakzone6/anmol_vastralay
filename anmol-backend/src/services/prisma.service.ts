@@ -56,9 +56,7 @@ export class PrismaService
       replicaUrls.push(primaryUrl);
     }
 
-    const uniqueReplicaUrls = Array.from(
-      new Set(replicaUrls.filter(Boolean)),
-    );
+    const uniqueReplicaUrls = Array.from(new Set(replicaUrls.filter(Boolean)));
 
     if (uniqueReplicaUrls.length > 0) {
       const replicaClients: PrismaClient[] = [];
@@ -87,7 +85,10 @@ export class PrismaService
       get: (target, prop, receiver) => {
         if (prop === '$primary') {
           return () => {
-            if (target.extendedClient && typeof target.extendedClient.$primary === 'function') {
+            if (
+              target.extendedClient &&
+              typeof target.extendedClient.$primary === 'function'
+            ) {
               return target.extendedClient.$primary();
             }
             return target;
@@ -95,7 +96,10 @@ export class PrismaService
         }
         if (prop === '$replica') {
           return () => {
-            if (target.extendedClient && typeof target.extendedClient.$replica === 'function') {
+            if (
+              target.extendedClient &&
+              typeof target.extendedClient.$replica === 'function'
+            ) {
               return target.extendedClient.$replica();
             }
             return target;
@@ -114,7 +118,10 @@ export class PrismaService
   }
 
   async onModuleInit() {
-    if (this.extendedClient && typeof this.extendedClient.$connect === 'function') {
+    if (
+      this.extendedClient &&
+      typeof this.extendedClient.$connect === 'function'
+    ) {
       await this.extendedClient.$connect();
     } else {
       await this.$connect();
@@ -122,7 +129,9 @@ export class PrismaService
 
     const hasExternalReplica =
       this.replicaPools.length > 0 &&
-      Boolean(process.env.DATABASE_READ_URL || process.env.DATABASE_READ_REPLICAS);
+      Boolean(
+        process.env.DATABASE_READ_URL || process.env.DATABASE_READ_REPLICAS,
+      );
 
     if (hasExternalReplica) {
       this.logger.log(
@@ -138,13 +147,18 @@ export class PrismaService
   }
 
   async onModuleDestroy() {
-    if (this.extendedClient && typeof this.extendedClient.$disconnect === 'function') {
+    if (
+      this.extendedClient &&
+      typeof this.extendedClient.$disconnect === 'function'
+    ) {
       await this.extendedClient.$disconnect();
     } else {
       await this.$disconnect();
     }
     await this.primaryPool.end();
     await Promise.all(this.replicaPools.map((p) => p.end()));
-    this.logger.log('🔌 Database connections and pools gracefully disconnected');
+    this.logger.log(
+      '🔌 Database connections and pools gracefully disconnected',
+    );
   }
 }

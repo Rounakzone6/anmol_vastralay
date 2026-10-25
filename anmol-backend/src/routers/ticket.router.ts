@@ -1,10 +1,20 @@
-import { adminProcedure, router, staffProcedure } from '@backend/config/trpc.config';
+import {
+  adminProcedure,
+  router,
+  staffProcedure,
+} from '@backend/config/trpc.config';
 import { z } from 'zod';
 import { notFound } from '@backend/config/trpc.config';
 
 export const ticketRouter = router({
   getTickets: staffProcedure
-    .input(z.object({ status: z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED']).optional() }).optional())
+    .input(
+      z
+        .object({
+          status: z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED']).optional(),
+        })
+        .optional(),
+    )
     .query(async ({ ctx, input }) => {
       return ctx.prisma.supportTicket.findMany({
         where: {
@@ -38,7 +48,7 @@ export const ticketRouter = router({
         ticketId: z.string(),
         text: z.string(),
         closeTicket: z.boolean().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const ticket = await ctx.prisma.supportTicket.findUnique({

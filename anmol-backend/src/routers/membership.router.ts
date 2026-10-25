@@ -25,7 +25,10 @@ export const membershipRouter = router({
   verifyPayment: protectedProcedure
     .input(VerifyMembershipPaymentSchema)
     .mutation(async ({ ctx, input }) => {
-      return ctx.services.membership.verifyMembershipPayment(ctx.user.id, input);
+      return ctx.services.membership.verifyMembershipPayment(
+        ctx.user.id,
+        input,
+      );
     }),
 
   adminUpdatePlan: adminProcedure

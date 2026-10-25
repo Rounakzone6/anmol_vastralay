@@ -4,9 +4,7 @@ import { Queue } from 'bullmq';
 
 @Injectable()
 export class NotificationQueueService {
-  constructor(
-    @InjectQueue('notifications') private notificationQueue: Queue,
-  ) {}
+  constructor(@InjectQueue('notifications') private notificationQueue: Queue) {}
 
   async enqueueOrderEmail(data: { orderId: string }) {
     await this.notificationQueue.add('order-email', data, {
@@ -26,7 +24,11 @@ export class NotificationQueueService {
   }
 
   // Future queues like bulk-emails can go here
-  async enqueueMarketingMessage(data: { phone: string; message: string; delayMs?: number }) {
+  async enqueueMarketingMessage(data: {
+    phone: string;
+    message: string;
+    delayMs?: number;
+  }) {
     await this.notificationQueue.add('marketing-message', data, {
       priority: 3, // Low priority
       delay: data.delayMs || 0, // Delay message to avoid spam bans
@@ -35,7 +37,7 @@ export class NotificationQueueService {
 
   async enqueueAbandonedCartWhatsApp(data: { userId: string; phone: string }) {
     await this.notificationQueue.add('abandoned-cart-whatsapp', data, {
-      priority: 2, 
+      priority: 2,
     });
   }
 
@@ -50,4 +52,3 @@ export class NotificationQueueService {
     });
   }
 }
-

@@ -63,8 +63,7 @@ export class EmailService {
       this.transport = nodemailer.createTransport({
         host,
         port,
-        secure:
-          config.get<string>('SMTP_SECURE') === 'true' || port === 465,
+        secure: config.get<string>('SMTP_SECURE') === 'true' || port === 465,
         auth: { user, pass },
       });
       this.logger.log('✓ SMTP email transport configured');
@@ -124,7 +123,8 @@ export class EmailService {
 
   private async send(message: EmailPayload): Promise<boolean> {
     const isResendSandbox = this.resendFrom.includes('resend.dev');
-    const isOwnerEmail = message.to.toLowerCase() === 'anmolvastralayofficial@gmail.com';
+    const isOwnerEmail =
+      message.to.toLowerCase() === 'anmolvastralayofficial@gmail.com';
 
     // 1. If SMTP is configured and Resend is on sandbox mode for arbitrary recipients, use SMTP directly
     if (this.transport && isResendSandbox && !isOwnerEmail) {
@@ -189,7 +189,9 @@ export class EmailService {
           html: message.html,
           attachments: message.attachments,
         });
-        this.logger.log(`SMTP Email sent (fallback): ${message.subject} -> ${message.to}`);
+        this.logger.log(
+          `SMTP Email sent (fallback): ${message.subject} -> ${message.to}`,
+        );
         return true;
       } catch (error: any) {
         this.logger.error(

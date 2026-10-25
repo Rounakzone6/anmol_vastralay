@@ -40,7 +40,9 @@ describe('BloomFilter Data Structure', () => {
     }
 
     const empiricalFpr = falsePositives / TEST_SAMPLES;
-    console.log(`Measured False Positive Rate: ${(empiricalFpr * 100).toFixed(2)}% (${falsePositives}/${TEST_SAMPLES})`);
+    console.log(
+      `Measured False Positive Rate: ${(empiricalFpr * 100).toFixed(2)}% (${falsePositives}/${TEST_SAMPLES})`,
+    );
 
     // Measured FPR should stay within reasonable probabilistic bounds (<= 2% when p=0.01)
     expect(empiricalFpr).toBeLessThanOrEqual(0.02);

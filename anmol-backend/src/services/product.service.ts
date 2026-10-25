@@ -61,7 +61,6 @@ export class ProductService {
     return this.queries.getSitemapProducts(page, pageSize);
   }
 
-
   async create(input: z.infer<typeof productBaseSchema>, userId: string) {
     const res = await this.mutations.create(input, userId);
     let categoryName: string | undefined;
@@ -91,7 +90,6 @@ export class ProductService {
     this.searchBloom.scheduleDebouncedRebuild();
     return res;
   }
-
 
   async setActive(input: z.infer<typeof SetProductActiveSchema>) {
     return this.mutations.setActive(input);

@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserRole, OtpType } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
@@ -52,7 +56,12 @@ export class AuthService {
   async login(
     identifier: string,
     password: string,
-  ): Promise<{ success: boolean; message: string; email: string; type: string }> {
+  ): Promise<{
+    success: boolean;
+    message: string;
+    email: string;
+    type: string;
+  }> {
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;
 
@@ -70,17 +79,19 @@ export class AuthService {
 
       const rateLimitKey = `ratelimit:otp:${adminEmail}`;
       if (await redis.get(rateLimitKey)) {
-        throw new UnauthorizedException('Please wait 60 seconds before requesting another OTP');
+        throw new UnauthorizedException(
+          'Please wait 60 seconds before requesting another OTP',
+        );
       }
-      
+
       const code = this.generateOtp();
       const purpose = 'LOGIN';
-      
+
       // Store purpose-bound OTP in Redis (expires in 10 minutes)
       await redis.set(`otp:${purpose}:${adminEmail}`, code, 'EX', 600);
       await redis.set(`otp:${adminEmail}`, code, 'EX', 600); // Backwards compatibility
       await redis.del(`otp:attempts:${purpose}:${adminEmail}`);
-      
+
       // Set rate limit (60 seconds)
       await redis.set(rateLimitKey, '1', 'EX', 60);
 
@@ -90,10 +101,17 @@ export class AuthService {
         await redis.del(`otp:${purpose}:${adminEmail}`);
         await redis.del(`otp:${adminEmail}`);
         await redis.del(rateLimitKey);
-        throw new BadRequestException('Failed to send OTP email. Please try again.');
+        throw new BadRequestException(
+          'Failed to send OTP email. Please try again.',
+        );
       }
 
-      return { success: true, message: 'OTP sent to email', email: adminEmail, type: 'LOGIN' };
+      return {
+        success: true,
+        message: 'OTP sent to email',
+        email: adminEmail,
+        type: 'LOGIN',
+      };
     }
 
     const record = await this.prisma.user.findFirst({
@@ -118,7 +136,9 @@ export class AuthService {
 
     const targetEmail = record.email;
     if (!targetEmail) {
-       throw new UnauthorizedException('Account has no email for OTP verification. Please contact support.');
+      throw new UnauthorizedException(
+        'Account has no email for OTP verification. Please contact support.',
+      );
     }
 
     const lockoutKey = `otp:lockout:${targetEmail}`;
@@ -130,7 +150,9 @@ export class AuthService {
 
     const rateLimitKey = `ratelimit:otp:${targetEmail}`;
     if (await redis.get(rateLimitKey)) {
-      throw new UnauthorizedException('Please wait 60 seconds before requesting another OTP');
+      throw new UnauthorizedException(
+        'Please wait 60 seconds before requesting another OTP',
+      );
     }
 
     const code = this.generateOtp();
@@ -150,10 +172,17 @@ export class AuthService {
       await redis.del(`otp:${purpose}:${targetEmail}`);
       await redis.del(`otp:${targetEmail}`);
       await redis.del(rateLimitKey);
-      throw new BadRequestException('Failed to send OTP email. Please try again.');
+      throw new BadRequestException(
+        'Failed to send OTP email. Please try again.',
+      );
     }
 
-    return { success: true, message: 'OTP sent to email', email: targetEmail, type: 'LOGIN' };
+    return {
+      success: true,
+      message: 'OTP sent to email',
+      email: targetEmail,
+      type: 'LOGIN',
+    };
   }
 
   async register(input: {
@@ -161,7 +190,12 @@ export class AuthService {
     phone?: string;
     name: string;
     password: string;
-  }): Promise<{ success: boolean; message: string; email: string; type: string }> {
+  }): Promise<{
+    success: boolean;
+    message: string;
+    email: string;
+    type: string;
+  }> {
     if (!input.email) {
       throw new Error('BAD_REQUEST:Email is required for MFA registration');
     }
@@ -179,9 +213,9 @@ export class AuthService {
         },
       });
 
-      this.emailService.sendWelcomeEmail(user.email!, user.name).catch((error) =>
-        console.error('Failed to send welcome email', error),
-      );
+      this.emailService
+        .sendWelcomeEmail(user.email, user.name)
+        .catch((error) => console.error('Failed to send welcome email', error));
 
       const lockoutKey = `otp:lockout:${user.email}`;
       if (await redis.get(lockoutKey)) {
@@ -192,7 +226,9 @@ export class AuthService {
 
       const rateLimitKey = `ratelimit:otp:${user.email}`;
       if (await redis.get(rateLimitKey)) {
-        throw new UnauthorizedException('Please wait 60 seconds before requesting another OTP');
+        throw new UnauthorizedException(
+          'Please wait 60 seconds before requesting another OTP',
+        );
       }
 
       const code = this.generateOtp();
@@ -212,10 +248,17 @@ export class AuthService {
         await redis.del(`otp:${purpose}:${user.email}`);
         await redis.del(`otp:${user.email}`);
         await redis.del(rateLimitKey);
-        throw new BadRequestException('Failed to send OTP email. Please try again.');
+        throw new BadRequestException(
+          'Failed to send OTP email. Please try again.',
+        );
       }
 
-      return { success: true, message: 'OTP sent to email', email: user.email!, type: 'REGISTER' };
+      return {
+        success: true,
+        message: 'OTP sent to email',
+        email: user.email!,
+        type: 'REGISTER',
+      };
     } catch (error: any) {
       if (error.code === 'P2002') {
         const field = error.meta?.target?.[0];
@@ -230,7 +273,11 @@ export class AuthService {
     }
   }
 
-  async verifyOtp(email: string, code: string, type: string): Promise<{ token: string; user: AuthUser }> {
+  async verifyOtp(
+    email: string,
+    code: string,
+    type: string,
+  ): Promise<{ token: string; user: AuthUser }> {
     const purpose = (type || 'LOGIN').toUpperCase();
     const lockoutKey = `otp:lockout:${email}`;
     if (await redis.get(lockoutKey)) {
@@ -316,19 +363,19 @@ export class AuthService {
     }
 
     const userRecord = await this.prisma.user.findFirst({
-       where: { email }
+      where: { email },
     });
 
     if (!userRecord) {
-        throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('User not found');
     }
 
     if (!userRecord.emailVerified) {
-        await this.prisma.user.update({
-            where: { id: userRecord.id },
-            data: { emailVerified: true }
-        });
-        userRecord.emailVerified = true;
+      await this.prisma.user.update({
+        where: { id: userRecord.id },
+        data: { emailVerified: true },
+      });
+      userRecord.emailVerified = true;
     }
 
     const user = this.sanitize(userRecord);
@@ -400,9 +447,11 @@ export class AuthService {
           role: 'CUSTOMER',
         },
       });
-      this.emailService.sendWelcomeEmail(record.email!, record.name).catch((error) =>
-        console.error('Failed to send Google welcome email', error),
-      );
+      this.emailService
+        .sendWelcomeEmail(record.email, record.name)
+        .catch((error) =>
+          console.error('Failed to send Google welcome email', error),
+        );
     }
 
     const user = this.sanitize(record);

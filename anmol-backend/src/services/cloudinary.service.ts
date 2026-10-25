@@ -69,7 +69,10 @@ export class CloudinaryService implements OnModuleInit {
         return { url: result.url, publicId: `ik:${result.fileId}` };
       } catch (error) {
         if (this.cloudinaryConfigured) {
-          console.error('ImageKit upload failed, falling back to Cloudinary:', error);
+          console.error(
+            'ImageKit upload failed, falling back to Cloudinary:',
+            error,
+          );
           return this.uploadToCloudinary(dataUri, folder);
         }
         throw error;
@@ -79,7 +82,10 @@ export class CloudinaryService implements OnModuleInit {
         return await this.uploadToCloudinary(dataUri, folder);
       } catch (error) {
         if (this.imagekitConfigured) {
-          console.error('Cloudinary upload failed, falling back to ImageKit:', error);
+          console.error(
+            'Cloudinary upload failed, falling back to ImageKit:',
+            error,
+          );
           const result = await this.imagekit!.upload({
             file: dataUri,
             fileName: `img_${Date.now()}`,
@@ -103,10 +109,13 @@ export class CloudinaryService implements OnModuleInit {
     publicId?: string,
   ): Promise<{ url: string; publicId: string }> {
     this.assertConfigured();
-    
+
     // Prefer Cloudinary for PDF buffers due to native support for upload_stream
     if (this.cloudinaryConfigured) {
-      const result = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
+      const result = await new Promise<{
+        secure_url: string;
+        public_id: string;
+      }>((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           {
             folder,
@@ -116,7 +125,9 @@ export class CloudinaryService implements OnModuleInit {
           },
           (error, uploaded) => {
             if (error || !uploaded) {
-              reject(error || new Error('Cloudinary did not return an uploaded PDF'));
+              reject(
+                error || new Error('Cloudinary did not return an uploaded PDF'),
+              );
               return;
             }
             resolve({
@@ -141,7 +152,7 @@ export class CloudinaryService implements OnModuleInit {
 
   async deleteImage(publicId: string): Promise<void> {
     this.assertConfigured();
-    
+
     if (publicId.startsWith('ik:')) {
       if (this.imagekitConfigured) {
         const fileId = publicId.substring(3);

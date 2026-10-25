@@ -6,9 +6,17 @@ import { redis } from '@backend/config/redis.config';
 
 export const dashboardRouter = router({
   getUpdates: staffProcedure
-    .input(z.object({ filter: z.enum(['TODAY', 'YESTERDAY', 'LAST_WEEK', 'ALL_TIME']).optional() }).optional())
+    .input(
+      z
+        .object({
+          filter: z
+            .enum(['TODAY', 'YESTERDAY', 'LAST_WEEK', 'ALL_TIME'])
+            .optional(),
+        })
+        .optional(),
+    )
     .query(async ({ ctx, input }) => {
-      const prisma = ctx.prisma as PrismaClient;
+      const prisma = ctx.prisma;
 
       let dateFilter: Date | undefined;
       let endDateFilter: Date | undefined;
@@ -27,114 +35,118 @@ export const dashboardRouter = router({
         dateFilter.setDate(dateFilter.getDate() - 7);
       } // ALL_TIME leaves dateFilter as undefined
 
-      const dateCondition = dateFilter ? { gte: dateFilter, ...(endDateFilter ? { lt: endDateFilter } : {}) } : undefined;
+      const dateCondition = dateFilter
+        ? { gte: dateFilter, ...(endDateFilter ? { lt: endDateFilter } : {}) }
+        : undefined;
 
-    // Fetch out of stock variants
-    const outOfStock = await prisma.productVariant.findMany({
-      where: { stockQty: { lte: 0 } },
-      include: { product: { select: { name: true, slug: true } } },
-      take: 20,
-    });
+      // Fetch out of stock variants
+      const outOfStock = await prisma.productVariant.findMany({
+        where: { stockQty: { lte: 0 } },
+        include: { product: { select: { name: true, slug: true } } },
+        take: 20,
+      });
 
-    // Fetch categories with low total inventory
-    const categoriesWithProducts = await prisma.category.findMany({
-      include: {
-        products: {
-          where: { isActive: true },
-          include: { variants: true }
-        }
-      }
-    });
+      // Fetch categories with low total inventory
+      const categoriesWithProducts = await prisma.category.findMany({
+        include: {
+          products: {
+            where: { isActive: true },
+            include: { variants: true },
+          },
+        },
+      });
 
-    const lowStockCategories = categoriesWithProducts
-      .map(category => {
-        let totalStock = 0;
-        category.products.forEach(p => {
-           p.variants.forEach(v => totalStock += v.stockQty);
-        });
-        return { ...category, totalStock };
-      })
-      .filter(category => category.totalStock <= 15);
+      const lowStockCategories = categoriesWithProducts
+        .map((category) => {
+          let totalStock = 0;
+          category.products.forEach((p) => {
+            p.variants.forEach((v) => (totalStock += v.stockQty));
+          });
+          return { ...category, totalStock };
+        })
+        .filter((category) => category.totalStock <= 15);
 
-    // Fetch recent orders
-    const recentOrders = await prisma.order.findMany({
-      where: dateCondition ? { createdAt: dateCondition } : undefined,
-      include: { user: { select: { name: true, phone: true } } },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
+      // Fetch recent orders
+      const recentOrders = await prisma.order.findMany({
+        where: dateCondition ? { createdAt: dateCondition } : undefined,
+        include: { user: { select: { name: true, phone: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      });
 
-    // Fetch new users
-    const newUsers = await prisma.user.findMany({
-      where: dateCondition ? { createdAt: dateCondition } : undefined,
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
+      // Fetch new users
+      const newUsers = await prisma.user.findMany({
+        where: dateCondition ? { createdAt: dateCondition } : undefined,
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      });
 
-    // Fetch delivery staff status (Treating as staff attendance)
-    const deliveryStaff = await prisma.deliveryPerson.findMany({
-      orderBy: { updatedAt: 'desc' },
-      take: 20,
-    });
+      // Fetch delivery staff status (Treating as staff attendance)
+      const deliveryStaff = await prisma.deliveryPerson.findMany({
+        orderBy: { updatedAt: 'desc' },
+        take: 20,
+      });
 
-    const updates = [
-      ...outOfStock.map((item) => ({
-        id: `stock-${item.id}`,
-        type: 'STOCK',
-        title: 'Out of Stock Alert',
-        message: `${item.product.name} ${item.color ? '(' + item.color + ')' : ''} is out of stock.`,
-        date: item.updatedAt,
-        link: `/products/${item.product.slug}`,
-      })),
-      ...lowStockCategories.map((category) => ({
-        id: `cat-stock-${category.id}`,
-        type: 'STOCK',
-        title: 'Category Inventory Low',
-        message: `The "${category.name}" category only has ${category.totalStock} item(s) left in stock. Consider adding more products!`,
-        date: new Date(), // Always show at top as active critical alert
-        link: `/categories`,
-      })),
-      ...recentOrders.map((order) => ({
-        id: `order-${order.id}`,
-        type: 'ORDER',
-        title: 'New Order Received',
-        message: `Order #${order.id.slice(-6)} placed by ${order.user.name || order.user.phone} for ₹${order.totalAmount.toString()}.`,
-        date: order.createdAt,
-        link: `/orders?highlight=${order.id}`,
-      })),
-      ...newUsers.map((user) => ({
-        id: `user-${user.id}`,
-        type: 'USER',
-        title: 'New User Registered',
-        message: `${user.name || user.phone || user.email} just signed up.`,
-        date: user.createdAt,
-        link: `/customers?highlight=${user.id}`,
-      })),
-      ...deliveryStaff.map((staff) => ({
-        id: `staff-${staff.id}`,
-        type: 'STAFF',
-        title: 'Staff Status Update',
-        message: `${staff.name} is currently ${staff.status}.`,
-        date: staff.updatedAt,
-        link: `/delivery-persons`,
-      })),
-    ];
+      const updates = [
+        ...outOfStock.map((item) => ({
+          id: `stock-${item.id}`,
+          type: 'STOCK',
+          title: 'Out of Stock Alert',
+          message: `${item.product.name} ${item.color ? '(' + item.color + ')' : ''} is out of stock.`,
+          date: item.updatedAt,
+          link: `/products/${item.product.slug}`,
+        })),
+        ...lowStockCategories.map((category) => ({
+          id: `cat-stock-${category.id}`,
+          type: 'STOCK',
+          title: 'Category Inventory Low',
+          message: `The "${category.name}" category only has ${category.totalStock} item(s) left in stock. Consider adding more products!`,
+          date: new Date(), // Always show at top as active critical alert
+          link: `/categories`,
+        })),
+        ...recentOrders.map((order) => ({
+          id: `order-${order.id}`,
+          type: 'ORDER',
+          title: 'New Order Received',
+          message: `Order #${order.id.slice(-6)} placed by ${order.user.name || order.user.phone} for ₹${order.totalAmount.toString()}.`,
+          date: order.createdAt,
+          link: `/orders?highlight=${order.id}`,
+        })),
+        ...newUsers.map((user) => ({
+          id: `user-${user.id}`,
+          type: 'USER',
+          title: 'New User Registered',
+          message: `${user.name || user.phone || user.email} just signed up.`,
+          date: user.createdAt,
+          link: `/customers?highlight=${user.id}`,
+        })),
+        ...deliveryStaff.map((staff) => ({
+          id: `staff-${staff.id}`,
+          type: 'STAFF',
+          title: 'Staff Status Update',
+          message: `${staff.name} is currently ${staff.status}.`,
+          date: staff.updatedAt,
+          link: `/delivery-persons`,
+        })),
+      ];
 
-    // Filter updates to match the selected date range
-    const filteredUpdates = updates.filter(update => {
-      if (!dateFilter) return true;
-      const updateDate = update.date.getTime();
-      const start = dateFilter.getTime();
-      const end = endDateFilter ? endDateFilter.getTime() : Infinity;
-      return updateDate >= start && updateDate < end;
-    });
+      // Filter updates to match the selected date range
+      const filteredUpdates = updates.filter((update) => {
+        if (!dateFilter) return true;
+        const updateDate = update.date.getTime();
+        const start = dateFilter.getTime();
+        const end = endDateFilter ? endDateFilter.getTime() : Infinity;
+        return updateDate >= start && updateDate < end;
+      });
 
-    // Sort by most recent first
-    return filteredUpdates.sort((a, b) => b.date.getTime() - a.date.getTime());
-  }),
+      // Sort by most recent first
+      return filteredUpdates.sort(
+        (a, b) => b.date.getTime() - a.date.getTime(),
+      );
+    }),
 
   getCategoryInventory: staffProcedure.query(async ({ ctx }) => {
-    const prisma = ctx.prisma as PrismaClient;
+    const prisma = ctx.prisma;
     const categories = await prisma.category.findMany({
       select: {
         id: true,
@@ -144,35 +156,39 @@ export const dashboardRouter = router({
             variants: {
               select: {
                 stockQty: true,
-              }
-            }
-          }
-        }
-      }
+              },
+            },
+          },
+        },
+      },
     });
 
-    const inventoryData = categories.map(category => {
-      let totalStock = 0;
-      category.products.forEach(p => {
-        p.variants.forEach(v => totalStock += v.stockQty);
-      });
-      return {
-        name: category.name,
-        stock: totalStock,
-      };
-    }).filter(c => c.stock > 0).sort((a, b) => b.stock - a.stock);
+    const inventoryData = categories
+      .map((category) => {
+        let totalStock = 0;
+        category.products.forEach((p) => {
+          p.variants.forEach((v) => (totalStock += v.stockQty));
+        });
+        return {
+          name: category.name,
+          stock: totalStock,
+        };
+      })
+      .filter((c) => c.stock > 0)
+      .sort((a, b) => b.stock - a.stock);
 
     return inventoryData;
   }),
 
   getStats: staffProcedure.query(async ({ ctx }) => {
-    const prisma = ctx.prisma as PrismaClient;
-    const [categoriesCount, activeProducts, lowStockVariants, customersCount] = await Promise.all([
-      prisma.category.count(),
-      prisma.product.count({ where: { isActive: true } }),
-      prisma.productVariant.count({ where: { stockQty: { lte: 5 } } }),
-      prisma.user.count({ where: { role: 'CUSTOMER' } }),
-    ]);
+    const prisma = ctx.prisma;
+    const [categoriesCount, activeProducts, lowStockVariants, customersCount] =
+      await Promise.all([
+        prisma.category.count(),
+        prisma.product.count({ where: { isActive: true } }),
+        prisma.productVariant.count({ where: { stockQty: { lte: 5 } } }),
+        prisma.user.count({ where: { role: 'CUSTOMER' } }),
+      ]);
 
     return {
       categoriesCount,
@@ -186,68 +202,79 @@ export const dashboardRouter = router({
     try {
       const cacheKey = `dashboard:demand_forecast:${new Date().toISOString().split('T')[0]}`;
       const cachedForecast = await redis.get(cacheKey);
-      
+
       if (cachedForecast) {
         return cachedForecast;
       }
 
-      const prisma = ctx.prisma as PrismaClient;
-      
+      const prisma = ctx.prisma;
+
       const ninetyDaysAgo = new Date();
       ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
       const recentOrders = await prisma.order.findMany({
         where: {
           createdAt: { gte: ninetyDaysAgo },
-          status: { not: 'CANCELLED' }
+          status: { not: 'CANCELLED' },
         },
         include: {
           items: {
             include: {
               product: {
                 include: {
-                  category: true
-                }
-              }
-            }
+                  category: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const categorySales: Record<
+        string,
+        { totalSold: number; last30Days: number; prev60Days: number }
+      > = {};
+
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      recentOrders.forEach((order) => {
+        const isRecent = order.createdAt >= thirtyDaysAgo;
+
+        order.items.forEach((item) => {
+          const catName = item.product.category?.name || 'Uncategorized';
+          if (!categorySales[catName]) {
+            categorySales[catName] = {
+              totalSold: 0,
+              last30Days: 0,
+              prev60Days: 0,
+            };
           }
-        }
+
+          categorySales[catName].totalSold += item.quantity;
+          if (isRecent) {
+            categorySales[catName].last30Days += item.quantity;
+          } else {
+            categorySales[catName].prev60Days += item.quantity;
+          }
+        });
       });
 
-    const categorySales: Record<string, { totalSold: number, last30Days: number, prev60Days: number }> = {};
-    
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    recentOrders.forEach(order => {
-      const isRecent = order.createdAt >= thirtyDaysAgo;
-      
-      order.items.forEach(item => {
-        const catName = item.product.category?.name || 'Uncategorized';
-        if (!categorySales[catName]) {
-          categorySales[catName] = { totalSold: 0, last30Days: 0, prev60Days: 0 };
-        }
-        
-        categorySales[catName].totalSold += item.quantity;
-        if (isRecent) {
-          categorySales[catName].last30Days += item.quantity;
-        } else {
-          categorySales[catName].prev60Days += item.quantity;
-        }
-      });
-    });
-
-      const formattedData = Object.entries(categorySales).map(([category, stats]) => ({
-        category,
-        ...stats
-      }));
+      const formattedData = Object.entries(categorySales).map(
+        ([category, stats]) => ({
+          category,
+          ...stats,
+        }),
+      );
 
       // Pass the data to the Gemini AI Service
-      const aiForecast = await ctx.services.ai.generateDemandForecast(JSON.stringify(formattedData, null, 2));
-      
+      const aiForecast = await ctx.services.ai.generateDemandForecast(
+        JSON.stringify(formattedData, null, 2),
+      );
+
       // Cache the result for 24 hours
       await redis.set(cacheKey, aiForecast, 'EX', 86400);
-      
+
       return aiForecast;
     } catch (error: any) {
       console.error('Error generating demand forecast:', error);

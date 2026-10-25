@@ -43,7 +43,8 @@ export class MembershipService {
       if (process.env.NODE_ENV === 'production') {
         throw new TRPCError({
           code: 'NOT_FOUND',
-          message: 'No active VIP membership plan configured. Please configure a plan in Admin settings.',
+          message:
+            'No active VIP membership plan configured. Please configure a plan in Admin settings.',
         });
       }
 
@@ -91,14 +92,15 @@ export class MembershipService {
     const now = new Date();
     const isMember = Boolean(
       user.isMember &&
-        user.membershipExpiresAt &&
-        user.membershipExpiresAt > now,
+      user.membershipExpiresAt &&
+      user.membershipExpiresAt > now,
     );
 
     let daysLeft = 0;
     if (isMember && user.membershipExpiresAt) {
       daysLeft = Math.ceil(
-        (user.membershipExpiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+        (user.membershipExpiresAt.getTime() - now.getTime()) /
+          (1000 * 60 * 60 * 24),
       );
     }
 
@@ -142,7 +144,9 @@ export class MembershipService {
         7200,
       );
     } catch (err) {
-      this.logger.warn(`Failed to cache pending membership transaction in Redis: ${err}`);
+      this.logger.warn(
+        `Failed to cache pending membership transaction in Redis: ${err}`,
+      );
     }
 
     return {
@@ -189,13 +193,16 @@ export class MembershipService {
 
     // 2. Validate original transaction ownership and plan
     try {
-      const cachedPending = await redis.get(`membership:pending:${input.razorpay_order_id}`);
+      const cachedPending = await redis.get(
+        `membership:pending:${input.razorpay_order_id}`,
+      );
       if (cachedPending) {
         const pending = JSON.parse(cachedPending);
         if (pending.userId && pending.userId !== userId) {
           throw new TRPCError({
             code: 'FORBIDDEN',
-            message: 'Payment transaction was not initiated by the authenticated user',
+            message:
+              'Payment transaction was not initiated by the authenticated user',
           });
         }
       }
@@ -208,7 +215,9 @@ export class MembershipService {
       where: { transactionId: input.razorpay_payment_id },
     });
     if (existingMembership) {
-      this.logger.log(`Membership already activated for transaction ${input.razorpay_payment_id}`);
+      this.logger.log(
+        `Membership already activated for transaction ${input.razorpay_payment_id}`,
+      );
       return {
         success: true,
         message: 'VIP membership is already activated for this transaction.',
@@ -219,7 +228,9 @@ export class MembershipService {
 
     const plan = await this.getPlan();
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(
+      now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000,
+    );
 
     // Save UserMembership and update User atomically
     await this.prisma.$transaction(async (tx) => {
@@ -250,7 +261,9 @@ export class MembershipService {
       await redis.del(`membership:pending:${input.razorpay_order_id}`);
     } catch {}
 
-    this.logger.log(`User ${userId} activated VIP membership until ${expiresAt.toISOString()}`);
+    this.logger.log(
+      `User ${userId} activated VIP membership until ${expiresAt.toISOString()}`,
+    );
 
     return {
       success: true,
@@ -275,7 +288,9 @@ export class MembershipService {
           ...(input.name ? { name: input.name } : {}),
           price: input.price,
           ...(input.durationDays ? { durationDays: input.durationDays } : {}),
-          ...(input.deliveryCharge !== undefined ? { deliveryCharge: input.deliveryCharge } : {}),
+          ...(input.deliveryCharge !== undefined
+            ? { deliveryCharge: input.deliveryCharge }
+            : {}),
           ...(input.benefits ? { benefits: input.benefits } : {}),
           ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
         },
@@ -286,13 +301,13 @@ export class MembershipService {
           name: input.name || 'Anmol VIP Royal Club',
           price: input.price,
           durationDays: input.durationDays || 365,
-          deliveryCharge: input.deliveryCharge !== undefined ? input.deliveryCharge : 20.0,
+          deliveryCharge:
+            input.deliveryCharge !== undefined ? input.deliveryCharge : 20.0,
           benefits: input.benefits || DEFAULT_VIP_BENEFITS,
           isActive: input.isActive ?? true,
         },
       });
     }
-
 
     return {
       success: true,

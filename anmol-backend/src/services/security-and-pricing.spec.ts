@@ -48,7 +48,10 @@ describe('Security, Authorization & Pricing Verification Suite', () => {
   });
 
   describe('Authoritative Pricing & Discount Calculations (Audit Item 16 & 89)', () => {
-    function computeItemSellingPrice(netPrice: any, discountPercent: any): number {
+    function computeItemSellingPrice(
+      netPrice: any,
+      discountPercent: any,
+    ): number {
       const net = Number(netPrice);
       const discount = Number(discountPercent || 0);
       if (discount <= 0) return Math.round(net * 100) / 100;
@@ -62,7 +65,10 @@ describe('Security, Authorization & Pricing Verification Suite', () => {
       };
 
       const storefrontPriced = withProductPricing(rawProduct);
-      const checkoutCalculated = computeItemSellingPrice(rawProduct.netPrice, rawProduct.discountPercent);
+      const checkoutCalculated = computeItemSellingPrice(
+        rawProduct.netPrice,
+        rawProduct.discountPercent,
+      );
 
       expect(storefrontPriced.sellingPrice).toBe(1600);
       expect(checkoutCalculated).toBe(1600);
@@ -75,7 +81,10 @@ describe('Security, Authorization & Pricing Verification Suite', () => {
         discountPercent: 15,
       };
 
-      const sellingPrice = computeItemSellingPrice(product.netPrice, product.discountPercent);
+      const sellingPrice = computeItemSellingPrice(
+        product.netPrice,
+        product.discountPercent,
+      );
       // 999 * 0.85 = 849.15
       expect(sellingPrice).toBe(849.15);
     });
@@ -131,7 +140,9 @@ describe('Security, Authorization & Pricing Verification Suite', () => {
       const getPlanInEnv = (nodeEnv: string, planExists: boolean) => {
         if (!planExists) {
           if (nodeEnv === 'production') {
-            throw new Error('NOT_FOUND: No active VIP membership plan configured');
+            throw new Error(
+              'NOT_FOUND: No active VIP membership plan configured',
+            );
           }
           return { price: 499, isDefaultDevSeed: true };
         }

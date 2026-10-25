@@ -60,7 +60,7 @@ export class HealthService {
         typeof (this.prisma as any).$primary === 'function'
           ? (this.prisma as any).$primary()
           : this.prisma;
-      await primaryClient.$queryRawUnsafe('SELECT 1');
+      await primaryClient.$queryRaw`SELECT 1`;
       primaryDbHealth = {
         status: 'up',
         latencyMs: Date.now() - start,
@@ -82,7 +82,7 @@ export class HealthService {
         typeof (this.prisma as any).$replica === 'function'
           ? (this.prisma as any).$replica()
           : this.prisma;
-      await replicaClient.$queryRawUnsafe('SELECT 1');
+      await replicaClient.$queryRaw`SELECT 1`;
       replicaDbHealth = {
         status: 'up',
         latencyMs: Date.now() - start,
@@ -107,7 +107,10 @@ export class HealthService {
           latencyMs: Date.now() - start,
         };
       } else {
-        redisHealth = { status: 'down', error: `Unexpected ping response: ${pingRes}` };
+        redisHealth = {
+          status: 'down',
+          error: `Unexpected ping response: ${pingRes}`,
+        };
         if (overallStatus === 'healthy') overallStatus = 'degraded';
       }
     } catch (err: any) {

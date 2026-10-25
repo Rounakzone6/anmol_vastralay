@@ -73,7 +73,7 @@ Keep your answers concise and friendly, suitable for WhatsApp. Do not use excess
                   properties: {
                     subject: {
                       type: SchemaType.STRING,
-                      description: 'A short summary of the customer\'s issue.',
+                      description: "A short summary of the customer's issue.",
                     },
                   },
                   required: ['subject'],
@@ -121,7 +121,10 @@ Keep your answers concise and friendly, suitable for WhatsApp. Do not use excess
       let result = await chat.sendMessage(parts);
       let response = result.response;
 
-      const functionCalls = typeof response.functionCalls === 'function' ? response.functionCalls() : undefined;
+      const functionCalls =
+        typeof response.functionCalls === 'function'
+          ? response.functionCalls()
+          : undefined;
       if (functionCalls && functionCalls.length > 0) {
         const call = functionCalls[0] as unknown as LocalFunctionCall;
         let functionResponse: Record<string, unknown> = {};
@@ -149,7 +152,9 @@ Keep your answers concise and friendly, suitable for WhatsApp. Do not use excess
                   .join(', '),
               };
             } else {
-              functionResponse = { error: 'Order not found or you are not authorized to view it.' };
+              functionResponse = {
+                error: 'Order not found or you are not authorized to view it.',
+              };
             }
           } catch (e: unknown) {
             this.logger.debug(e);
@@ -193,19 +198,26 @@ Keep your answers concise and friendly, suitable for WhatsApp. Do not use excess
                   status: 'OPEN',
                   messages: {
                     create: [
-                      { sender: 'AI', text: `Escalated reason: ${call.args.subject}` },
-                      { sender: 'CUSTOMER', text } // Add the last user message for context
-                    ]
-                  }
+                      {
+                        sender: 'AI',
+                        text: `Escalated reason: ${call.args.subject}`,
+                      },
+                      { sender: 'CUSTOMER', text }, // Add the last user message for context
+                    ],
+                  },
                 },
               });
-              functionResponse = { 
-                success: true, 
+              functionResponse = {
+                success: true,
                 ticketId: ticket.id,
-                messageToUser: 'Ticket has been created. A human agent will contact them shortly.' 
+                messageToUser:
+                  'Ticket has been created. A human agent will contact them shortly.',
               };
             } else {
-              functionResponse = { error: 'Customer is not registered. Ask them to register on our website first.' };
+              functionResponse = {
+                error:
+                  'Customer is not registered. Ask them to register on our website first.',
+              };
             }
           } catch (e: unknown) {
             this.logger.debug(e);

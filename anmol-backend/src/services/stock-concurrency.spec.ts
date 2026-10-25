@@ -9,7 +9,7 @@ describe('Real & Simulated Concurrency: POS vs Online Checkout Race Elimination'
     try {
       if (process.env.DATABASE_URL) {
         prisma = new PrismaClient();
-        await prisma.$queryRawUnsafe('SELECT 1');
+        await prisma.$queryRaw`SELECT 1`;
         isDbAvailable = true;
       }
     } catch {
@@ -28,7 +28,9 @@ describe('Real & Simulated Concurrency: POS vs Online Checkout Race Elimination'
   describe('PostgreSQL Row Lock Validation (Online Checkout vs POS Billing Racing)', () => {
     it('executes 10 parallel checkouts (5 POS + 5 Online) on 3 units of stock in PostgreSQL: exactly 3 succeed, 7 fail with CONFLICT, final stock is 0', async () => {
       if (!isDbAvailable || !prisma) {
-        console.log('Skipping live DB concurrency test (PostgreSQL not connected in current local env)');
+        console.log(
+          'Skipping live DB concurrency test (PostgreSQL not connected in current local env)',
+        );
         return;
       }
 
@@ -153,7 +155,9 @@ describe('Real & Simulated Concurrency: POS vs Online Checkout Race Elimination'
         expect(finalVariant.stockQty).toBe(0);
       } finally {
         // Cleanup test data
-        await prisma.product.delete({ where: { id: product.id } }).catch(() => {});
+        await prisma.product
+          .delete({ where: { id: product.id } })
+          .catch(() => {});
       }
     });
   });

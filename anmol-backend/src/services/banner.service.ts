@@ -56,35 +56,40 @@ export class BannerService {
     const heroBanners = [
       {
         title: 'Dussehra & Vijayadashami Festive Weaves',
-        subtitle: 'Opulent crimson red & mustard gold Banarasi silk sarees woven for celebration.',
+        subtitle:
+          'Opulent crimson red & mustard gold Banarasi silk sarees woven for celebration.',
         buttonText: 'Shop Sarees',
         imageUrl: '/banners/dussehra_festival.jpg',
         placement: 'HERO' as const,
       },
       {
         title: 'Karwa Chauth Moonlit Bridal Elegance',
-        subtitle: 'Exquisite bridal lehengas & pure silk sarees crafted for sacred rituals.',
+        subtitle:
+          'Exquisite bridal lehengas & pure silk sarees crafted for sacred rituals.',
         buttonText: 'Shop Lehengas',
         imageUrl: '/banners/karwa_chauth.jpg',
         placement: 'HERO' as const,
       },
       {
         title: 'Diwali Deepotsav: Women & Girls Royal Edit',
-        subtitle: 'Radiant designer lehengas, sequins Anarkalis & festive matching sets.',
+        subtitle:
+          'Radiant designer lehengas, sequins Anarkalis & festive matching sets.',
         buttonText: 'Shop Diwali Edit',
         imageUrl: '/banners/diwali_women_girls.jpg',
         placement: 'HERO' as const,
       },
       {
         title: 'Chhath Puja Mahaparv: Sacred Handloom Weaves',
-        subtitle: 'Auspicious turmeric yellow & vermillion red handloom pure silk sarees for Arghya.',
+        subtitle:
+          'Auspicious turmeric yellow & vermillion red handloom pure silk sarees for Arghya.',
         buttonText: 'Shop Chhath Sarees',
         imageUrl: '/banners/chhath_puja.jpg',
         placement: 'HERO' as const,
       },
       {
-        title: "Diwali Celebration: Men & Boys Royal Ethnic Wear",
-        subtitle: 'Matching royal navy blue & gold embroidered silk kurtas, Nehru jackets and sherwanis.',
+        title: 'Diwali Celebration: Men & Boys Royal Ethnic Wear',
+        subtitle:
+          'Matching royal navy blue & gold embroidered silk kurtas, Nehru jackets and sherwanis.',
         buttonText: "Shop Men's Diwali",
         imageUrl: '/banners/diwali_men_boys.jpg',
         placement: 'HERO' as const,
@@ -94,7 +99,8 @@ export class BannerService {
     const categoryBanners = [
       {
         title: 'Festive Banarasi Sarees',
-        subtitle: 'Pure mulberry silk with real gold and silver electroplated zari.',
+        subtitle:
+          'Pure mulberry silk with real gold and silver electroplated zari.',
         buttonText: 'Shop Now',
         imageUrl: '/banners/dussehra_festival.jpg',
         placement: 'CATEGORY' as const,
@@ -102,7 +108,8 @@ export class BannerService {
       },
       {
         title: 'Bridal & Party Lehengas',
-        subtitle: 'Opulent mirror work, sequins, and velvet borders for royal ceremonies.',
+        subtitle:
+          'Opulent mirror work, sequins, and velvet borders for royal ceremonies.',
         buttonText: 'Shop Now',
         imageUrl: '/banners/karwa_chauth.jpg',
         placement: 'CATEGORY' as const,
@@ -110,7 +117,8 @@ export class BannerService {
       },
       {
         title: "Men's Royal Ethnic Wear",
-        subtitle: 'Impeccable fits, celebratory hues, and heritage hand-embroidered kurtas.',
+        subtitle:
+          'Impeccable fits, celebratory hues, and heritage hand-embroidered kurtas.',
         buttonText: 'Shop Now',
         imageUrl: '/banners/diwali_men_boys.jpg',
         placement: 'CATEGORY' as const,
@@ -118,7 +126,8 @@ export class BannerService {
       },
       {
         title: 'Anarkali Sets & Suits',
-        subtitle: 'Lightweight flowy fabrics, organza dupattas, and contemporary regal drapes.',
+        subtitle:
+          'Lightweight flowy fabrics, organza dupattas, and contemporary regal drapes.',
         buttonText: 'Shop Now',
         imageUrl: '/banners/diwali_women_girls.jpg',
         placement: 'CATEGORY' as const,
@@ -126,7 +135,8 @@ export class BannerService {
       },
       {
         title: 'Chhath Puja Sacred Collection',
-        subtitle: 'Pure auspicious handloom weaves for divine sunrise offerings.',
+        subtitle:
+          'Pure auspicious handloom weaves for divine sunrise offerings.',
         buttonText: 'Shop Now',
         imageUrl: '/banners/chhath_puja.jpg',
         placement: 'CATEGORY' as const,

@@ -10,7 +10,9 @@ export class AiService {
 
   constructor() {
     this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+    this.model = this.genAI.getGenerativeModel({
+      model: 'gemini-flash-latest',
+    });
     this.groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
   }
 
@@ -40,7 +42,8 @@ export class AiService {
     } = input;
 
     try {
-      let imagePart: { inlineData: { data: string; mimeType: string } } | null = null;
+      let imagePart: { inlineData: { data: string; mimeType: string } } | null =
+        null;
 
       if (imageUrl && imageUrl.trim()) {
         try {
@@ -48,7 +51,8 @@ export class AiService {
           if (response.ok) {
             const arrayBuffer = await response.arrayBuffer();
             const buffer = Buffer.from(arrayBuffer);
-            const mimeType = response.headers.get('content-type') || 'image/jpeg';
+            const mimeType =
+              response.headers.get('content-type') || 'image/jpeg';
             imagePart = {
               inlineData: {
                 data: buffer.toString('base64'),
@@ -57,7 +61,10 @@ export class AiService {
             };
           }
         } catch (imgErr) {
-          console.warn('Failed to fetch image for AI generation, proceeding with text context:', imgErr);
+          console.warn(
+            'Failed to fetch image for AI generation, proceeding with text context:',
+            imgErr,
+          );
         }
       }
 
@@ -118,7 +125,8 @@ export class AiService {
         const cut = metaDescription.slice(0, 155).replace(/\s+\S*$/, '');
         metaDescription = (cut || metaDescription.slice(0, 155)).trim();
         if (!metaDescription.endsWith('.')) metaDescription += '.';
-        if (metaDescription.length > 160) metaDescription = metaDescription.slice(0, 160);
+        if (metaDescription.length > 160)
+          metaDescription = metaDescription.slice(0, 160);
       }
 
       return {
@@ -131,7 +139,9 @@ export class AiService {
       };
     } catch (error: any) {
       console.error('Error generating product details:', error);
-      throw new Error(error.message || 'Failed to generate product details with AI');
+      throw new Error(
+        error.message || 'Failed to generate product details with AI',
+      );
     }
   }
 
@@ -160,7 +170,11 @@ export class AiService {
       Do NOT wrap in markdown code blocks or backticks. Return raw JSON only.
     `;
 
-    const candidateModels = ['qwen/qwen3.8-27b', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
+    const candidateModels = [
+      'qwen/qwen3.8-27b',
+      'openai/gpt-oss-120b',
+      'openai/gpt-oss-20b',
+    ];
     let lastError: any = null;
 
     for (const model of candidateModels) {
@@ -192,7 +206,8 @@ export class AiService {
           const cut = metaDescription.slice(0, 155).replace(/\s+\S*$/, '');
           metaDescription = (cut || metaDescription.slice(0, 155)).trim();
           if (!metaDescription.endsWith('.')) metaDescription += '.';
-          if (metaDescription.length > 160) metaDescription = metaDescription.slice(0, 160);
+          if (metaDescription.length > 160)
+            metaDescription = metaDescription.slice(0, 160);
         }
 
         return {
@@ -201,13 +216,21 @@ export class AiService {
           metaDescription,
         };
       } catch (error: any) {
-        console.warn(`Groq model ${model} failed for category details:`, error?.message || error);
+        console.warn(
+          `Groq model ${model} failed for category details:`,
+          error?.message || error,
+        );
         lastError = error;
       }
     }
 
-    console.error('All candidate models failed for category details:', lastError);
-    throw new Error(lastError?.message || 'Failed to generate category details with AI');
+    console.error(
+      'All candidate models failed for category details:',
+      lastError,
+    );
+    throw new Error(
+      lastError?.message || 'Failed to generate category details with AI',
+    );
   }
 
   async generateDemandForecast(salesData: string) {
@@ -236,13 +259,13 @@ export class AiService {
 
       const result = await this.model.generateContent(prompt);
       const text = result.response.text();
-      
+
       const jsonMatch = text.match(/\[[\s\S]*\]/);
       if (!jsonMatch) {
         console.error('Failed to find JSON array in AI response:', text);
         throw new Error('AI did not return valid JSON');
       }
-      
+
       return JSON.parse(jsonMatch[0]);
     } catch (error) {
       console.error('Error generating demand forecast:', error);
@@ -284,12 +307,16 @@ export class AiService {
       return text.trim();
     } catch (error) {
       console.error('Error generating retargeting message:', error);
-      return "Hi there! We miss you at Anmol Vastralay. Use code COMEBACK15 for 15% off your next purchase! 🛍️";
+      return 'Hi there! We miss you at Anmol Vastralay. Use code COMEBACK15 for 15% off your next purchase! 🛍️';
     }
   }
 
   async polishCampaignMessage(draftMessage: string) {
-    const candidateModels = ['qwen/qwen3.8-27b', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
+    const candidateModels = [
+      'qwen/qwen3.8-27b',
+      'openai/gpt-oss-120b',
+      'openai/gpt-oss-20b',
+    ];
     for (const model of candidateModels) {
       try {
         const completion = await this.groq.chat.completions.create({
@@ -311,7 +338,10 @@ export class AiService {
         const content = completion.choices[0]?.message?.content?.trim();
         if (content) return content;
       } catch (error: any) {
-        console.warn(`Groq model ${model} failed for campaign polish:`, error?.message || error);
+        console.warn(
+          `Groq model ${model} failed for campaign polish:`,
+          error?.message || error,
+        );
       }
     }
     return draftMessage; // fallback to original if API fails

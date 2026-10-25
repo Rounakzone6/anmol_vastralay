@@ -85,7 +85,7 @@ export const categoryRouter = router({
     .input(z.object({ name: z.string(), description: z.string() }))
     .mutation(async ({ ctx, input }) => {
       // Need to inject aiService via services, but wait, is it in ctx.services?
-      // Let's check trpc.config.ts if AiService is exposed. 
+      // Let's check trpc.config.ts if AiService is exposed.
       // If not, we might need to add it or it might already be there (it is used in product.router.ts).
       return ctx.services.ai.generateCategoryDetails(input);
     }),

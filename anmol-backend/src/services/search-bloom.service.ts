@@ -17,7 +17,10 @@ export class SearchBloomService implements OnModuleInit {
   async onModuleInit() {
     // Build index in background without blocking server startup
     this.rebuildIndex().catch((err) => {
-      this.logger.error(`Failed to initialize Search Bloom Filter: ${err.message}`, err.stack);
+      this.logger.error(
+        `Failed to initialize Search Bloom Filter: ${err.message}`,
+        err.stack,
+      );
     });
   }
 
@@ -30,12 +33,13 @@ export class SearchBloomService implements OnModuleInit {
     }
     this.rebuildTimeout = setTimeout(() => {
       this.rebuildIndex().catch((err) => {
-        this.logger.error(`Debounced Search Bloom Filter rebuild failed: ${err.message}`);
+        this.logger.error(
+          `Debounced Search Bloom Filter rebuild failed: ${err.message}`,
+        );
       });
       this.rebuildTimeout = null;
     }, delayMs);
   }
-
 
   /**
    * Tokenize text into words and add both full words and their prefixes (>= 2 chars)
@@ -107,7 +111,10 @@ export class SearchBloomService implements OnModuleInit {
     }
   }
 
-  private addTextTokensToFilter(targetFilter: BloomFilter, text?: string | null): void {
+  private addTextTokensToFilter(
+    targetFilter: BloomFilter,
+    text?: string | null,
+  ): void {
     if (!text) return;
     const words = text
       .toLowerCase()
@@ -125,7 +132,11 @@ export class SearchBloomService implements OnModuleInit {
   /**
    * Incrementally index a single product without full rebuild
    */
-  public indexProduct(name: string, categoryName?: string, brand?: string): void {
+  public indexProduct(
+    name: string,
+    categoryName?: string,
+    brand?: string,
+  ): void {
     this.addTextTokens(name);
     this.addTextTokens(categoryName);
     this.addTextTokens(brand);

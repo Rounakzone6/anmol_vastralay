@@ -49,7 +49,9 @@ export class NotificationProcessor extends WorkerHost {
       const maxAttempts = job.opts.attempts || 5;
       if (job.attemptsMade >= maxAttempts - 1) {
         // All retries exhausted! Mark order for manual assignment
-        await this.deliveryAssignmentService.handleExhaustedRetries(job.data.orderId);
+        await this.deliveryAssignmentService.handleExhaustedRetries(
+          job.data.orderId,
+        );
       }
       throw new Error(
         `Driver assignment retry for order ${job.data.orderId}: no available driver found yet (attempt ${job.attemptsMade + 1}/${maxAttempts}).`,
@@ -57,14 +59,16 @@ export class NotificationProcessor extends WorkerHost {
     }
   }
 
-
   private async handleOrderEmail(data: { orderId: string }) {
     const { orderId } = data;
     try {
       await this.invoiceService.emailOrderInvoice(orderId);
       this.logger.log(`✅ Order ${orderId}: Invoice email sent`);
     } catch (error) {
-      this.logger.error(`❌ Order ${orderId}: Failed to send invoice email`, error);
+      this.logger.error(
+        `❌ Order ${orderId}: Failed to send invoice email`,
+        error,
+      );
       throw error;
     }
   }
@@ -80,7 +84,9 @@ export class NotificationProcessor extends WorkerHost {
       let phone = data.phone;
       if (!phone) {
         // Fallback to address phone if user profile doesn't have it
-        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        const user = await this.prisma.user.findUnique({
+          where: { id: userId },
+        });
         phone = user?.phone;
         if (!phone) {
           const address = await this.prisma.address.findFirst({
@@ -93,44 +99,66 @@ export class NotificationProcessor extends WorkerHost {
 
       if (phone) {
         // Ensure invoice PDF is ready for WhatsApp
-        const invoice = await this.invoiceService.generateInvoice(undefined, orderId);
-        
+        const invoice = await this.invoiceService.generateInvoice(
+          undefined,
+          orderId,
+        );
+
         const message = `🛍️ *Order Confirmed!* 🛍️\n\nThank you for shopping at Anmol Vastralay!\nYour order *#${orderId.slice(-8).toUpperCase()}* for ₹${amount} has been placed successfully.\n\nAttached is your invoice. 🧾`;
-        
+
         await this.whatsappWebService.sendDocument(
           phone,
           { url: invoice.invoiceUrl },
           `${invoice.invoiceNumber}.pdf`,
-          message
+          message,
         );
-        this.logger.log(`✅ Order ${orderId}: WhatsApp confirmation sent to ${phone}`);
+        this.logger.log(
+          `✅ Order ${orderId}: WhatsApp confirmation sent to ${phone}`,
+        );
       } else {
-        this.logger.warn(`⚠️ Order ${orderId}: No phone number found for WhatsApp confirmation`);
+        this.logger.warn(
+          `⚠️ Order ${orderId}: No phone number found for WhatsApp confirmation`,
+        );
       }
     } catch (error) {
-      this.logger.error(`❌ Order ${orderId}: Failed to send WA confirmation`, error);
+      this.logger.error(
+        `❌ Order ${orderId}: Failed to send WA confirmation`,
+        error,
+      );
       throw error;
     }
   }
 
-  private async handleMarketingMessage(data: { phone: string; message: string }) {
+  private async handleMarketingMessage(data: {
+    phone: string;
+    message: string;
+  }) {
     try {
       await this.whatsappWebService.sendMessage(data.phone, data.message);
       this.logger.log(`✅ Sent marketing message to ${data.phone}`);
     } catch (error) {
-      this.logger.error(`❌ Failed to send marketing message to ${data.phone}`, error);
+      this.logger.error(
+        `❌ Failed to send marketing message to ${data.phone}`,
+        error,
+      );
       throw error;
     }
   }
 
-  private async handleAbandonedCartWhatsApp(data: { userId: string; phone: string }) {
+  private async handleAbandonedCartWhatsApp(data: {
+    userId: string;
+    phone: string;
+  }) {
     try {
       const message = `👋 Hi there!\n\nWe noticed you left some beautiful items in your Anmol Vastralay cart. 🛍️\n\nCheckout now before they go out of stock! Here is a 5% discount code just for you: *COMEBACK5*\n\n🛒 Tap here to continue shopping: ${process.env.FRONTEND_URL}/cart`;
-      
+
       await this.whatsappWebService.sendMessage(data.phone, message);
       this.logger.log(`✅ Sent abandoned cart reminder to ${data.phone}`);
     } catch (error) {
-      this.logger.error(`❌ Failed to send abandoned cart reminder to ${data.phone}`, error);
+      this.logger.error(
+        `❌ Failed to send abandoned cart reminder to ${data.phone}`,
+        error,
+      );
       throw error;
     }
   }

@@ -35,7 +35,12 @@ export class ProductQueries {
     const canIncludeInactive = Boolean(isStaff && input?.includeInactive);
 
     // 0. Bloom Filter Fast Path: If search term is definitely not present, skip DB completely
-    if (!canIncludeInactive && input?.search && input.search.trim().length >= 2 && this.bloomFilter) {
+    if (
+      !canIncludeInactive &&
+      input?.search &&
+      input.search.trim().length >= 2 &&
+      this.bloomFilter
+    ) {
       const mightMatch = this.bloomFilter.mightMatchQuery(input.search);
       if (!mightMatch) {
         return {
@@ -68,12 +73,28 @@ export class ProductQueries {
       ...(input?.search
         ? {
             OR: [
-              { name: { contains: input.search, mode: 'insensitive' as const } },
-              { description: { contains: input.search, mode: 'insensitive' as const } },
-              { brand: { contains: input.search, mode: 'insensitive' as const } },
-              { category: { name: { contains: input.search, mode: 'insensitive' as const } } },
-              { variants: { some: { sku: { equals: input.search } } } }
-            ]
+              {
+                name: { contains: input.search, mode: 'insensitive' as const },
+              },
+              {
+                description: {
+                  contains: input.search,
+                  mode: 'insensitive' as const,
+                },
+              },
+              {
+                brand: { contains: input.search, mode: 'insensitive' as const },
+              },
+              {
+                category: {
+                  name: {
+                    contains: input.search,
+                    mode: 'insensitive' as const,
+                  },
+                },
+              },
+              { variants: { some: { sku: { equals: input.search } } } },
+            ],
           }
         : {}),
     };
@@ -144,10 +165,10 @@ export class ProductQueries {
       where: { stockQty: { lte: 0 } },
       include: {
         product: {
-          select: { name: true, slug: true, isActive: true }
-        }
+          select: { name: true, slug: true, isActive: true },
+        },
       },
-      orderBy: { updatedAt: 'desc' }
+      orderBy: { updatedAt: 'desc' },
     });
     return variants;
   }
@@ -155,9 +176,15 @@ export class ProductQueries {
   async getRecommendations(productId: string) {
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
-      select: { id: true, categoryId: true, subcategoryId: true, name: true, description: true }
+      select: {
+        id: true,
+        categoryId: true,
+        subcategoryId: true,
+        name: true,
+        description: true,
+      },
     });
-    
+
     if (!product) notFound('Product');
 
     // 1. Fetch products in the same category, excluding current product
@@ -172,26 +199,38 @@ export class ProductQueries {
     });
 
     // 2. Simple Content-Based Scoring using keyword overlap
-    const getKeywords = (text: string) => (text || '').toLowerCase().split(/\\W+/).filter(w => w.length > 3);
-    const sourceKeywords = new Set([...getKeywords(product.name), ...getKeywords(product.description || '')]);
+    const getKeywords = (text: string) =>
+      (text || '')
+        .toLowerCase()
+        .split(/\\W+/)
+        .filter((w) => w.length > 3);
+    const sourceKeywords = new Set([
+      ...getKeywords(product.name),
+      ...getKeywords(product.description || ''),
+    ]);
 
-    const scoredProducts = similarProducts.map(p => {
-      const pKeywords = [...getKeywords(p.name), ...getKeywords(p.description || '')];
+    const scoredProducts = similarProducts.map((p) => {
+      const pKeywords = [
+        ...getKeywords(p.name),
+        ...getKeywords(p.description || ''),
+      ];
       let score = 0;
-      pKeywords.forEach(kw => {
+      pKeywords.forEach((kw) => {
         if (sourceKeywords.has(kw)) score += 1;
       });
       // Boost score if same subcategory
       if (p.subcategoryId === product.subcategoryId) score += 5;
-      
+
       return { product: p, score };
     });
 
     // Sort by score descending, take top 4
     scoredProducts.sort((a, b) => b.score - a.score);
-    
-    const recommendations = scoredProducts.slice(0, 4).map(sp => mapProduct(sp.product));
-    
+
+    const recommendations = scoredProducts
+      .slice(0, 4)
+      .map((sp) => mapProduct(sp.product));
+
     return recommendations;
   }
 
@@ -233,7 +272,11 @@ export class ProductQueries {
           isActive: true,
           OR: [
             { name: { contains: trimmed, mode: 'insensitive' as const } },
-            { category: { name: { contains: trimmed, mode: 'insensitive' as const } } },
+            {
+              category: {
+                name: { contains: trimmed, mode: 'insensitive' as const },
+              },
+            },
             { brand: { contains: trimmed, mode: 'insensitive' as const } },
           ],
         },
@@ -319,4 +362,3 @@ export class ProductQueries {
     };
   }
 }
-

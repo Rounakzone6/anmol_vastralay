@@ -183,7 +183,9 @@ export const posRouter = router({
       // Step A: Idempotency Check (Prevents double-click duplicate sales)
       if (input.idempotencyKey) {
         try {
-          const cached = await redis.get(`pos:idempotency:${input.idempotencyKey}`);
+          const cached = await redis.get(
+            `pos:idempotency:${input.idempotencyKey}`,
+          );
           if (cached) {
             return JSON.parse(cached);
           }
@@ -191,7 +193,9 @@ export const posRouter = router({
       }
 
       // Step B: Server-Side Price Verification (NEVER trust prices from browser)
-      const productIds = Array.from(new Set(input.items.map((it) => it.productId)));
+      const productIds = Array.from(
+        new Set(input.items.map((it) => it.productId)),
+      );
       const products = await ctx.prisma.product.findMany({
         where: { id: { in: productIds } },
         select: { id: true, netPrice: true, name: true },
@@ -218,7 +222,8 @@ export const posRouter = router({
       });
 
       // Step C: Cashier Discount Capping (Max 25% allowed at register without manager code)
-      const maxAllowedDiscount = Math.round(((subtotal * 25) / 100) * 100) / 100;
+      const maxAllowedDiscount =
+        Math.round(((subtotal * 25) / 100) * 100) / 100;
       if (input.discountAmount > maxAllowedDiscount) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
@@ -238,7 +243,8 @@ export const posRouter = router({
         if (!input.splitPayments || input.splitPayments.length === 0) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
-            message: 'Split payments breakdown is required for SPLIT payment method',
+            message:
+              'Split payments breakdown is required for SPLIT payment method',
           });
         }
         const splitSum = input.splitPayments.reduce((s, p) => s + p.amount, 0);
@@ -249,7 +255,10 @@ export const posRouter = router({
           });
         }
       } else if (input.paymentMethod === 'CASH') {
-        if (input.cashTendered !== undefined && input.cashTendered < totalAmount) {
+        if (
+          input.cashTendered !== undefined &&
+          input.cashTendered < totalAmount
+        ) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
             message: `Cash tendered (₹${input.cashTendered.toFixed(2)}) cannot be less than grand total (₹${totalAmount.toFixed(2)})`,
@@ -305,7 +314,9 @@ export const posRouter = router({
         if (cleanPhone) {
           const customer = await tx.user.upsert({
             where: { phone: cleanPhone },
-            update: input.customerName ? { name: input.customerName.trim() } : {},
+            update: input.customerName
+              ? { name: input.customerName.trim() }
+              : {},
             create: {
               phone: cleanPhone,
               name: input.customerName?.trim() || 'Valued Customer',
@@ -424,7 +435,7 @@ export const posRouter = router({
         const itemRows = createdOrder.items
           .map(
             (it, idx) =>
-              `${idx + 1}. *${it.product.name}* ${(it.variant?.color || '')} ${(it.variant?.size || '')}\n   Qty: ${it.quantity} × ₹${Number(it.price).toLocaleString('en-IN')} = ₹${(it.quantity * Number(it.price)).toLocaleString('en-IN')}`,
+              `${idx + 1}. *${it.product.name}* ${it.variant?.color || ''} ${it.variant?.size || ''}\n   Qty: ${it.quantity} × ₹${Number(it.price).toLocaleString('en-IN')} = ₹${(it.quantity * Number(it.price)).toLocaleString('en-IN')}`,
           )
           .join('\n');
 
@@ -493,7 +504,9 @@ export const posRouter = router({
   // ─── 4. Recent Bills for Register View & Reprint ───────────────────────────
   getRecentBills: staffProcedure
     .input(
-      z.object({ limit: z.number().int().min(1).max(50).default(15) }).optional(),
+      z
+        .object({ limit: z.number().int().min(1).max(50).default(15) })
+        .optional(),
     )
     .query(async ({ ctx, input }) => {
       const limit = input?.limit ?? 15;
@@ -584,7 +597,9 @@ export const posRouter = router({
         },
         items: order.items.map((i) => ({
           name: i.product.name,
-          variant: i.variant ? `${i.variant.color} ${i.variant.size || ''}`.trim() : '',
+          variant: i.variant
+            ? `${i.variant.color} ${i.variant.size || ''}`.trim()
+            : '',
           sku: i.variant?.sku || i.productId.slice(-6).toUpperCase(),
           quantity: i.quantity,
           unitPrice: Number(i.price),

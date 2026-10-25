@@ -1,9 +1,9 @@
 /**
  * High-performance, memory-efficient Bloom Filter implementation.
- * 
+ *
  * Uses Kirsch-Mitzenmacher optimization (double hashing) with 32-bit modular
  * stepping to generate k independent, uniformly distributed bit positions across m bits.
- * 
+ *
  * Mathematical properties:
  * - Zero False Negatives: If has(key) is false, the key is 100% GUARANTEED not in the set.
  * - Measured False Positives: Accurately targets p <= 0.01 (1%).
@@ -16,7 +16,9 @@ export class BloomFilter {
 
   constructor(expectedItems: number = 20000, falsePositiveRate: number = 0.01) {
     // Optimal bit size: m = - (n * ln(p)) / (ln(2)^2)
-    const m = Math.ceil(- (expectedItems * Math.log(falsePositiveRate)) / (Math.LN2 * Math.LN2));
+    const m = Math.ceil(
+      -(expectedItems * Math.log(falsePositiveRate)) / (Math.LN2 * Math.LN2),
+    );
     this.size = Math.max(m, 1024);
 
     // Optimal hash count: k = (m / n) * ln(2)
@@ -63,7 +65,7 @@ export class BloomFilter {
       const bitIndex = (combined >>> 0) % this.size;
       const byteIndex = (bitIndex / 8) | 0;
       const bitOffset = bitIndex % 8;
-      this.bitArray[byteIndex] |= (1 << bitOffset);
+      this.bitArray[byteIndex] |= 1 << bitOffset;
       combined = (combined + h2) >>> 0;
     }
     this.count++;

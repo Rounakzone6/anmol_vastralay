@@ -150,8 +150,10 @@ async function bootstrap() {
     rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 500, // limit each IP to 500 requests per windowMs
-      message: { message: 'Too many requests from this IP, please try again later.' },
-    })
+      message: {
+        message: 'Too many requests from this IP, please try again later.',
+      },
+    }),
   );
 
   app.enableCors({
@@ -175,7 +177,9 @@ async function bootstrap() {
       if (!origin || allowedOrigins.includes(origin) || isVercelPreview) {
         callback(null, true);
       } else {
-        callback(new Error(`CORS policy blocked access from origin: ${origin}`));
+        callback(
+          new Error(`CORS policy blocked access from origin: ${origin}`),
+        );
       }
     },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -212,7 +216,9 @@ async function bootstrap() {
       res.set('Content-Type', metricsService.getContentType());
       res.end(await metricsService.getMetrics());
     } catch (err: any) {
-      res.status(500).end(err?.message || 'Failed to collect Prometheus metrics');
+      res
+        .status(500)
+        .end(err?.message || 'Failed to collect Prometheus metrics');
     }
   });
 

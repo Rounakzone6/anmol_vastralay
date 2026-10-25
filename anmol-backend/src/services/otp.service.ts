@@ -65,8 +65,7 @@ export class OtpService {
     const port = this.config.get<number>('SMTP_PORT') || 587;
     const user = this.config.get<string>('SMTP_USER');
     const pass = this.config.get<string>('SMTP_PASS');
-    const smtpFrom =
-      this.config.get<string>('SMTP_FROM_EMAIL') || user || '';
+    const smtpFrom = this.config.get<string>('SMTP_FROM_EMAIL') || user || '';
     this.smtpFromEmail = smtpFrom.includes('<')
       ? smtpFrom
       : `"Anmol Vastralay" <${smtpFrom}>`;
@@ -111,7 +110,9 @@ export class OtpService {
       this.logger.log(`SMS OTP sent successfully to ${phone}`);
       return true;
     } catch (err: any) {
-      this.logger.error(`Failed to send SMS to ${phone}: ${err?.message || err}`);
+      this.logger.error(
+        `Failed to send SMS to ${phone}: ${err?.message || err}`,
+      );
       return false;
     }
   }
@@ -142,7 +143,8 @@ export class OtpService {
     `;
 
     const isResendSandbox = this.resendFromEmail.includes('resend.dev');
-    const isOwnerEmail = email.toLowerCase() === 'anmolvastralayofficial@gmail.com';
+    const isOwnerEmail =
+      email.toLowerCase() === 'anmolvastralayofficial@gmail.com';
 
     // 1. If SMTP is configured and Resend is only in test/sandbox mode for non-owner recipients, use SMTP directly
     if (this.smtpTransport && isResendSandbox && !isOwnerEmail) {
@@ -156,7 +158,10 @@ export class OtpService {
         this.logger.log(`SMTP OTP email sent to ${email}`);
         return true;
       } catch (err: any) {
-        this.logger.error(`Failed to send SMTP email to ${email}:`, err?.message || err);
+        this.logger.error(
+          `Failed to send SMTP email to ${email}:`,
+          err?.message || err,
+        );
       }
     }
 
@@ -171,13 +176,20 @@ export class OtpService {
         });
 
         if (error) {
-          this.logger.error(`Resend OTP send error for ${email}: ${error.message}`);
+          this.logger.error(
+            `Resend OTP send error for ${email}: ${error.message}`,
+          );
         } else {
-          this.logger.log(`Resend OTP email sent to ${email} (id: ${data?.id})`);
+          this.logger.log(
+            `Resend OTP email sent to ${email} (id: ${data?.id})`,
+          );
           return true;
         }
       } catch (err: any) {
-        this.logger.error(`Failed to send Resend OTP to ${email}:`, err?.message || err);
+        this.logger.error(
+          `Failed to send Resend OTP to ${email}:`,
+          err?.message || err,
+        );
       }
     }
 
@@ -193,7 +205,10 @@ export class OtpService {
         this.logger.log(`SMTP OTP email sent to ${email} (fallback)`);
         return true;
       } catch (err: any) {
-        this.logger.error(`Failed to send SMTP fallback email to ${email}:`, err?.message || err);
+        this.logger.error(
+          `Failed to send SMTP fallback email to ${email}:`,
+          err?.message || err,
+        );
       }
     }
 

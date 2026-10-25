@@ -37,14 +37,17 @@ export class IdempotencyService {
         if (existingData) {
           const parsed = JSON.parse(existingData);
           if (parsed.status === 'COMPLETED') {
-            this.logger.log(`Idempotency replay: Returning cached result for "${key}"`);
+            this.logger.log(
+              `Idempotency replay: Returning cached result for "${key}"`,
+            );
             return parsed.result as T;
           }
         }
 
         throw new TRPCError({
           code: 'CONFLICT',
-          message: 'A concurrent request with the same idempotency key is already processing. Please wait.',
+          message:
+            'A concurrent request with the same idempotency key is already processing. Please wait.',
         });
       }
 
@@ -69,7 +72,9 @@ export class IdempotencyService {
       try {
         await redis.del(fullKey);
       } catch (cleanupErr: any) {
-        this.logger.debug(`Failed to clean idempotency key "${fullKey}": ${cleanupErr?.message}`);
+        this.logger.debug(
+          `Failed to clean idempotency key "${fullKey}": ${cleanupErr?.message}`,
+        );
       }
 
       throw err;

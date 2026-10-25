@@ -320,7 +320,7 @@ export class ProductMutations {
           }
         }
       }
-      
+
       await this.prisma.product.delete({ where: { id: input.id } });
       await this.invalidateCache();
       return { success: true };

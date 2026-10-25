@@ -15,12 +15,16 @@ export class DeliveryAssignmentService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    this.logger.log('DeliveryAssignmentService initialized with atomic driver/order claims & BullMQ retry');
+    this.logger.log(
+      'DeliveryAssignmentService initialized with atomic driver/order claims & BullMQ retry',
+    );
   }
 
   @OnEvent('order.processing', { async: true })
   async handleOrderProcessingEvent(payload: { orderId: string }) {
-    this.logger.log(`Received order.processing event for order ${payload.orderId}`);
+    this.logger.log(
+      `Received order.processing event for order ${payload.orderId}`,
+    );
     await this.assignDriverToOrder(payload.orderId, false);
   }
 
@@ -29,7 +33,10 @@ export class DeliveryAssignmentService implements OnModuleInit {
    * Uses double-guarded updates on both driver and order sides to prevent two drivers from being
    * assigned to the same order, and two orders from claiming the same driver.
    */
-  async assignDriverToOrder(orderId: string, isFromQueue: boolean = false): Promise<boolean> {
+  async assignDriverToOrder(
+    orderId: string,
+    isFromQueue: boolean = false,
+  ): Promise<boolean> {
     try {
       // 1. Check if order is already assigned
       const existingOrder = await this.prisma.order.findUnique({
@@ -43,7 +50,9 @@ export class DeliveryAssignmentService implements OnModuleInit {
       }
 
       if (existingOrder.deliveryPersonId) {
-        this.logger.log(`Order ${orderId} is already assigned to driver ${existingOrder.deliveryPersonId}`);
+        this.logger.log(
+          `Order ${orderId} is already assigned to driver ${existingOrder.deliveryPersonId}`,
+        );
         return true;
       }
 
@@ -55,7 +64,9 @@ export class DeliveryAssignmentService implements OnModuleInit {
       });
 
       if (availableCandidates.length === 0) {
-        this.logger.warn(`No delivery personnel currently available for order ${orderId}.`);
+        this.logger.warn(
+          `No delivery personnel currently available for order ${orderId}.`,
+        );
         if (!isFromQueue) {
           // Initial trigger: enqueue once into BullMQ with stable jobId: assign-<orderId>
           await this.notificationQueue.enqueueDeliveryAssignment({ orderId });
@@ -64,7 +75,8 @@ export class DeliveryAssignmentService implements OnModuleInit {
       }
 
       // 3. Atomically attempt to claim the driver AND assign order inside a single transaction
-      let claimedPerson: { id: string; name: string; phone: string } | null = null;
+      let claimedPerson: { id: string; name: string; phone: string } | null =
+        null;
       let updatedOrder: any = null;
 
       for (const candidate of availableCandidates) {
@@ -110,26 +122,36 @@ export class DeliveryAssignmentService implements OnModuleInit {
           }
         } catch (txError: any) {
           if (txError.message === 'ORDER_ALREADY_ASSIGNED_OR_CANCELLED') {
-            this.logger.log(`Order ${orderId} was already assigned by concurrent worker`);
+            this.logger.log(
+              `Order ${orderId} was already assigned by concurrent worker`,
+            );
             return true;
           }
-          this.logger.warn(`Transaction retry on candidate ${candidate.id}: ${txError.message}`);
+          this.logger.warn(
+            `Transaction retry on candidate ${candidate.id}: ${txError.message}`,
+          );
         }
       }
 
       if (!claimedPerson || !updatedOrder) {
-        this.logger.warn(`All candidate drivers claimed concurrently for order ${orderId}.`);
+        this.logger.warn(
+          `All candidate drivers claimed concurrently for order ${orderId}.`,
+        );
         if (!isFromQueue) {
           await this.notificationQueue.enqueueDeliveryAssignment({ orderId });
         }
         return false;
       }
 
-      this.logger.log(`✅ Atomically assigned delivery person ${claimedPerson.name} (${claimedPerson.id}) to order ${orderId}`);
+      this.logger.log(
+        `✅ Atomically assigned delivery person ${claimedPerson.name} (${claimedPerson.id}) to order ${orderId}`,
+      );
 
       // 4. Send WhatsApp Notification to assigned driver
-      const paymentMethod = updatedOrder.payments?.[0]?.paymentMethod || 'Online/Prepaid';
-      const isCOD = paymentMethod === 'COD' ? 'COD (Cash on Delivery)' : paymentMethod;
+      const paymentMethod =
+        updatedOrder.payments?.[0]?.paymentMethod || 'Online/Prepaid';
+      const isCOD =
+        paymentMethod === 'COD' ? 'COD (Cash on Delivery)' : paymentMethod;
 
       let fallbackPhone: string | null | undefined = null;
       if (!updatedOrder.user?.phone) {
@@ -140,18 +162,26 @@ export class DeliveryAssignmentService implements OnModuleInit {
         fallbackPhone = address?.phone;
       }
 
-      const customerPhone = updatedOrder.user?.phone || fallbackPhone || 'Not Provided';
+      const customerPhone =
+        updatedOrder.user?.phone || fallbackPhone || 'Not Provided';
       const customerName = updatedOrder.user?.name || 'Customer';
 
       const message = `🚨 *NEW DELIVERY ASSIGNED* 🚨\n\n*Order ID:* #${updatedOrder.id.slice(-6).toUpperCase()}\n*Payment:* ${isCOD} - ₹${updatedOrder.totalAmount.toString()}\n*Customer:* ${customerName}\n*Contact:* ${customerPhone}\n\n*Delivery Address:*\n${updatedOrder.shippingAddress}\n\nPlease ensure timely delivery! 📦`;
 
-      this.whatsappWeb.sendMessage(claimedPerson.phone, message).catch((err) => {
-        this.logger.warn(`Could not dispatch WhatsApp to driver ${claimedPerson?.phone}: ${err.message}`);
-      });
+      this.whatsappWeb
+        .sendMessage(claimedPerson.phone, message)
+        .catch((err) => {
+          this.logger.warn(
+            `Could not dispatch WhatsApp to driver ${claimedPerson?.phone}: ${err.message}`,
+          );
+        });
 
       return true;
     } catch (error: any) {
-      this.logger.error(`Error in atomic driver assignment for order ${orderId}:`, error);
+      this.logger.error(
+        `Error in atomic driver assignment for order ${orderId}:`,
+        error,
+      );
       if (!isFromQueue) {
         await this.notificationQueue.enqueueDeliveryAssignment({ orderId });
       }
@@ -165,7 +195,9 @@ export class DeliveryAssignmentService implements OnModuleInit {
    */
   async handleExhaustedRetries(orderId: string): Promise<void> {
     try {
-      this.logger.error(`🚨 ALERT: All 5 delivery dispatch attempts failed for Order ${orderId}. Marking for manual dispatcher assignment.`);
+      this.logger.error(
+        `🚨 ALERT: All 5 delivery dispatch attempts failed for Order ${orderId}. Marking for manual dispatcher assignment.`,
+      );
       await this.prisma.orderStatusHistory.create({
         data: {
           orderId,
@@ -174,7 +206,9 @@ export class DeliveryAssignmentService implements OnModuleInit {
         },
       });
     } catch (err: any) {
-      this.logger.error(`Failed to record exhausted retry status for order ${orderId}: ${err.message}`);
+      this.logger.error(
+        `Failed to record exhausted retry status for order ${orderId}: ${err.message}`,
+      );
     }
   }
 
@@ -185,7 +219,9 @@ export class DeliveryAssignmentService implements OnModuleInit {
   @OnEvent('order.cancelled', { async: true })
   @OnEvent('order.returned', { async: true })
   async handleOrderLifecycleEvent(payload: { orderId: string }) {
-    this.logger.log(`Received lifecycle event for order ${payload.orderId}. Releasing driver if assigned.`);
+    this.logger.log(
+      `Received lifecycle event for order ${payload.orderId}. Releasing driver if assigned.`,
+    );
     try {
       const order = await this.prisma.order.findUnique({
         where: { id: payload.orderId },
@@ -197,10 +233,15 @@ export class DeliveryAssignmentService implements OnModuleInit {
           where: { id: order.deliveryPersonId },
           data: { status: 'AVAILABLE' },
         });
-        this.logger.log(`✅ Released delivery person ${order.deliveryPersonId} back to AVAILABLE`);
+        this.logger.log(
+          `✅ Released delivery person ${order.deliveryPersonId} back to AVAILABLE`,
+        );
       }
     } catch (error) {
-      this.logger.error(`Error freeing delivery person for order ${payload.orderId}:`, error);
+      this.logger.error(
+        `Error freeing delivery person for order ${payload.orderId}:`,
+        error,
+      );
     }
   }
 }

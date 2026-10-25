@@ -38,7 +38,7 @@ export const userRouter = router({
       z.object({
         segment: z.enum(['ALL', 'VIP', 'DORMANT', 'REGULAR', 'NEW']),
         message: z.string().min(5),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       return ctx.services.user.sendMarketingCampaign(input);

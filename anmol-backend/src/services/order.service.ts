@@ -47,7 +47,9 @@ export class OrderService {
     const idempotencyKey = input.idempotencyKey?.trim();
     if (idempotencyKey) {
       try {
-        const cached = await redis.get(`order:idempotency:${userId}:${idempotencyKey}`);
+        const cached = await redis.get(
+          `order:idempotency:${userId}:${idempotencyKey}`,
+        );
         if (cached) {
           return JSON.parse(cached);
         }
@@ -78,7 +80,10 @@ export class OrderService {
       }
 
       // Canonical server-side selling price calculation honoring discountPercent
-      const price = computeItemSellingPrice(item.product.netPrice, item.product.discountPercent);
+      const price = computeItemSellingPrice(
+        item.product.netPrice,
+        item.product.discountPercent,
+      );
       totalAmount += price * item.quantity;
     }
 
@@ -114,7 +119,7 @@ export class OrderService {
     const isMember = Boolean(
       user?.isMember &&
       user.membershipExpiresAt &&
-      user.membershipExpiresAt > new Date()
+      user.membershipExpiresAt > new Date(),
     );
 
     let deliveryFee = 0;
@@ -141,7 +146,10 @@ export class OrderService {
               productId: item.productId,
               variantId: item.variantId,
               quantity: item.quantity,
-              price: computeItemSellingPrice(item.product.netPrice, item.product.discountPercent),
+              price: computeItemSellingPrice(
+                item.product.netPrice,
+                item.product.discountPercent,
+              ),
             })),
           },
           statusHistory: {
@@ -207,14 +215,17 @@ export class OrderService {
           data: { transactionId: razorpayOrderId },
         });
       } catch (err: any) {
-        this.logger.error(`Razorpay order creation failed for order ${createdOrder.id}: ${err?.message || err}`);
+        this.logger.error(
+          `Razorpay order creation failed for order ${createdOrder.id}: ${err?.message || err}`,
+        );
         await this.prisma.order.update({
           where: { id: createdOrder.id },
           data: { status: 'CANCELLED' },
         });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Unable to initiate payment with payment gateway. Please try again.',
+          message:
+            'Unable to initiate payment with payment gateway. Please try again.',
         });
       }
     }
@@ -229,13 +240,18 @@ export class OrderService {
     // Save result to idempotency cache (TTL: 5 minutes)
     if (idempotencyKey) {
       try {
-        await redis.set(`order:idempotency:${userId}:${idempotencyKey}`, JSON.stringify(result), 'EX', 300);
+        await redis.set(
+          `order:idempotency:${userId}:${idempotencyKey}`,
+          JSON.stringify(result),
+          'EX',
+          300,
+        );
       } catch {}
     }
 
     // 5. Clear cart in Redis
     await this.cartService.clearCart(userId);
-    
+
     // Emit event if order status is PROCESSING
     if (input.paymentMethod === 'COD') {
       this.eventEmitter.emit('order.processing', { orderId: result.orderId });
@@ -244,7 +260,7 @@ export class OrderService {
     // 6. Handle post-order confirmations asynchronously via BullMQ
     if (input.paymentMethod === 'COD') {
       const user = await this.prisma.user.findUnique({ where: { id: userId } });
-      
+
       await this.notificationQueue.enqueueOrderEmail({
         orderId: result.orderId,
       });
@@ -407,17 +423,21 @@ export class OrderService {
   }
 
   // After the transaction completes, emit events based on the new status
-  async adminUpdateOrderStatusWithEvents(input: z.infer<typeof UpdateOrderStatusSchema>) {
+  async adminUpdateOrderStatusWithEvents(
+    input: z.infer<typeof UpdateOrderStatusSchema>,
+  ) {
     const order = await this.adminUpdateOrderStatus(input);
-    
+
     if (!order) return order;
 
     if (input.status === 'PROCESSING') {
       this.eventEmitter.emit('order.processing', { orderId: order.id });
-    } else if (['DELIVERED', 'CANCELLED', 'RETURNED', 'REPLACED'].includes(input.status)) {
+    } else if (
+      ['DELIVERED', 'CANCELLED', 'RETURNED', 'REPLACED'].includes(input.status)
+    ) {
       this.eventEmitter.emit('order.completed', { orderId: order.id });
     }
-    
+
     return order;
   }
 

@@ -139,9 +139,11 @@ export class PaymentService {
 
       return tx.payment.findUniqueOrThrow({ where: { id: payment.id } });
     });
-    this.invoiceService.emailOrderInvoice(payment.orderId).catch((error) =>
-      console.error('Failed to send paid order invoice email', error),
-    );
+    this.invoiceService
+      .emailOrderInvoice(payment.orderId)
+      .catch((error) =>
+        console.error('Failed to send paid order invoice email', error),
+      );
     return result;
   }
 }

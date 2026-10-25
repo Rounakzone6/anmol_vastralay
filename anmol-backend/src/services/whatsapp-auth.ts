@@ -1,7 +1,15 @@
-import { initAuthCreds, BufferJSON, AuthenticationState, SignalDataTypeMap, proto } from '@whiskeysockets/baileys';
+import {
+  initAuthCreds,
+  BufferJSON,
+  AuthenticationState,
+  SignalDataTypeMap,
+  proto,
+} from '@whiskeysockets/baileys';
 import { PrismaService } from './prisma.service';
 
-export const usePrismaAuthState = async (prisma: PrismaService): Promise<{ state: AuthenticationState, saveCreds: () => Promise<void> }> => {
+export const usePrismaAuthState = async (
+  prisma: PrismaService,
+): Promise<{ state: AuthenticationState; saveCreds: () => Promise<void> }> => {
   const writeData = async (data: any, key: string) => {
     const dataString = JSON.stringify(data, BufferJSON.replacer);
     await prisma.whatsappSession.upsert({
@@ -13,7 +21,9 @@ export const usePrismaAuthState = async (prisma: PrismaService): Promise<{ state
 
   const readData = async (key: string) => {
     try {
-      const row = await prisma.whatsappSession.findUnique({ where: { id: key } });
+      const row = await prisma.whatsappSession.findUnique({
+        where: { id: key },
+      });
       if (row && row.data) {
         return JSON.parse(row.data, BufferJSON.reviver);
       }
@@ -31,7 +41,7 @@ export const usePrismaAuthState = async (prisma: PrismaService): Promise<{ state
     }
   };
 
-  const creds = await readData('creds') || initAuthCreds();
+  const creds = (await readData('creds')) || initAuthCreds();
 
   return {
     state: {
@@ -46,7 +56,7 @@ export const usePrismaAuthState = async (prisma: PrismaService): Promise<{ state
                 value = proto.Message.AppStateSyncKeyData.fromObject(value);
               }
               data[id] = value;
-            })
+            }),
           );
           return data;
         },

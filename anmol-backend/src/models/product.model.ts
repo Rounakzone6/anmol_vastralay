@@ -1,8 +1,4 @@
-import {
-  Prisma,
-  ProductVariant,
-  ProductKind,
-} from '@prisma/client';
+import { Prisma, ProductVariant, ProductKind } from '@prisma/client';
 import { z } from 'zod';
 import { withProductPricing } from '@backend/utils/pricing';
 

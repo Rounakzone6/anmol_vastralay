@@ -19,7 +19,8 @@ export const orderRouter = router({
     .input(ValidateCouponSchema)
     .query(async ({ ctx, input }) => {
       // Security: Rate-limit public coupon validation to 10 attempts/min per user/IP
-      const clientKey = ctx.user?.id || (ctx as any).req?.ip || 'anonymous_client';
+      const clientKey =
+        ctx.user?.id || (ctx as any).req?.ip || 'anonymous_client';
       const rateKey = `rate:coupon:${clientKey}`;
       try {
         const attempts = await redis.incr(rateKey);
@@ -29,7 +30,8 @@ export const orderRouter = router({
         if (attempts > 10) {
           throw new TRPCError({
             code: 'TOO_MANY_REQUESTS',
-            message: 'Too many coupon validation attempts. Please wait 1 minute before trying again.',
+            message:
+              'Too many coupon validation attempts. Please wait 1 minute before trying again.',
           });
         }
       } catch (err: any) {
