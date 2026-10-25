@@ -7,6 +7,8 @@ import {
   mapProduct,
   productPublicSelect,
 } from '@backend/models/product.model';
+import { withProductPricing } from '@backend/utils/pricing';
+import type { SearchBloomService } from '@backend/services/search-bloom.service';
 
 async function safeCacheGet<T>(key: string): Promise<T | null> {
   try {
@@ -24,9 +26,27 @@ async function safeCacheSet(key: string, data: any, ttl = 600): Promise<void> {
 }
 
 export class ProductQueries {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly bloomFilter?: SearchBloomService,
+  ) {}
 
   async list(input?: z.infer<typeof ListProductSchema>) {
+    // 0. Bloom Filter Fast Path: If search term is definitely not present, skip DB completely
+    if (input?.search && input.search.trim().length >= 2 && this.bloomFilter) {
+      const mightMatch = this.bloomFilter.mightMatchQuery(input.search);
+      if (!mightMatch) {
+        return {
+          items: [],
+          total: 0,
+          page: input?.page ?? 1,
+          pageSize: input?.pageSize ?? 20,
+          totalPages: 0,
+          bloomFilterRejected: true,
+        };
+      }
+    }
+
     const cacheKey = `product:list:${JSON.stringify(input || {})}`;
     const cachedData = await safeCacheGet<any>(cacheKey);
     if (cachedData) {
@@ -165,5 +185,103 @@ export class ProductQueries {
     const recommendations = scoredProducts.slice(0, 4).map(sp => mapProduct(sp.product));
     
     return recommendations;
+  }
+
+  async searchSuggestions(query: string, limit = 6) {
+    const trimmed = (query || '').trim();
+    if (!trimmed || trimmed.length < 2) {
+      return {
+        products: [],
+        categories: [],
+        query: trimmed,
+        bloomFilterVerified: true,
+        shortCircuited: false,
+      };
+    }
+
+    // 1. Bloom Filter Gate: Verify if this prefix or term exists in catalog
+    if (this.bloomFilter) {
+      const mightMatch = this.bloomFilter.mightMatchQuery(trimmed);
+      if (!mightMatch) {
+        // Guaranteed 0 items in catalog! Save database load completely.
+        return {
+          products: [],
+          categories: [],
+          query: trimmed,
+          bloomFilterVerified: true,
+          shortCircuited: true,
+        };
+      }
+    }
+
+    const cacheKey = `search:suggestions:${trimmed.toLowerCase()}:${limit}`;
+    const cached = await safeCacheGet<any>(cacheKey);
+    if (cached) return cached;
+
+    // 2. Fetch matching active products and categories
+    const [matchingProducts, matchingCategories] = await Promise.all([
+      this.prisma.product.findMany({
+        where: {
+          isActive: true,
+          OR: [
+            { name: { contains: trimmed, mode: 'insensitive' as const } },
+            { category: { name: { contains: trimmed, mode: 'insensitive' as const } } },
+            { brand: { contains: trimmed, mode: 'insensitive' as const } },
+          ],
+        },
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          netPrice: true,
+          discountPercent: true,
+          category: { select: { name: true, slug: true } },
+          images: {
+            take: 1,
+            orderBy: { sortOrder: 'asc' as const },
+            select: { url: true, altText: true },
+          },
+        },
+      }),
+      this.prisma.category.findMany({
+        where: {
+          isActive: true,
+          name: { contains: trimmed, mode: 'insensitive' as const },
+        },
+        take: 3,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+        },
+      }),
+    ]);
+
+    const formattedProducts = matchingProducts.map((p) => {
+      const priced = withProductPricing(p);
+      return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        netPrice: priced.netPrice,
+        discountPercent: priced.discountPercent,
+        sellingPrice: priced.sellingPrice,
+        categoryName: p.category?.name || null,
+        categorySlug: p.category?.slug || null,
+        image: p.images[0]?.url || null,
+      };
+    });
+
+    const result = {
+      products: formattedProducts,
+      categories: matchingCategories,
+      query: trimmed,
+      bloomFilterVerified: true,
+      shortCircuited: false,
+    };
+
+    await safeCacheSet(cacheKey, result, 300); // 5 min cache
+    return result;
   }
 }

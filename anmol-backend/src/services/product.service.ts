@@ -3,6 +3,7 @@ import { PrismaService } from '@backend/services/prisma.service';
 import { CloudinaryService } from '@backend/services/cloudinary.service';
 import { ProductQueries } from '@backend/services/product/product.queries';
 import { ProductMutations } from '@backend/services/product/product.mutations';
+import { SearchBloomService } from '@backend/services/search-bloom.service';
 import { z } from 'zod';
 import {
   ListProductSchema,
@@ -26,13 +27,18 @@ export class ProductService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cloudinary: CloudinaryService,
+    private readonly searchBloom: SearchBloomService,
   ) {
-    this.queries = new ProductQueries(this.prisma);
+    this.queries = new ProductQueries(this.prisma, this.searchBloom);
     this.mutations = new ProductMutations(this.prisma, this.cloudinary);
   }
 
   async list(input?: z.infer<typeof ListProductSchema>) {
     return this.queries.list(input);
+  }
+
+  async searchSuggestions(query: string, limit?: number) {
+    return this.queries.searchSuggestions(query, limit);
   }
 
   async getById(id: string) {
@@ -52,11 +58,17 @@ export class ProductService {
   }
 
   async create(input: z.infer<typeof productBaseSchema>, userId: string) {
-    return this.mutations.create(input, userId);
+    const res = await this.mutations.create(input, userId);
+    this.searchBloom.indexProduct(input.name, undefined, input.brand);
+    return res;
   }
 
   async update(input: z.infer<typeof UpdateProductSchema>, userId: string) {
-    return this.mutations.update(input, userId);
+    const res = await this.mutations.update(input, userId);
+    if (input.name || input.brand) {
+      this.searchBloom.rebuildIndex().catch(() => {});
+    }
+    return res;
   }
 
   async delete(input: z.infer<typeof DeleteProductSchema>) {

@@ -28,6 +28,17 @@ export const productRouter = router({
       return ctx.services.product.list(input);
     }),
 
+  searchSuggestions: publicProcedure
+    .input(
+      z.object({
+        query: z.string().default(''),
+        limit: z.number().int().min(1).max(20).default(6),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.services.product.searchSuggestions(input.query, input.limit);
+    }),
+
   getById: publicProcedure
     .input(ProductIdSchema)
     .query(async ({ ctx, input }) => {

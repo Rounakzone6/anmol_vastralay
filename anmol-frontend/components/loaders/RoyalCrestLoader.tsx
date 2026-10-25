@@ -35,6 +35,7 @@ export default function RoyalCrestLoader({
               src="/logo.png"
               alt="Anmol Vastralay"
               fill
+              sizes="72px"
               className="object-contain filter drop-shadow-md"
               priority
             />

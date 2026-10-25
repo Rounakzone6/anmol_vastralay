@@ -7,6 +7,7 @@ import { Menu, X, Search, ShoppingCart, Heart, LogOut, User, MapPin, Package, Ch
 import { useAuth } from "@/lib/useAuth";
 import { trpc } from "@/lib/trpc";
 import AnnouncementBar from "@/components/AnnouncementBar";
+import SearchAutocomplete from "@/components/SearchAutocomplete";
 
 const ProfileAvatar = ({ size = 36, profileImg, displayName, initials }: { size?: number, profileImg?: string | null, displayName: string, initials: string }) => (
   profileImg ? (
@@ -129,27 +130,10 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Desktop Search Bar */}
-          <form 
-            onSubmit={handleSearch} 
-            className="hidden max-w-md flex-1 items-center md:flex"
-          >
-            <div className="relative w-full">
-              <input
-                type="text"
-                placeholder="Saree, Jeans, Kurti, T-shirt khojein..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-full border border-gray-300 bg-gray-50 py-2 pl-4 pr-10 text-sm focus:border-[#85142b] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#85142b]"
-              />
-              <button 
-                type="submit" 
-                className="absolute right-3 top-2.5 text-gray-400 hover:text-[#85142b]"
-              >
-                <Search size={18} />
-              </button>
-            </div>
-          </form>
+          {/* Desktop Search Bar with Live Suggestions & Bloom Filter */}
+          <div className="hidden max-w-md flex-1 items-center md:flex">
+            <SearchAutocomplete variant="desktop" />
+          </div>
 
           {/* Right Navigation Icons (Desktop) */}
           <div className="hidden items-center gap-5 md:flex">
@@ -275,20 +259,9 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Search Bar */}
+      {/* Mobile Search Bar with Live Suggestions & Bloom Filter */}
       <div className="px-4 pb-3 md:hidden">
-        <form onSubmit={handleSearch} className="relative w-full">
-          <input
-            type="text"
-            placeholder="Saree, Jeans, Kurti khojein..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 bg-gray-50 py-2 pl-4 pr-10 text-sm focus:outline-none focus:ring-1 focus:ring-[#85142b]"
-          />
-          <button type="submit" className="absolute right-3 top-2.5 text-gray-400">
-            <Search size={18} />
-          </button>
-        </form>
+        <SearchAutocomplete variant="mobile" onNavigate={() => setIsOpen(false)} />
       </div>
 
       {/* Mobile Bottom Navigation Bar */}

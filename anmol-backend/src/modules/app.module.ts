@@ -41,6 +41,8 @@ import { DeliveryAssignmentService } from '@backend/services/delivery-assignment
 import { MembershipService } from '@backend/services/membership.service';
 import { IdempotencyService } from '@backend/services/idempotency.service';
 
+import { SearchBloomService } from '@backend/services/search-bloom.service';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -84,6 +86,7 @@ import { IdempotencyService } from '@backend/services/idempotency.service';
       useClass: ThrottlerGuard,
     },
     CategoryService,
+    SearchBloomService,
     ProductService,
     CartService,
     OrderService,
