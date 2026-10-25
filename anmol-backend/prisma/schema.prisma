@@ -56,7 +56,7 @@ model User {
   dateOfBirth     DateTime?
   emailVerified   Boolean   @default(false)
   phoneVerified        Boolean   @default(false)
-  role                 UserRole  @default(STAFF)
+  role                 UserRole  @default(CUSTOMER)
   isMember             Boolean   @default(false)
   membershipExpiresAt  DateTime?
   createdAt            DateTime  @default(now())

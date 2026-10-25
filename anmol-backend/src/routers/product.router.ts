@@ -25,8 +25,26 @@ export const productRouter = router({
   list: publicProcedure
     .input(ListProductSchema.optional())
     .query(async ({ ctx, input }) => {
-      return ctx.services.product.list(input);
+      const isStaff = ctx.user?.role === 'STAFF' || ctx.user?.role === 'ADMIN';
+      return ctx.services.product.list(input, isStaff);
     }),
+
+  getSitemapProducts: publicProcedure
+    .input(
+      z
+        .object({
+          page: z.number().int().min(1).default(1),
+          pageSize: z.number().int().min(1).max(1000).default(500),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.services.product.getSitemapProducts(
+        input?.page ?? 1,
+        input?.pageSize ?? 500,
+      );
+    }),
+
 
   searchSuggestions: publicProcedure
     .input(
@@ -42,13 +60,15 @@ export const productRouter = router({
   getById: publicProcedure
     .input(ProductIdSchema)
     .query(async ({ ctx, input }) => {
-      return ctx.services.product.getById(input.id);
+      const isStaff = ctx.user?.role === 'STAFF' || ctx.user?.role === 'ADMIN';
+      return ctx.services.product.getById(input.id, isStaff);
     }),
 
   getBySlug: publicProcedure
     .input(ProductSlugSchema)
     .query(async ({ ctx, input }) => {
-      return ctx.services.product.getBySlug(input.slug);
+      const isStaff = ctx.user?.role === 'STAFF' || ctx.user?.role === 'ADMIN';
+      return ctx.services.product.getBySlug(input.slug, isStaff);
     }),
 
   getRecommendations: publicProcedure

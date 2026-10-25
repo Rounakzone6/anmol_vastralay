@@ -4,6 +4,8 @@ import {
   router,
   staffProcedure,
 } from '@backend/config/trpc.config';
+import { TRPCError } from '@trpc/server';
+import { redis } from '@backend/config/redis.config';
 import {
   CreateOrderSchema,
   GenerateInvoiceSchema,
@@ -16,6 +18,24 @@ export const orderRouter = router({
   validateCoupon: publicProcedure
     .input(ValidateCouponSchema)
     .query(async ({ ctx, input }) => {
+      // Security: Rate-limit public coupon validation to 10 attempts/min per user/IP
+      const clientKey = ctx.user?.id || (ctx as any).req?.ip || 'anonymous_client';
+      const rateKey = `rate:coupon:${clientKey}`;
+      try {
+        const attempts = await redis.incr(rateKey);
+        if (attempts === 1) {
+          await redis.expire(rateKey, 60);
+        }
+        if (attempts > 10) {
+          throw new TRPCError({
+            code: 'TOO_MANY_REQUESTS',
+            message: 'Too many coupon validation attempts. Please wait 1 minute before trying again.',
+          });
+        }
+      } catch (err: any) {
+        if (err instanceof TRPCError) throw err;
+      }
+
       return ctx.services.order.validateCoupon(input.code);
     }),
 

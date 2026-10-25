@@ -33,20 +33,20 @@ export class ProductService {
     this.mutations = new ProductMutations(this.prisma, this.cloudinary);
   }
 
-  async list(input?: z.infer<typeof ListProductSchema>) {
-    return this.queries.list(input);
+  async list(input?: z.infer<typeof ListProductSchema>, isStaff = false) {
+    return this.queries.list(input, isStaff);
   }
 
   async searchSuggestions(query: string, limit?: number) {
     return this.queries.searchSuggestions(query, limit);
   }
 
-  async getById(id: string) {
-    return this.queries.getById(id);
+  async getById(id: string, isStaff = false) {
+    return this.queries.getById(id, isStaff);
   }
 
-  async getBySlug(slug: string) {
-    return this.queries.getBySlug(slug);
+  async getBySlug(slug: string, isStaff = false) {
+    return this.queries.getBySlug(slug, isStaff);
   }
 
   async getOutOfStockVariants() {
@@ -57,23 +57,41 @@ export class ProductService {
     return this.queries.getRecommendations(productId);
   }
 
+  async getSitemapProducts(page?: number, pageSize?: number) {
+    return this.queries.getSitemapProducts(page, pageSize);
+  }
+
+
   async create(input: z.infer<typeof productBaseSchema>, userId: string) {
     const res = await this.mutations.create(input, userId);
-    this.searchBloom.indexProduct(input.name, undefined, input.brand);
+    let categoryName: string | undefined;
+    if (input.categoryId) {
+      try {
+        const cat = await this.prisma.category.findUnique({
+          where: { id: input.categoryId },
+          select: { name: true },
+        });
+        categoryName = cat?.name;
+      } catch {}
+    }
+    this.searchBloom.indexProduct(input.name, categoryName, input.brand);
     return res;
   }
 
   async update(input: z.infer<typeof UpdateProductSchema>, userId: string) {
     const res = await this.mutations.update(input, userId);
-    if (input.name || input.brand) {
-      this.searchBloom.rebuildIndex().catch(() => {});
+    if (input.name || input.brand || input.categoryId) {
+      this.searchBloom.scheduleDebouncedRebuild();
     }
     return res;
   }
 
   async delete(input: z.infer<typeof DeleteProductSchema>) {
-    return this.mutations.delete(input);
+    const res = await this.mutations.delete(input);
+    this.searchBloom.scheduleDebouncedRebuild();
+    return res;
   }
+
 
   async setActive(input: z.infer<typeof SetProductActiveSchema>) {
     return this.mutations.setActive(input);

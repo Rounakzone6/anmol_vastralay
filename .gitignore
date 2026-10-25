@@ -10,12 +10,12 @@ out/
 build/
 coverage/
 
-# Local environment files
-.env
-.env*.local
-.env.development
-.env.test
-.env.production
+# Local environment files & secrets
+.env*
+!.env.example
+*.pem
+*.key
+*.cert
 
 # WhatsApp Auth Session & Credentials
 **/baileys_auth_info/

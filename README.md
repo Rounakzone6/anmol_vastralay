@@ -1,7 +1,7 @@
 # Anmol Vastralay - Enterprise Omnichannel E-Commerce & POS Platform
 
-[![CI Pipeline](https://github.com/anmol-vastralay/anmol-vastralay/actions/workflows/ci.yml/badge.svg)](https://github.com/anmol-vastralay/anmol-vastralay/actions/workflows/ci.yml)
-[![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
+[![CI Pipeline](https://github.com/Rounakzone6/anmol_vastralay/actions/workflows/ci.yml/badge.svg)](https://github.com/Rounakzone6/anmol_vastralay/actions/workflows/ci.yml)
+[![Node.js](https://img.shields.io/badge/Node.js-22.x-green.svg)](https://nodejs.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-16.x-black.svg)](https://nextjs.org/)
 [![NestJS](https://img.shields.io/badge/NestJS-11.x-red.svg)](https://nestjs.com/)
 [![tRPC](https://img.shields.io/badge/tRPC-v11-blue.svg)](https://trpc.io/)
@@ -12,14 +12,14 @@
 
 ---
 
-## 🌐 Live Demo & Credentials
+## 🌐 Local Services & Port Mapping
 
-| Application | URL | Role | Credentials |
+| Application | Port / URL | Role | Access / Authentication |
 | :--- | :--- | :--- | :--- |
-| **Customer Storefront** | [Demo Storefront](http://localhost:3000) | Customer | Sign up or Login via OTP / Google OAuth |
-| **Admin & POS Terminal** | [Admin & POS Portal](http://localhost:3002) | Store Admin | `admin@anmolvastralay.com` / `admin123` |
-| **POS Billing Counter** | [POS Billing Terminal](http://localhost:3002/pos) | Billing Staff | `pos@anmolvastralay.com` / `pos123` |
-| **Queue Dashboard** | [BullMQ Admin](http://localhost:3001/admin/queues) | Operations | Internal Staff Access |
+| **Customer Storefront** | [http://localhost:3000](http://localhost:3000) | Customer | Sign up or Login via MFA OTP / Google OAuth |
+| **Admin & POS Terminal** | [http://localhost:3002](http://localhost:3002) | Store Admin | Configured via `ADMIN_EMAIL` / `ADMIN_PASSWORD` in `.env` |
+| **POS Billing Counter** | [http://localhost:3002/pos](http://localhost:3002/pos) | Billing Staff | Staff authenticated session (seeded via `npm run prisma:seed`) |
+| **Queue Dashboard** | [http://localhost:3001/admin/queues](http://localhost:3001/admin/queues) | Operations | Authenticated internal staff access |
 
 ---
 
@@ -171,13 +171,13 @@ anmol_vastralay/
 ## 🚀 Quickstart & Local Setup
 
 ### Prerequisites
-- Node.js 20.x or higher
+- Node.js 22.x or higher
 - PostgreSQL 16
 - Redis 7
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/anmol-vastralay/anmol-vastralay.git
+git clone https://github.com/Rounakzone6/anmol_vastralay.git
 cd anmol_vastralay
 ```
 

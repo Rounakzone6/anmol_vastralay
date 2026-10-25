@@ -39,12 +39,15 @@ export class NotificationQueueService {
     });
   }
 
-  async enqueueDeliveryAssignment(data: { orderId: string; attempt?: number }) {
+  async enqueueDeliveryAssignment(data: { orderId: string }) {
     await this.notificationQueue.add('assign-delivery', data, {
+      jobId: `assign-${data.orderId}`,
       priority: 1,
-      delay: 30000, // Retry in 30 seconds
+      delay: 15000, // Retry in 15 seconds
       attempts: 5,
       backoff: { type: 'exponential', delay: 10000 },
+      removeOnComplete: true,
     });
   }
 }
+

@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/
 import { JwtService } from '@nestjs/jwt';
 import { UserRole, OtpType } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
 import { PrismaService } from '@backend/services/prisma.service';
 import { EmailService } from '@backend/services/email.service';
@@ -44,7 +45,8 @@ export class AuthService {
   }
 
   private generateOtp(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    // Cryptographically secure 6-digit OTP
+    return crypto.randomInt(100000, 1000000).toString();
   }
 
   async login(
@@ -59,15 +61,25 @@ export class AuthService {
         throw new UnauthorizedException('Invalid credentials');
       }
 
+      const lockoutKey = `otp:lockout:${adminEmail}`;
+      if (await redis.get(lockoutKey)) {
+        throw new UnauthorizedException(
+          'Too many failed OTP attempts. Account temporarily locked for 15 minutes.',
+        );
+      }
+
       const rateLimitKey = `ratelimit:otp:${adminEmail}`;
       if (await redis.get(rateLimitKey)) {
         throw new UnauthorizedException('Please wait 60 seconds before requesting another OTP');
       }
       
       const code = this.generateOtp();
+      const purpose = 'LOGIN';
       
-      // Store in Redis (expires in 10 minutes)
-      await redis.set(`otp:${adminEmail}`, code, 'EX', 600);
+      // Store purpose-bound OTP in Redis (expires in 10 minutes)
+      await redis.set(`otp:${purpose}:${adminEmail}`, code, 'EX', 600);
+      await redis.set(`otp:${adminEmail}`, code, 'EX', 600); // Backwards compatibility
+      await redis.del(`otp:attempts:${purpose}:${adminEmail}`);
       
       // Set rate limit (60 seconds)
       await redis.set(rateLimitKey, '1', 'EX', 60);
@@ -75,6 +87,7 @@ export class AuthService {
       const sent = await this.otpService.sendEmailOtp(adminEmail, code);
       if (!sent) {
         // Rollback redis keys on failure
+        await redis.del(`otp:${purpose}:${adminEmail}`);
         await redis.del(`otp:${adminEmail}`);
         await redis.del(rateLimitKey);
         throw new BadRequestException('Failed to send OTP email. Please try again.');
@@ -108,28 +121,39 @@ export class AuthService {
        throw new UnauthorizedException('Account has no email for OTP verification. Please contact support.');
     }
 
+    const lockoutKey = `otp:lockout:${targetEmail}`;
+    if (await redis.get(lockoutKey)) {
+      throw new UnauthorizedException(
+        'Too many failed OTP attempts. Account temporarily locked for 15 minutes.',
+      );
+    }
+
     const rateLimitKey = `ratelimit:otp:${targetEmail}`;
     if (await redis.get(rateLimitKey)) {
       throw new UnauthorizedException('Please wait 60 seconds before requesting another OTP');
     }
 
     const code = this.generateOtp();
+    const purpose = 'LOGIN';
 
-    // Store in Redis (expires in 10 minutes)
-    await redis.set(`otp:${targetEmail}`, code, 'EX', 600);
+    // Store purpose-bound OTP in Redis (expires in 10 minutes)
+    await redis.set(`otp:${purpose}:${targetEmail}`, code, 'EX', 600);
+    await redis.set(`otp:${targetEmail}`, code, 'EX', 600); // Backwards compatibility
+    await redis.del(`otp:attempts:${purpose}:${targetEmail}`);
 
     // Set rate limit (60 seconds)
     await redis.set(rateLimitKey, '1', 'EX', 60);
 
-      const sent = await this.otpService.sendEmailOtp(targetEmail, code);
-      if (!sent) {
-        // Rollback redis keys on failure
-        await redis.del(`otp:${targetEmail}`);
-        await redis.del(rateLimitKey);
-        throw new BadRequestException('Failed to send OTP email. Please try again.');
-      }
+    const sent = await this.otpService.sendEmailOtp(targetEmail, code);
+    if (!sent) {
+      // Rollback redis keys on failure
+      await redis.del(`otp:${purpose}:${targetEmail}`);
+      await redis.del(`otp:${targetEmail}`);
+      await redis.del(rateLimitKey);
+      throw new BadRequestException('Failed to send OTP email. Please try again.');
+    }
 
-      return { success: true, message: 'OTP sent to email', email: targetEmail, type: 'LOGIN' };
+    return { success: true, message: 'OTP sent to email', email: targetEmail, type: 'LOGIN' };
   }
 
   async register(input: {
@@ -159,15 +183,25 @@ export class AuthService {
         console.error('Failed to send welcome email', error),
       );
 
+      const lockoutKey = `otp:lockout:${user.email}`;
+      if (await redis.get(lockoutKey)) {
+        throw new UnauthorizedException(
+          'Too many failed OTP attempts. Account temporarily locked for 15 minutes.',
+        );
+      }
+
       const rateLimitKey = `ratelimit:otp:${user.email}`;
       if (await redis.get(rateLimitKey)) {
         throw new UnauthorizedException('Please wait 60 seconds before requesting another OTP');
       }
 
       const code = this.generateOtp();
+      const purpose = 'REGISTER';
 
-      // Store in Redis (expires in 10 minutes)
-      await redis.set(`otp:${user.email}`, code, 'EX', 600);
+      // Store purpose-bound OTP in Redis (expires in 10 minutes)
+      await redis.set(`otp:${purpose}:${user.email}`, code, 'EX', 600);
+      await redis.set(`otp:${user.email}`, code, 'EX', 600); // Backwards compatibility
+      await redis.del(`otp:attempts:${purpose}:${user.email}`);
 
       // Set rate limit (60 seconds)
       await redis.set(rateLimitKey, '1', 'EX', 60);
@@ -175,6 +209,7 @@ export class AuthService {
       const sent = await this.otpService.sendEmailOtp(user.email!, code);
       if (!sent) {
         // Rollback redis keys on failure
+        await redis.del(`otp:${purpose}:${user.email}`);
         await redis.del(`otp:${user.email}`);
         await redis.del(rateLimitKey);
         throw new BadRequestException('Failed to send OTP email. Please try again.');
@@ -196,14 +231,53 @@ export class AuthService {
   }
 
   async verifyOtp(email: string, code: string, type: string): Promise<{ token: string; user: AuthUser }> {
-    const storedCode = await redis.get(`otp:${email}`);
-
-    if (!storedCode || storedCode !== code) {
-       throw new UnauthorizedException('Invalid or expired OTP code');
+    const purpose = (type || 'LOGIN').toUpperCase();
+    const lockoutKey = `otp:lockout:${email}`;
+    if (await redis.get(lockoutKey)) {
+      throw new UnauthorizedException(
+        'Too many failed attempts. Account temporarily locked for 15 minutes.',
+      );
     }
 
-    // Delete the OTP after successful verification
-    await redis.del(`otp:${email}`);
+    const otpKey = `otp:${purpose}:${email}`;
+    const attemptsKey = `otp:attempts:${purpose}:${email}`;
+
+    // Lookup purpose-bound OTP first, fallback to legacy key if present
+    let storedCode = await redis.get(otpKey);
+    if (!storedCode) {
+      storedCode = await redis.get(`otp:${email}`);
+    }
+
+    if (!storedCode) {
+      throw new UnauthorizedException('Invalid or expired OTP code');
+    }
+
+    if (storedCode !== code.trim()) {
+      const attempts = await redis.incr(attemptsKey);
+      await redis.expire(attemptsKey, 600);
+      if (attempts >= 5) {
+        await Promise.all([
+          redis.del(otpKey),
+          redis.del(`otp:${email}`),
+          redis.del(attemptsKey),
+          redis.set(lockoutKey, '1', 'EX', 900), // 15-minute lockout
+        ]);
+        throw new UnauthorizedException(
+          'Maximum OTP verification attempts exceeded. Account locked for 15 minutes.',
+        );
+      }
+      const remaining = 5 - attempts;
+      throw new UnauthorizedException(
+        `Invalid OTP code. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`,
+      );
+    }
+
+    // Atomic one-time consumption: delete immediately upon successful verification
+    await Promise.all([
+      redis.del(otpKey),
+      redis.del(`otp:${email}`),
+      redis.del(attemptsKey),
+    ]);
 
     const adminEmail = process.env.ADMIN_EMAIL;
     if (adminEmail && email === adminEmail) {

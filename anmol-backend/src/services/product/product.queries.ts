@@ -31,9 +31,11 @@ export class ProductQueries {
     private readonly bloomFilter?: SearchBloomService,
   ) {}
 
-  async list(input?: z.infer<typeof ListProductSchema>) {
+  async list(input?: z.infer<typeof ListProductSchema>, isStaff = false) {
+    const canIncludeInactive = Boolean(isStaff && input?.includeInactive);
+
     // 0. Bloom Filter Fast Path: If search term is definitely not present, skip DB completely
-    if (input?.search && input.search.trim().length >= 2 && this.bloomFilter) {
+    if (!canIncludeInactive && input?.search && input.search.trim().length >= 2 && this.bloomFilter) {
       const mightMatch = this.bloomFilter.mightMatchQuery(input.search);
       if (!mightMatch) {
         return {
@@ -47,7 +49,7 @@ export class ProductQueries {
       }
     }
 
-    const cacheKey = `product:list:${JSON.stringify(input || {})}`;
+    const cacheKey = `product:list:${canIncludeInactive ? 'staff:' : 'pub:'}${JSON.stringify(input || {})}`;
     const cachedData = await safeCacheGet<any>(cacheKey);
     if (cachedData) {
       return cachedData;
@@ -56,7 +58,7 @@ export class ProductQueries {
     const page = input?.cursor ?? input?.page ?? 1;
     const pageSize = input?.pageSize ?? 20;
     const where = {
-      ...(input?.includeInactive ? {} : { isActive: true }),
+      ...(canIncludeInactive ? {} : { isActive: true }),
       ...(input?.categoryId ? { categoryId: input.categoryId } : {}),
       ...(input?.subcategoryId ? { subcategoryId: input.subcategoryId } : {}),
       ...(input?.categorySlug
@@ -101,13 +103,16 @@ export class ProductQueries {
     return result;
   }
 
-  async getById(id: string) {
-    const cacheKey = `product:id:${id}`;
+  async getById(id: string, isStaff = false) {
+    const cacheKey = `product:id:${isStaff ? 'staff:' : 'pub:'}${id}`;
     const cachedData = await safeCacheGet<any>(cacheKey);
     if (cachedData) return cachedData;
 
-    const product = await this.prisma.product.findUnique({
-      where: { id },
+    const product = await this.prisma.product.findFirst({
+      where: {
+        id,
+        ...(isStaff ? {} : { isActive: true }),
+      },
       select: productPublicSelect,
     });
     if (!product) notFound('Product');
@@ -116,13 +121,16 @@ export class ProductQueries {
     return result;
   }
 
-  async getBySlug(slug: string) {
-    const cacheKey = `product:slug:${slug}`;
+  async getBySlug(slug: string, isStaff = false) {
+    const cacheKey = `product:slug:${isStaff ? 'staff:' : 'pub:'}${slug}`;
     const cachedData = await safeCacheGet<any>(cacheKey);
     if (cachedData) return cachedData;
 
-    const product = await this.prisma.product.findUnique({
-      where: { slug },
+    const product = await this.prisma.product.findFirst({
+      where: {
+        slug,
+        ...(isStaff ? {} : { isActive: true }),
+      },
       select: productPublicSelect,
     });
     if (!product) notFound('Product');
@@ -284,4 +292,31 @@ export class ProductQueries {
     await safeCacheSet(cacheKey, result, 300); // 5 min cache
     return result;
   }
+
+  async getSitemapProducts(page: number = 1, pageSize: number = 500) {
+    const skip = (page - 1) * pageSize;
+    const [items, total] = await Promise.all([
+      this.prisma.product.findMany({
+        where: { isActive: true },
+        select: {
+          id: true,
+          slug: true,
+          updatedAt: true,
+        },
+        skip,
+        take: pageSize,
+        orderBy: { updatedAt: 'desc' },
+      }),
+      this.prisma.product.count({ where: { isActive: true } }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
 }
+

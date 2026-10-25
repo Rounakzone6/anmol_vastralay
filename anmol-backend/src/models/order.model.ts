@@ -4,6 +4,7 @@ export const CreateOrderSchema = z.object({
   shippingAddress: z.string(),
   paymentMethod: z.enum(['COD', 'RAZORPAY']),
   couponCode: z.string().optional(),
+  idempotencyKey: z.string().optional(),
 });
 
 export const ValidateCouponSchema = z.object({

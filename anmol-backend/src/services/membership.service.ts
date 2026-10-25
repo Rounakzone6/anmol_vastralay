@@ -3,11 +3,20 @@ import { PrismaService } from '@backend/services/prisma.service';
 import { TRPCError } from '@trpc/server';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import { redis } from '@backend/config/redis.config';
 import { z } from 'zod';
 import {
   UpdateMembershipPlanSchema,
   VerifyMembershipPaymentSchema,
 } from '@backend/models/membership.model';
+
+export const DEFAULT_VIP_BENEFITS = [
+  'Free Delivery on ALL orders (Save ₹20/order)',
+  'Priority 24h Express Dispatch & Packaging',
+  'VIP Early Access to Festive Sales & New Drops',
+  'Dedicated VIP WhatsApp Styling & Support',
+  'Special Birthday Surprise Gift Voucher',
+];
 
 @Injectable()
 export class MembershipService {
@@ -31,19 +40,21 @@ export class MembershipService {
     });
 
     if (!plan) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'No active VIP membership plan configured. Please configure a plan in Admin settings.',
+        });
+      }
+
+      // Safe non-production seed: ₹499 instead of ₹1
       plan = await this.prisma.membershipPlan.create({
         data: {
           name: 'Anmol VIP Royal Club',
-          price: 1.0,
+          price: 499.0,
           durationDays: 365,
           deliveryCharge: 20.0,
-          benefits: [
-            'Free Delivery on ALL orders (Save ₹20/order)',
-            'Priority 24h Express Dispatch & Packaging',
-            'VIP Early Access to Festive Sales & New Drops',
-            'Dedicated VIP WhatsApp Styling & Support',
-            'Special Birthday Surprise Gift Voucher',
-          ],
+          benefits: DEFAULT_VIP_BENEFITS,
           isActive: true,
         },
       });
@@ -116,6 +127,24 @@ export class MembershipService {
       },
     });
 
+    // Persist pending transaction intent in Redis to validate original transaction
+    try {
+      await redis.set(
+        `membership:pending:${rpOrder.id}`,
+        JSON.stringify({
+          userId,
+          planId: plan.id,
+          amount: plan.price,
+          durationDays: plan.durationDays,
+          createdAt: Date.now(),
+        }),
+        'EX',
+        7200,
+      );
+    } catch (err) {
+      this.logger.warn(`Failed to cache pending membership transaction in Redis: ${err}`);
+    }
+
     return {
       razorpayOrderId: rpOrder.id,
       amount: plan.price,
@@ -139,7 +168,7 @@ export class MembershipService {
       });
     }
 
-    // Verify cryptographic signature
+    // 1. Verify cryptographic signature
     const generatedSignature = crypto
       .createHmac('sha256', secret)
       .update(input.razorpay_order_id + '|' + input.razorpay_payment_id)
@@ -158,11 +187,41 @@ export class MembershipService {
       });
     }
 
+    // 2. Validate original transaction ownership and plan
+    try {
+      const cachedPending = await redis.get(`membership:pending:${input.razorpay_order_id}`);
+      if (cachedPending) {
+        const pending = JSON.parse(cachedPending);
+        if (pending.userId && pending.userId !== userId) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Payment transaction was not initiated by the authenticated user',
+          });
+        }
+      }
+    } catch (err: any) {
+      if (err instanceof TRPCError) throw err;
+    }
+
+    // 3. Enforce idempotency: prevent replaying valid payment callback
+    const existingMembership = await this.prisma.userMembership.findFirst({
+      where: { transactionId: input.razorpay_payment_id },
+    });
+    if (existingMembership) {
+      this.logger.log(`Membership already activated for transaction ${input.razorpay_payment_id}`);
+      return {
+        success: true,
+        message: 'VIP membership is already activated for this transaction.',
+        expiresAt: existingMembership.endDate,
+        transactionId: input.razorpay_payment_id,
+      };
+    }
+
     const plan = await this.getPlan();
     const now = new Date();
     const expiresAt = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
 
-    // Save UserMembership and update User
+    // Save UserMembership and update User atomically
     await this.prisma.$transaction(async (tx) => {
       await tx.userMembership.create({
         data: {
@@ -185,6 +244,11 @@ export class MembershipService {
         },
       });
     });
+
+    // Clean up pending transaction cache
+    try {
+      await redis.del(`membership:pending:${input.razorpay_order_id}`);
+    } catch {}
 
     this.logger.log(`User ${userId} activated VIP membership until ${expiresAt.toISOString()}`);
 
@@ -223,16 +287,12 @@ export class MembershipService {
           price: input.price,
           durationDays: input.durationDays || 365,
           deliveryCharge: input.deliveryCharge !== undefined ? input.deliveryCharge : 20.0,
-          benefits: input.benefits || [
-            'Free Delivery on ALL orders (Save ₹20/order)',
-            'Priority 24h Express Dispatch & Packaging',
-            'VIP Early Access to Festive Sales & New Drops',
-            'Dedicated VIP WhatsApp Styling & Support',
-          ],
+          benefits: input.benefits || DEFAULT_VIP_BENEFITS,
           isActive: input.isActive ?? true,
         },
       });
     }
+
 
     return {
       success: true,

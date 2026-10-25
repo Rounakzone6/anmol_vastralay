@@ -33,8 +33,10 @@ const server = http.createServer(async (req, res) => {
     }
 
     const internalToken = config.internalToken;
-    if (internalToken && req.headers['x-ai-service-token'] !== internalToken) {
-      return writeJson(res, 401, { error: 'Unauthorized' });
+    if (process.env.NODE_ENV === 'production' || internalToken) {
+      if (!internalToken || req.headers['x-ai-service-token'] !== internalToken) {
+        return writeJson(res, 401, { error: 'Unauthorized: Valid internal token required' });
+      }
     }
 
     const body = (await readJson(req)) as { messages?: unknown };
@@ -58,6 +60,11 @@ const server = http.createServer(async (req, res) => {
     else res.end();
   }
 });
+
+if (process.env.NODE_ENV === 'production' && !config.internalToken) {
+  console.error('FATAL: AI_SERVICE_INTERNAL_TOKEN is mandatory in production. Shutting down.');
+  process.exit(1);
+}
 
 server.listen(config.port, () => {
   console.log(`AI service listening on http://localhost:${config.port}`);

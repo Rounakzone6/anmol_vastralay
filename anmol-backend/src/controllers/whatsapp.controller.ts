@@ -31,6 +31,8 @@ export class WhatsappController {
       // You should set TWILIO_WEBHOOK_URL in your .env to the exact URL Twilio requests
       const webhookUrl = process.env.TWILIO_WEBHOOK_URL; 
 
+      const isProduction = process.env.NODE_ENV === 'production';
+
       if (authToken && webhookUrl && signature) {
         const isValid = twilio.validateRequest(
           authToken,
@@ -43,8 +45,13 @@ export class WhatsappController {
           this.logger.error('Invalid Twilio webhook signature');
           return res.status(401).send('Unauthorized');
         }
+      } else if (isProduction) {
+        this.logger.error(
+          'Twilio webhook rejected in production: signature, authToken, or webhookUrl missing',
+        );
+        return res.status(401).send('Unauthorized: Webhook signature verification required');
       } else {
-        this.logger.warn('Twilio signature verification bypassed (missing ENV vars or signature)');
+        this.logger.warn('Twilio signature verification bypassed in dev mode (missing ENV vars or signature)');
       }
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

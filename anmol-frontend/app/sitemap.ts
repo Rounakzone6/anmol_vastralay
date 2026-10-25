@@ -17,14 +17,24 @@ export async function generateSitemaps() {
   try {
     const api = process.env.NEXT_PUBLIC_API_URL;
     if (api) {
-      const res = await fetch(`${api}/product.list?input=${encodeURIComponent(JSON.stringify({ json: { pageSize: 1, includeInactive: false } }))}`);
-      const data = await res.json();
-      total = data?.result?.data?.json?.total || data?.result?.data?.total || 0;
+      const res = await fetch(
+        `${api}/product.getSitemapProducts?input=${encodeURIComponent(
+          JSON.stringify({ json: { page: 1, pageSize: 1 } }),
+        )}`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        total = data?.result?.data?.json?.total || data?.result?.data?.total || 0;
+      } else {
+        console.error('generateSitemaps: API responded with status', res.status);
+      }
     }
-  } catch (e) {}
+  } catch (e: any) {
+    console.error('generateSitemaps error fetching total products:', e?.message || e);
+  }
 
   const sitemaps = [{ id: 0 }]; // 0 for static and categories
-  const maxProductsPerSitemap = 1000;
+  const maxProductsPerSitemap = 500;
   for (let i = 0; i < Math.ceil(total / maxProductsPerSitemap); i++) {
     sitemaps.push({ id: i + 1 });
   }
@@ -39,7 +49,11 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
     try {
       const api = process.env.NEXT_PUBLIC_API_URL;
       if (api) {
-        const res = await fetch(`${api}/category.list?input=${encodeURIComponent(JSON.stringify({ json: { includeInactive: false } }))}`);
+        const res = await fetch(
+          `${api}/category.list?input=${encodeURIComponent(
+            JSON.stringify({ json: { includeInactive: false } }),
+          )}`,
+        );
         if (res.ok) {
           const data = await res.json();
           const categories = data?.result?.data?.json || data?.result?.data || [];
@@ -61,10 +75,12 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
               });
             }
           });
+        } else {
+          console.error('sitemap: category.list responded with status', res.status);
         }
       }
-    } catch (e) {
-      console.error('category sitemap generation error', e);
+    } catch (e: any) {
+      console.error('sitemap: category generation error:', e?.message || e);
     }
 
     const staticRoutes: MetadataRoute.Sitemap = STATIC_ROUTES.map((route) => ({
@@ -77,29 +93,36 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
     return [...staticRoutes, ...categoryRoutes];
   }
 
-  // If id > 0, generate product routes in chunks of 1000
+  // If id > 0, generate product routes using dedicated sitemap endpoint
   const page = id;
-  const pageSize = 1000;
+  const pageSize = 500;
   let productRoutes: MetadataRoute.Sitemap = [];
   try {
     const api = process.env.NEXT_PUBLIC_API_URL;
     if (api) {
-      const res = await fetch(`${api}/product.list?input=${encodeURIComponent(JSON.stringify({ json: { page, pageSize, includeInactive: false } }))}`);
+      const res = await fetch(
+        `${api}/product.getSitemapProducts?input=${encodeURIComponent(
+          JSON.stringify({ json: { page, pageSize } }),
+        )}`,
+      );
       if (res.ok) {
         const data = await res.json();
-        const products = data?.result?.data?.json?.items || data?.result?.data?.items || [];
+        const products =
+          data?.result?.data?.json?.items || data?.result?.data?.items || [];
         productRoutes = products.map((p: any) => ({
           url: `${baseUrl}/product/${p.slug || p.id}`,
           lastModified: p.updatedAt ? new Date(p.updatedAt) : new Date(),
           changeFrequency: 'daily',
           priority: 0.8,
-          images: p.images ? p.images.map((img: any) => img.url) : undefined,
         }));
+      } else {
+        console.error('sitemap: product.getSitemapProducts responded with status', res.status);
       }
     }
-  } catch (e) {
-    console.error('product sitemap generation error', e);
+  } catch (e: any) {
+    console.error('sitemap: product route generation error:', e?.message || e);
   }
 
   return productRoutes;
 }
+

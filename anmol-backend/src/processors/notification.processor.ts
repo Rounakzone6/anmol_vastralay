@@ -34,18 +34,29 @@ export class NotificationProcessor extends WorkerHost {
       case 'marketing-message':
         return this.handleMarketingMessage(job.data);
       case 'assign-delivery':
-        return this.handleAssignDelivery(job.data);
+        return this.handleAssignDelivery(job);
       default:
         this.logger.warn(`No handler for job name: ${job.name}`);
     }
   }
 
-  private async handleAssignDelivery(data: { orderId: string }) {
-    const assigned = await this.deliveryAssignmentService.assignDriverToOrder(data.orderId);
+  private async handleAssignDelivery(job: Job<{ orderId: string }>) {
+    const assigned = await this.deliveryAssignmentService.assignDriverToOrder(
+      job.data.orderId,
+      true, // isFromQueue: true prevents recursive enqueues
+    );
     if (!assigned) {
-      throw new Error(`Driver assignment retry for order ${data.orderId}: no available driver found yet.`);
+      const maxAttempts = job.opts.attempts || 5;
+      if (job.attemptsMade >= maxAttempts - 1) {
+        // All retries exhausted! Mark order for manual assignment
+        await this.deliveryAssignmentService.handleExhaustedRetries(job.data.orderId);
+      }
+      throw new Error(
+        `Driver assignment retry for order ${job.data.orderId}: no available driver found yet (attempt ${job.attemptsMade + 1}/${maxAttempts}).`,
+      );
     }
   }
+
 
   private async handleOrderEmail(data: { orderId: string }) {
     const { orderId } = data;

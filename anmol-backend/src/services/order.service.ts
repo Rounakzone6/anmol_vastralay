@@ -1,9 +1,10 @@
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@backend/services/prisma.service';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import Razorpay from 'razorpay';
+import { redis } from '@backend/config/redis.config';
 import {
   CreateOrderSchema,
   UpdateOrderStatusSchema,
@@ -14,8 +15,16 @@ import { InvoiceService } from '@backend/services/invoice.service';
 import { CartService } from '@backend/services/cart.service';
 import { NotificationQueueService } from '@backend/services/notification-queue.service';
 
+function computeItemSellingPrice(netPrice: any, discountPercent: any): number {
+  const net = Number(netPrice);
+  const discount = Number(discountPercent || 0);
+  if (discount <= 0) return Math.round(net * 100) / 100;
+  return Math.round(net * (1 - discount / 100) * 100) / 100;
+}
+
 @Injectable()
 export class OrderService {
+  private readonly logger = new Logger(OrderService.name);
   private razorpay: Razorpay;
 
   constructor(
@@ -34,6 +43,17 @@ export class OrderService {
   }
 
   async createOrder(userId: string, input: z.infer<typeof CreateOrderSchema>) {
+    // 0. Idempotency Check
+    const idempotencyKey = input.idempotencyKey?.trim();
+    if (idempotencyKey) {
+      try {
+        const cached = await redis.get(`order:idempotency:${userId}:${idempotencyKey}`);
+        if (cached) {
+          return JSON.parse(cached);
+        }
+      } catch {}
+    }
+
     // 1. Get user cart from Redis via CartService
     const cart = await this.cartService.getCart(userId);
 
@@ -57,8 +77,8 @@ export class OrderService {
         }
       }
 
-      // using product netPrice
-      const price = Number(item.product.netPrice);
+      // Canonical server-side selling price calculation honoring discountPercent
+      const price = computeItemSellingPrice(item.product.netPrice, item.product.discountPercent);
       totalAmount += price * item.quantity;
     }
 
@@ -108,8 +128,8 @@ export class OrderService {
 
     totalAmount += deliveryFee;
 
-    // 3. Create order in transaction
-    const result = await this.prisma.$transaction(async (tx) => {
+    // 3. Create order in transaction without holding external gateway calls
+    const createdOrder = await this.prisma.$transaction(async (tx) => {
       const order = await tx.order.create({
         data: {
           userId,
@@ -121,7 +141,7 @@ export class OrderService {
               productId: item.productId,
               variantId: item.variantId,
               quantity: item.quantity,
-              price: item.product.netPrice,
+              price: computeItemSellingPrice(item.product.netPrice, item.product.discountPercent),
             })),
           },
           statusHistory: {
@@ -135,38 +155,19 @@ export class OrderService {
         },
       });
 
-      // 4. Create Payment record and Razorpay Order if needed
-      let razorpayOrderId: string | null = null;
-      if (input.paymentMethod === 'RAZORPAY') {
-        const rpOrder = await this.razorpay.orders.create({
-          amount: Math.round(totalAmount * 100), // amount in paise
-          currency: 'INR',
-          receipt: order.id,
-        });
-        razorpayOrderId = rpOrder.id;
+      // Payment record initially created inside transaction
+      await tx.payment.create({
+        data: {
+          orderId: order.id,
+          userId,
+          amount: totalAmount,
+          status: 'PENDING',
+          paymentMethod: input.paymentMethod,
+        },
+      });
 
-        await tx.payment.create({
-          data: {
-            orderId: order.id,
-            userId,
-            amount: totalAmount,
-            status: 'PENDING',
-            paymentMethod: 'RAZORPAY',
-            transactionId: razorpayOrderId,
-          },
-        });
-      } else {
-        await tx.payment.create({
-          data: {
-            orderId: order.id,
-            userId,
-            amount: totalAmount,
-            status: 'PENDING',
-            paymentMethod: 'COD',
-          },
-        });
-
-        // Deduct inventory for COD orders atomically with conditional stock check (Strict CP)
+      // Deduct inventory for COD orders atomically with conditional stock check (Strict CP)
+      if (input.paymentMethod === 'COD') {
         for (const item of cart.items) {
           if (item.variantId) {
             const updated = await tx.productVariant.updateMany({
@@ -187,16 +188,51 @@ export class OrderService {
         }
       }
 
-      // Note: Cart clearing happens after transaction finishes successfully since it's in Redis
-
-      return {
-        orderId: order.id,
-        method: input.paymentMethod,
-        razorpayOrderId,
-        amount: totalAmount,
-      };
+      return order;
     });
-    
+
+    // 4. Handle Razorpay order creation OUTSIDE database transaction
+    let razorpayOrderId: string | null = null;
+    if (input.paymentMethod === 'RAZORPAY') {
+      try {
+        const rpOrder = await this.razorpay.orders.create({
+          amount: Math.round(totalAmount * 100), // amount in paise
+          currency: 'INR',
+          receipt: createdOrder.id,
+        });
+        razorpayOrderId = rpOrder.id;
+
+        await this.prisma.payment.updateMany({
+          where: { orderId: createdOrder.id, paymentMethod: 'RAZORPAY' },
+          data: { transactionId: razorpayOrderId },
+        });
+      } catch (err: any) {
+        this.logger.error(`Razorpay order creation failed for order ${createdOrder.id}: ${err?.message || err}`);
+        await this.prisma.order.update({
+          where: { id: createdOrder.id },
+          data: { status: 'CANCELLED' },
+        });
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Unable to initiate payment with payment gateway. Please try again.',
+        });
+      }
+    }
+
+    const result = {
+      orderId: createdOrder.id,
+      method: input.paymentMethod,
+      razorpayOrderId,
+      amount: totalAmount,
+    };
+
+    // Save result to idempotency cache (TTL: 5 minutes)
+    if (idempotencyKey) {
+      try {
+        await redis.set(`order:idempotency:${userId}:${idempotencyKey}`, JSON.stringify(result), 'EX', 300);
+      } catch {}
+    }
+
     // 5. Clear cart in Redis
     await this.cartService.clearCart(userId);
     

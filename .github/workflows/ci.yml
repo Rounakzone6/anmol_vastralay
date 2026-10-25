@@ -40,10 +40,10 @@ jobs:
       - name: Checkout Codebase
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20.x
+      - name: Setup Node.js 22.x
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '22.x'
           cache: 'npm'
           cache-dependency-path: anmol-backend/package-lock.json
 
@@ -57,9 +57,20 @@ jobs:
           DATABASE_URL: postgresql://anmol_user:anmol_password@localhost:5432/anmol_db?schema=public
         run: npx prisma generate
 
+      - name: Deploy Database Migrations
+        working-directory: anmol-backend
+        env:
+          DATABASE_URL: postgresql://anmol_user:anmol_password@localhost:5432/anmol_db?schema=public
+        run: npx prisma migrate deploy
+
+      - name: Backend Lint Check
+        working-directory: anmol-backend
+        run: npm run lint:check
+
       - name: TypeScript Type Check
         working-directory: anmol-backend
         run: npm run type-check
+
 
       - name: Run Test Suite & Concurrency Validation
         working-directory: anmol-backend
@@ -79,16 +90,16 @@ jobs:
         run: npm run build
 
   frontend-check:
-    name: Frontend Lint & Type Verification
+    name: Frontend Lint, Type Verification & Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Codebase
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20.x
+      - name: Setup Node.js 22.x
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '22.x'
 
       - name: Generate Backend Prisma (Required by Frontend Types)
         working-directory: anmol-backend
@@ -104,17 +115,24 @@ jobs:
         working-directory: anmol-frontend
         run: npm run type-check
 
+      - name: Build Frontend Application
+        working-directory: anmol-frontend
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+        run: npm run build
+
   admin-check:
-    name: Admin POS & Dashboard Type Verification
+    name: Admin POS & Dashboard Type Verification & Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Codebase
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20.x
+      - name: Setup Node.js 22.x
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '22.x'
 
       - name: Generate Backend Prisma (Required by Admin Types)
         working-directory: anmol-backend
@@ -129,3 +147,9 @@ jobs:
       - name: Admin Type Check
         working-directory: anmol-admin
         run: npm run type-check
+
+      - name: Build Admin Application
+        working-directory: anmol-admin
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001
+        run: npm run build

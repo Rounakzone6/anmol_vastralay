@@ -49,7 +49,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     redirect(`/product/${product.slug}`);
   }
 
-  const price = Number(product.netPrice);
+  const discount = Number(product.discountPercent || 0);
+  const price = (product as any).sellingPrice
+    ? Number((product as any).sellingPrice)
+    : discount > 0
+      ? Math.round(Number(product.netPrice) * (1 - discount / 100) * 100) / 100
+      : Number(product.netPrice);
   const color = product.variants?.map(v => v.color).filter(Boolean)[0];
   const size = product.variants?.map(v => v.size).filter(Boolean)[0];
   const inStock = product.variants ? product.variants.some(v => v.stockQty > 0) : true;

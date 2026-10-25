@@ -7,6 +7,7 @@ export class SearchBloomService implements OnModuleInit {
   private readonly logger = new Logger(SearchBloomService.name);
   private filter: BloomFilter;
   private isReady: boolean = false;
+  private rebuildTimeout: NodeJS.Timeout | null = null;
 
   constructor(private readonly prisma: PrismaService) {
     // 50,000 estimated terms/prefixes with 1% false positive rate
@@ -19,6 +20,22 @@ export class SearchBloomService implements OnModuleInit {
       this.logger.error(`Failed to initialize Search Bloom Filter: ${err.message}`, err.stack);
     });
   }
+
+  /**
+   * Schedule a debounced rebuild (30s) to batch rapid catalog updates
+   */
+  public scheduleDebouncedRebuild(delayMs: number = 30000): void {
+    if (this.rebuildTimeout) {
+      clearTimeout(this.rebuildTimeout);
+    }
+    this.rebuildTimeout = setTimeout(() => {
+      this.rebuildIndex().catch((err) => {
+        this.logger.error(`Debounced Search Bloom Filter rebuild failed: ${err.message}`);
+      });
+      this.rebuildTimeout = null;
+    }, delayMs);
+  }
+
 
   /**
    * Tokenize text into words and add both full words and their prefixes (>= 2 chars)

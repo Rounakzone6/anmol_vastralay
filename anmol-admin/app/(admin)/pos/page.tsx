@@ -104,9 +104,24 @@ export default function POSPage() {
   const [sendWhatsApp, setSendWhatsApp] = useState<boolean>(true);
   const [cashierNotes, setCashierNotes] = useState<string>('');
 
-  // Held Carts (parked tabs)
+  // Held Carts (parked tabs) with localStorage persistence
   const [heldCarts, setHeldCarts] = useState<HeldCart[]>([]);
   const [showHeldModal, setShowHeldModal] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('anmol_pos_held_carts');
+      if (saved) {
+        setHeldCarts(JSON.parse(saved));
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('anmol_pos_held_carts', JSON.stringify(heldCarts));
+    } catch {}
+  }, [heldCarts]);
 
   // Recent Bills Modal & Drawer
   const [showRecentModal, setShowRecentModal] = useState(false);
@@ -308,7 +323,18 @@ export default function POSPage() {
     try {
       const result = await barcodeLookup.mutateAsync({ code });
       if (result.found && result.product) {
-        addItemToCart(result.product, result.variant);
+        if (result.requiresVariantSelection) {
+          setVariantSelectorProduct(result.product);
+          toast.info(`Product scanned. Please choose color/size variant.`);
+        } else if (result.variant) {
+          if (result.availableStock <= 0) {
+            toast.error(`Out of stock: ${result.product.name} (${result.variant.color || ''} ${result.variant.size || ''})`);
+          } else {
+            addItemToCart(result.product, result.variant);
+          }
+        } else {
+          toast.warning(`No active variants found for ${result.product.name}`);
+        }
         setBarcodeInput('');
         barcodeRef.current?.focus();
       } else {
@@ -317,6 +343,7 @@ export default function POSPage() {
     } catch (err: any) {
       toast.error(err.message || 'Error scanning barcode');
     }
+
   };
 
   // ─── Hold & Resume Cart System ─────────────────────────────────────────────

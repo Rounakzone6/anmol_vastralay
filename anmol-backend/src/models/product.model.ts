@@ -50,7 +50,7 @@ export const ListProductSchema = z.object({
   search: z.string().optional(),
   includeInactive: z.boolean().optional(),
   page: z.number().int().min(1).default(1),
-  pageSize: z.number().int().min(1).max(1000).default(20),
+  pageSize: z.number().int().min(1).max(100).default(20),
   cursor: z.number().nullish(),
 });
 

@@ -220,15 +220,16 @@ export default function SearchAutocomplete({
               Suggestions for &ldquo;{debouncedQuery}&rdquo;
             </span>
 
-            {/* Bloom Filter Verified Badge */}
+            {/* Fast Index Indicator */}
             <span
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold tracking-wide"
-              title="Bloom Filter verified term in catalog with zero false negatives"
+              title="In-memory prefix indexing (<1ms query response)"
             >
               <Zap size={10} className="text-emerald-600 fill-emerald-600" />
-              Bloom Filter ⚡
+              Fast Search ⚡
             </span>
           </div>
+
 
           {/* Loading Skeleton */}
           {isLoading && products.length === 0 && categories.length === 0 && (

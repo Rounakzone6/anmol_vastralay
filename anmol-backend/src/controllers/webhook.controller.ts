@@ -7,6 +7,7 @@ import { PrismaService } from '@backend/services/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InvoiceService } from '@backend/services/invoice.service';
 import { WhatsappWebService } from '@backend/services/whatsapp-web.service';
+import { redis } from '@backend/config/redis.config';
 
 @Controller('api/webhooks')
 export class WebhookController {
@@ -28,9 +29,13 @@ export class WebhookController {
     try {
       const secret = process.env.RAZORPAY_WEBHOOK_SECRET || '';
 
-      // If no secret is configured, just warn and return 200 to prevent retries
+      // Fail closed in production if secret is not configured
       if (!secret) {
-        this.logger.warn('RAZORPAY_WEBHOOK_SECRET is not configured');
+        if (process.env.NODE_ENV === 'production') {
+          this.logger.error('CRITICAL: RAZORPAY_WEBHOOK_SECRET is not configured in production. Rejecting webhook.');
+          return res.status(500).send('Webhook secret not configured');
+        }
+        this.logger.warn('RAZORPAY_WEBHOOK_SECRET is not configured in dev mode');
         return res.status(200).send('OK');
       }
 
@@ -46,7 +51,7 @@ export class WebhookController {
         return res.status(400).send('Missing signature');
       }
 
-      // Verify the signature
+      // Verify cryptographic signature
       const expectedSignature = crypto
         .createHmac('sha256', secret)
         .update(req.rawBody)
@@ -59,22 +64,61 @@ export class WebhookController {
 
       const payload = req.body;
       const event = payload.event;
+      const eventId = (req.headers['x-razorpay-event-id'] as string) || `${event}:${payload.payload?.payment?.entity?.id || ''}`;
+
+      // Deduplicate webhook events to prevent duplicate fulfillment or double-inventory deduction
+      if (eventId) {
+        try {
+          const isNew = await redis.set(`webhook:razorpay:${eventId}`, '1', 'EX', 86400, 'NX');
+          if (!isNew) {
+            this.logger.log(`Duplicate Razorpay webhook event ignored: ${eventId}`);
+            return res.status(200).send('Already processed');
+          }
+        } catch (cacheErr) {
+          this.logger.warn(`Redis deduplication check error: ${cacheErr}`);
+        }
+      }
+
       this.logger.log(`Received Razorpay webhook event: ${event}`);
 
-      // Handle specific payment events
-      if (event === 'payment.captured' || event === 'payment.authorized') {
-        const paymentEntity = payload.payload.payment.entity;
-        const razorpayOrderId = paymentEntity.order_id;
+      // Handle payment authorization: record status without premature fulfillment
+      if (event === 'payment.authorized') {
+        const paymentEntity = payload.payload?.payment?.entity;
+        const razorpayOrderId = paymentEntity?.order_id;
+        const razorpayPaymentId = paymentEntity?.id;
 
         if (razorpayOrderId) {
-          const razorpayPaymentId = paymentEntity.id; // e.g. pay_xxx
+          await this.prisma.payment.updateMany({
+            where: {
+              OR: [
+                { transactionId: razorpayOrderId },
+                ...(razorpayPaymentId ? [{ transactionId: razorpayPaymentId }] : []),
+              ],
+            },
+            data: {
+              status: 'PENDING',
+              ...(razorpayPaymentId ? { transactionId: razorpayPaymentId } : {}),
+            },
+          });
+          this.logger.log(`Payment authorized (pending capture) for Razorpay Order: ${razorpayOrderId}`);
+        }
+        return res.status(200).send('OK');
+      }
+
+      // Handle payment capture: fulfill order, atomically deduct stock, and send invoice
+      if (event === 'payment.captured') {
+        const paymentEntity = payload.payload?.payment?.entity;
+        const razorpayOrderId = paymentEntity?.order_id;
+        const razorpayPaymentId = paymentEntity?.id;
+
+        if (razorpayOrderId) {
           await this.prisma.$transaction(async (tx) => {
             // Update payment status to COMPLETED and record actual Payment ID
             await tx.payment.updateMany({
               where: {
                 OR: [
                   { transactionId: razorpayOrderId },
-                  { transactionId: razorpayPaymentId },
+                  ...(razorpayPaymentId ? [{ transactionId: razorpayPaymentId }] : []),
                 ],
               },
               data: {
@@ -83,7 +127,7 @@ export class WebhookController {
               },
             });
 
-            // Safely update the parent order status to PROCESSING and deduct inventory
+            // Safely update parent order status from PENDING to PROCESSING
             const payments = await tx.payment.findMany({
               where: {
                 OR: [
@@ -107,57 +151,64 @@ export class WebhookController {
                 });
 
                 if (updatedOrder.count > 0) {
-                  // Deduct inventory for online payments exactly once
+                  // Atomically deduct inventory with non-negative guard
                   for (const item of order.items) {
                     if (item.variantId) {
-                      await tx.productVariant.update({
-                        where: { id: item.variantId },
+                      const updatedStock = await tx.productVariant.updateMany({
+                        where: {
+                          id: item.variantId,
+                          stockQty: { gte: item.quantity },
+                        },
                         data: { stockQty: { decrement: item.quantity } },
                       });
+
+                      if (updatedStock.count === 0) {
+                        this.logger.error(
+                          `Oversell alert: Stock depleted for variant ${item.variantId} in captured order ${order.id}`,
+                        );
+                      }
                     }
                   }
 
-                // Send Email Invoice
-                this.invoiceService.emailOrderInvoice(order.id).catch(err => this.logger.error(err));
+                  // Send Email Invoice
+                  this.invoiceService.emailOrderInvoice(order.id).catch((err) => this.logger.error(err));
 
-                // Send WhatsApp Invoice
-                (async () => {
-                  try {
-                    const user = await this.prisma.user.findUnique({ where: { id: order.userId } });
-                    let phone = user?.phone;
-                    if (!phone) {
-                      const addr = await this.prisma.address.findFirst({
-                        where: { userId: order.userId },
-                        orderBy: { isDefault: 'desc' },
-                      });
-                      phone = addr?.phone;
+                  // Send WhatsApp Invoice
+                  (async () => {
+                    try {
+                      const user = await this.prisma.user.findUnique({ where: { id: order.userId } });
+                      let phone = user?.phone;
+                      if (!phone) {
+                        const addr = await this.prisma.address.findFirst({
+                          where: { userId: order.userId },
+                          orderBy: { isDefault: 'desc' },
+                        });
+                        phone = addr?.phone;
+                      }
+
+                      if (phone) {
+                        const invoice = await this.invoiceService.generateInvoice(undefined, order.id);
+                        const message = `🛍️ *Payment Received!* 🛍️\n\nThank you for shopping at Anmol Vastralay!\nYour Razorpay payment for order *#${order.id.slice(-8).toUpperCase()}* was successful.\n\nAttached is your invoice. 🧾`;
+
+                        await this.whatsappWebService.sendDocument(
+                          phone,
+                          { url: invoice.invoiceUrl },
+                          `${invoice.invoiceNumber}.pdf`,
+                          message,
+                        );
+                      }
+                    } catch (err) {
+                      this.logger.error('Failed to send WA order invoice', err);
                     }
+                  })();
 
-                    if (phone) {
-                      const invoice = await this.invoiceService.generateInvoice(undefined, order.id);
-                      const message = `🛍️ *Payment Received!* 🛍️\n\nThank you for shopping at Anmol Vastralay!\nYour Razorpay payment for order *#${order.id.slice(-8).toUpperCase()}* was successful.\n\nAttached is your invoice. 🧾`;
-                      
-                      await this.whatsappWebService.sendDocument(
-                        phone,
-                        { url: invoice.invoiceUrl },
-                        `${invoice.invoiceNumber}.pdf`,
-                        message
-                      );
-                    }
-                  } catch (err) {
-                    this.logger.error('Failed to send WA order invoice', err);
-                  }
-                })();
-
-                // Emit event for delivery boy assignment
-                this.eventEmitter.emit('order.processing', { orderId: order.id });
+                  // Emit event for delivery boy assignment
+                  this.eventEmitter.emit('order.processing', { orderId: order.id });
                 }
               }
             }
           });
-          this.logger.log(
-            `Payment marked COMPLETED for Razorpay Order: ${razorpayOrderId}`,
-          );
+          this.logger.log(`Payment marked COMPLETED for Razorpay Order: ${razorpayOrderId}`);
         }
       } else if (event === 'payment.failed') {
         const paymentEntity = payload.payload.payment.entity;

@@ -15,20 +15,21 @@ export class DeliveryAssignmentService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    this.logger.log('DeliveryAssignmentService initialized with atomic driver claims & BullMQ retry');
+    this.logger.log('DeliveryAssignmentService initialized with atomic driver/order claims & BullMQ retry');
   }
 
   @OnEvent('order.processing', { async: true })
   async handleOrderProcessingEvent(payload: { orderId: string }) {
     this.logger.log(`Received order.processing event for order ${payload.orderId}`);
-    await this.assignDriverToOrder(payload.orderId);
+    await this.assignDriverToOrder(payload.orderId, false);
   }
 
   /**
-   * Atomically claims an AVAILABLE driver using conditional updateMany inside a transaction.
-   * If no driver is currently free, queues a delayed retry via BullMQ.
+   * Atomically claims an AVAILABLE driver and assigns the order inside a single database transaction.
+   * Uses double-guarded updates on both driver and order sides to prevent two drivers from being
+   * assigned to the same order, and two orders from claiming the same driver.
    */
-  async assignDriverToOrder(orderId: string): Promise<boolean> {
+  async assignDriverToOrder(orderId: string, isFromQueue: boolean = false): Promise<boolean> {
     try {
       // 1. Check if order is already assigned
       const existingOrder = await this.prisma.order.findUnique({
@@ -46,7 +47,7 @@ export class DeliveryAssignmentService implements OnModuleInit {
         return true;
       }
 
-      // 2. Fetch all candidates marked AVAILABLE
+      // 2. Fetch candidates marked AVAILABLE
       const availableCandidates = await this.prisma.deliveryPerson.findMany({
         where: { status: 'AVAILABLE' },
         select: { id: true, name: true, phone: true },
@@ -54,54 +55,73 @@ export class DeliveryAssignmentService implements OnModuleInit {
       });
 
       if (availableCandidates.length === 0) {
-        this.logger.warn(`No delivery personnel currently available for order ${orderId}. Enqueueing BullMQ retry...`);
-        await this.notificationQueue.enqueueDeliveryAssignment({ orderId });
+        this.logger.warn(`No delivery personnel currently available for order ${orderId}.`);
+        if (!isFromQueue) {
+          // Initial trigger: enqueue once into BullMQ with stable jobId: assign-<orderId>
+          await this.notificationQueue.enqueueDeliveryAssignment({ orderId });
+        }
         return false;
       }
 
-      // 3. Atomically attempt to claim the driver inside transaction
+      // 3. Atomically attempt to claim the driver AND assign order inside a single transaction
       let claimedPerson: { id: string; name: string; phone: string } | null = null;
       let updatedOrder: any = null;
 
       for (const candidate of availableCandidates) {
-        const result = await this.prisma.$transaction(async (tx) => {
-          // Atomic conditional update to claim driver
-          const claim = await tx.deliveryPerson.updateMany({
-            where: {
-              id: candidate.id,
-              status: 'AVAILABLE',
-            },
-            data: { status: 'BUSY' },
+        try {
+          const result = await this.prisma.$transaction(async (tx) => {
+            // Guard 1: Atomic conditional update to claim driver
+            const claim = await tx.deliveryPerson.updateMany({
+              where: {
+                id: candidate.id,
+                status: 'AVAILABLE',
+              },
+              data: { status: 'BUSY' },
+            });
+
+            if (claim.count === 0) {
+              return null; // Another concurrent order claimed this driver
+            }
+
+            // Guard 2: Atomic conditional update on order side to ensure order still has no driver
+            const orderClaim = await tx.order.updateMany({
+              where: {
+                id: orderId,
+                deliveryPersonId: null,
+              },
+              data: { deliveryPersonId: candidate.id },
+            });
+
+            if (orderClaim.count === 0) {
+              // Order was already assigned or cancelled concurrently; roll back driver claim
+              throw new Error('ORDER_ALREADY_ASSIGNED_OR_CANCELLED');
+            }
+
+            return tx.order.findUnique({
+              where: { id: orderId },
+              include: { user: true, payments: true },
+            });
           });
 
-          // If count === 0, another concurrent order claimed this driver in the exact same millisecond
-          if (claim.count === 0) {
-            return null;
+          if (result) {
+            claimedPerson = candidate;
+            updatedOrder = result;
+            break;
           }
-
-          // Successfully claimed! Assign to order
-          const ord = await tx.order.update({
-            where: { id: orderId },
-            data: { deliveryPersonId: candidate.id },
-            include: {
-              user: true,
-              payments: true,
-            },
-          });
-
-          return ord;
-        });
-
-        if (result) {
-          claimedPerson = candidate;
-          updatedOrder = result;
-          break; // Driver successfully locked and assigned!
+        } catch (txError: any) {
+          if (txError.message === 'ORDER_ALREADY_ASSIGNED_OR_CANCELLED') {
+            this.logger.log(`Order ${orderId} was already assigned by concurrent worker`);
+            return true;
+          }
+          this.logger.warn(`Transaction retry on candidate ${candidate.id}: ${txError.message}`);
         }
       }
 
       if (!claimedPerson || !updatedOrder) {
-        this.logger.warn(`Driver race occurred on all candidates for order ${orderId}. Re-queueing via BullMQ.`);
-        await this.notificationQueue.enqueueDeliveryAssignment({ orderId });
+        this.logger.warn(`All candidate drivers claimed concurrently for order ${orderId}.`);
+        if (!isFromQueue) {
+          await this.notificationQueue.enqueueDeliveryAssignment({ orderId });
+        }
         return false;
       }
 
@@ -132,14 +152,40 @@ export class DeliveryAssignmentService implements OnModuleInit {
       return true;
     } catch (error: any) {
       this.logger.error(`Error in atomic driver assignment for order ${orderId}:`, error);
-      await this.notificationQueue.enqueueDeliveryAssignment({ orderId });
+      if (!isFromQueue) {
+        await this.notificationQueue.enqueueDeliveryAssignment({ orderId });
+      }
       return false;
     }
   }
 
+  /**
+   * Called when BullMQ retries are fully exhausted (after 5 attempts).
+   * Marks the order as requiring manual dispatcher intervention and logs an urgent alert.
+   */
+  async handleExhaustedRetries(orderId: string): Promise<void> {
+    try {
+      this.logger.error(`🚨 ALERT: All 5 delivery dispatch attempts failed for Order ${orderId}. Marking for manual dispatcher assignment.`);
+      await this.prisma.orderStatusHistory.create({
+        data: {
+          orderId,
+          status: 'PROCESSING',
+          note: 'ACTION REQUIRED: All automated driver dispatch retries exhausted (5/5). Order flagged for manual assignment.',
+        },
+      });
+    } catch (err: any) {
+      this.logger.error(`Failed to record exhausted retry status for order ${orderId}: ${err.message}`);
+    }
+  }
+
+  /**
+   * Free driver on order completion, cancellation, or return.
+   */
   @OnEvent('order.completed', { async: true })
-  async handleOrderCompletedEvent(payload: { orderId: string }) {
-    this.logger.log(`Received order.completed event for order ${payload.orderId}`);
+  @OnEvent('order.cancelled', { async: true })
+  @OnEvent('order.returned', { async: true })
+  async handleOrderLifecycleEvent(payload: { orderId: string }) {
+    this.logger.log(`Received lifecycle event for order ${payload.orderId}. Releasing driver if assigned.`);
     try {
       const order = await this.prisma.order.findUnique({
         where: { id: payload.orderId },
@@ -151,7 +197,7 @@ export class DeliveryAssignmentService implements OnModuleInit {
           where: { id: order.deliveryPersonId },
           data: { status: 'AVAILABLE' },
         });
-        this.logger.log(`Freed delivery person ${order.deliveryPersonId}`);
+        this.logger.log(`✅ Released delivery person ${order.deliveryPersonId} back to AVAILABLE`);
       }
     } catch (error) {
       this.logger.error(`Error freeing delivery person for order ${payload.orderId}:`, error);

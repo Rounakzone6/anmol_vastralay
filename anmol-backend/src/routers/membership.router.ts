@@ -1,7 +1,7 @@
 import {
   publicProcedure,
   protectedProcedure,
-  staffProcedure,
+  adminProcedure,
   router,
 } from '@backend/config/trpc.config';
 import {
@@ -28,13 +28,13 @@ export const membershipRouter = router({
       return ctx.services.membership.verifyMembershipPayment(ctx.user.id, input);
     }),
 
-  adminUpdatePlan: staffProcedure
+  adminUpdatePlan: adminProcedure
     .input(UpdateMembershipPlanSchema)
     .mutation(async ({ ctx, input }) => {
       return ctx.services.membership.adminUpdatePlan(input);
     }),
 
-  adminGetMembers: staffProcedure.query(async ({ ctx }) => {
+  adminGetMembers: adminProcedure.query(async ({ ctx }) => {
     return ctx.services.membership.adminGetMembers();
   }),
 });
