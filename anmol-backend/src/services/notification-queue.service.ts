@@ -38,4 +38,13 @@ export class NotificationQueueService {
       priority: 2, 
     });
   }
+
+  async enqueueDeliveryAssignment(data: { orderId: string; attempt?: number }) {
+    await this.notificationQueue.add('assign-delivery', data, {
+      priority: 1,
+      delay: 30000, // Retry in 30 seconds
+      attempts: 5,
+      backoff: { type: 'exponential', delay: 10000 },
+    });
+  }
 }

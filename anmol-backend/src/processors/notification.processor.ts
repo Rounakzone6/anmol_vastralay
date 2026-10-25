@@ -1,9 +1,10 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InvoiceService } from '@backend/services/invoice.service';
 import { WhatsappWebService } from '@backend/services/whatsapp-web.service';
 import { PrismaService } from '@backend/services/prisma.service';
+import { DeliveryAssignmentService } from '@backend/services/delivery-assignment.service';
 
 @Injectable()
 @Processor('notifications')
@@ -14,6 +15,8 @@ export class NotificationProcessor extends WorkerHost {
     private readonly invoiceService: InvoiceService,
     private readonly whatsappWebService: WhatsappWebService,
     private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => DeliveryAssignmentService))
+    private readonly deliveryAssignmentService: DeliveryAssignmentService,
   ) {
     super();
   }
@@ -30,8 +33,17 @@ export class NotificationProcessor extends WorkerHost {
         return this.handleAbandonedCartWhatsApp(job.data);
       case 'marketing-message':
         return this.handleMarketingMessage(job.data);
+      case 'assign-delivery':
+        return this.handleAssignDelivery(job.data);
       default:
         this.logger.warn(`No handler for job name: ${job.name}`);
+    }
+  }
+
+  private async handleAssignDelivery(data: { orderId: string }) {
+    const assigned = await this.deliveryAssignmentService.assignDriverToOrder(data.orderId);
+    if (!assigned) {
+      throw new Error(`Driver assignment retry for order ${data.orderId}: no available driver found yet.`);
     }
   }
 

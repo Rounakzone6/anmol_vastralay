@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { PrismaService } from '@backend/services/prisma.service';
 import { OnEvent } from '@nestjs/event-emitter';
 import { WhatsappWebService } from './whatsapp-web.service';
+import { NotificationQueueService } from './notification-queue.service';
 
 @Injectable()
 export class DeliveryAssignmentService implements OnModuleInit {
@@ -10,93 +11,129 @@ export class DeliveryAssignmentService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly whatsappWeb: WhatsappWebService,
+    private readonly notificationQueue: NotificationQueueService,
   ) {}
 
   async onModuleInit() {
-    this.logger.log('DeliveryAssignmentService initialized');
+    this.logger.log('DeliveryAssignmentService initialized with atomic driver claims & BullMQ retry');
   }
 
   @OnEvent('order.processing', { async: true })
   async handleOrderProcessingEvent(payload: { orderId: string }) {
     this.logger.log(`Received order.processing event for order ${payload.orderId}`);
+    await this.assignDriverToOrder(payload.orderId);
+  }
+
+  /**
+   * Atomically claims an AVAILABLE driver using conditional updateMany inside a transaction.
+   * If no driver is currently free, queues a delayed retry via BullMQ.
+   */
+  async assignDriverToOrder(orderId: string): Promise<boolean> {
     try {
-      // Find an available delivery person
-      const availablePerson = await this.prisma.deliveryPerson.findFirst({
+      // 1. Check if order is already assigned
+      const existingOrder = await this.prisma.order.findUnique({
+        where: { id: orderId },
+        select: { deliveryPersonId: true, status: true },
+      });
+
+      if (!existingOrder) {
+        this.logger.warn(`Order ${orderId} not found for delivery assignment`);
+        return true; // Don't retry non-existent order
+      }
+
+      if (existingOrder.deliveryPersonId) {
+        this.logger.log(`Order ${orderId} is already assigned to driver ${existingOrder.deliveryPersonId}`);
+        return true;
+      }
+
+      // 2. Fetch all candidates marked AVAILABLE
+      const availableCandidates = await this.prisma.deliveryPerson.findMany({
         where: { status: 'AVAILABLE' },
+        select: { id: true, name: true, phone: true },
+        take: 5,
       });
 
-      if (!availablePerson) {
-        this.logger.warn(`No available delivery person for order ${payload.orderId}. Queueing not fully implemented (requires retry mechanism).`);
-        return;
+      if (availableCandidates.length === 0) {
+        this.logger.warn(`No delivery personnel currently available for order ${orderId}. Enqueueing BullMQ retry...`);
+        await this.notificationQueue.enqueueDeliveryAssignment({ orderId });
+        return false;
       }
 
-      // Assign the person and update status to BUSY in a transaction
-      const order = await this.prisma.$transaction(async (tx) => {
-        const order = await tx.order.findUnique({
-          where: { id: payload.orderId },
-          include: {
-            user: true,
-            payments: true,
-          }
-        });
-        
-        // If already assigned, ignore
-        if (order?.deliveryPersonId) {
-          return null;
-        }
+      // 3. Atomically attempt to claim the driver inside transaction
+      let claimedPerson: { id: string; name: string; phone: string } | null = null;
+      let updatedOrder: any = null;
 
-        const updatedOrder = await tx.order.update({
-          where: { id: payload.orderId },
-          data: { deliveryPersonId: availablePerson.id },
-          include: {
-            user: true,
-            payments: true,
-          }
-        });
-
-        await tx.deliveryPerson.update({
-          where: { id: availablePerson.id },
-          data: { status: 'BUSY' },
-        });
-
-        return updatedOrder;
-      });
-
-      if (order) {
-        this.logger.log(`Assigned delivery person ${availablePerson.name} to order ${payload.orderId}`);
-
-        // Format and send WhatsApp message
-        const paymentMethod = order.payments?.[0]?.paymentMethod || 'Online/Prepaid';
-        const isCOD = paymentMethod === 'COD' ? 'COD (Cash on Delivery)' : paymentMethod;
-        // Try to find phone from user's addresses if user.phone is null
-        let fallbackPhone: string | null | undefined = null;
-        if (!order.user?.phone) {
-          const address = await this.prisma.address.findFirst({
-            where: { userId: order.userId },
-            orderBy: { isDefault: 'desc' },
+      for (const candidate of availableCandidates) {
+        const result = await this.prisma.$transaction(async (tx) => {
+          // Atomic conditional update to claim driver
+          const claim = await tx.deliveryPerson.updateMany({
+            where: {
+              id: candidate.id,
+              status: 'AVAILABLE',
+            },
+            data: { status: 'BUSY' },
           });
-          fallbackPhone = address?.phone;
+
+          // If count === 0, another concurrent order claimed this driver in the exact same millisecond
+          if (claim.count === 0) {
+            return null;
+          }
+
+          // Successfully claimed! Assign to order
+          const ord = await tx.order.update({
+            where: { id: orderId },
+            data: { deliveryPersonId: candidate.id },
+            include: {
+              user: true,
+              payments: true,
+            },
+          });
+
+          return ord;
+        });
+
+        if (result) {
+          claimedPerson = candidate;
+          updatedOrder = result;
+          break; // Driver successfully locked and assigned!
         }
-
-        const customerPhone = order.user?.phone || fallbackPhone || 'Not Provided';
-        const customerName = order.user?.name || 'Customer';
-
-        const message = `🚨 *NEW DELIVERY ASSIGNED* 🚨
-
-*Order ID:* #${order.id.slice(-6).toUpperCase()}
-*Payment:* ${isCOD} - ₹${order.totalAmount.toString()}
-*Customer:* ${customerName}
-*Contact:* ${customerPhone}
-
-*Delivery Address:*
-${order.shippingAddress}
-
-Please ensure timely delivery! 📦`;
-
-        await this.whatsappWeb.sendMessage(availablePerson.phone, message);
       }
-    } catch (error) {
-      this.logger.error(`Error assigning delivery person for order ${payload.orderId}:`, error);
+
+      if (!claimedPerson || !updatedOrder) {
+        this.logger.warn(`Driver race occurred on all candidates for order ${orderId}. Re-queueing via BullMQ.`);
+        await this.notificationQueue.enqueueDeliveryAssignment({ orderId });
+        return false;
+      }
+
+      this.logger.log(`✅ Atomically assigned delivery person ${claimedPerson.name} (${claimedPerson.id}) to order ${orderId}`);
+
+      // 4. Send WhatsApp Notification to assigned driver
+      const paymentMethod = updatedOrder.payments?.[0]?.paymentMethod || 'Online/Prepaid';
+      const isCOD = paymentMethod === 'COD' ? 'COD (Cash on Delivery)' : paymentMethod;
+
+      let fallbackPhone: string | null | undefined = null;
+      if (!updatedOrder.user?.phone) {
+        const address = await this.prisma.address.findFirst({
+          where: { userId: updatedOrder.userId },
+          orderBy: { isDefault: 'desc' },
+        });
+        fallbackPhone = address?.phone;
+      }
+
+      const customerPhone = updatedOrder.user?.phone || fallbackPhone || 'Not Provided';
+      const customerName = updatedOrder.user?.name || 'Customer';
+
+      const message = `🚨 *NEW DELIVERY ASSIGNED* 🚨\n\n*Order ID:* #${updatedOrder.id.slice(-6).toUpperCase()}\n*Payment:* ${isCOD} - ₹${updatedOrder.totalAmount.toString()}\n*Customer:* ${customerName}\n*Contact:* ${customerPhone}\n\n*Delivery Address:*\n${updatedOrder.shippingAddress}\n\nPlease ensure timely delivery! 📦`;
+
+      this.whatsappWeb.sendMessage(claimedPerson.phone, message).catch((err) => {
+        this.logger.warn(`Could not dispatch WhatsApp to driver ${claimedPerson?.phone}: ${err.message}`);
+      });
+
+      return true;
+    } catch (error: any) {
+      this.logger.error(`Error in atomic driver assignment for order ${orderId}:`, error);
+      await this.notificationQueue.enqueueDeliveryAssignment({ orderId });
+      return false;
     }
   }
 

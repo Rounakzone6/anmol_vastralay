@@ -24,7 +24,7 @@ export async function generateSitemaps() {
   } catch (e) {}
 
   const sitemaps = [{ id: 0 }]; // 0 for static and categories
-  const maxProductsPerSitemap = 5000;
+  const maxProductsPerSitemap = 1000;
   for (let i = 0; i < Math.ceil(total / maxProductsPerSitemap); i++) {
     sitemaps.push({ id: i + 1 });
   }
@@ -77,9 +77,9 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
     return [...staticRoutes, ...categoryRoutes];
   }
 
-  // If id > 0, generate product routes
+  // If id > 0, generate product routes in chunks of 1000
   const page = id;
-  const pageSize = 5000;
+  const pageSize = 1000;
   let productRoutes: MetadataRoute.Sitemap = [];
   try {
     const api = process.env.NEXT_PUBLIC_API_URL;

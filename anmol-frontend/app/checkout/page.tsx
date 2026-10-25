@@ -21,6 +21,8 @@ export default function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | 'new'>('new');
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'RAZORPAY'>('RAZORPAY');
   const [checkoutError, setCheckoutError] = useState('');
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
 
   const utils = trpc.useUtils();
   const { data: cart, isLoading } = trpc.cart.getCart.useQuery(undefined, {
@@ -171,8 +173,15 @@ export default function CheckoutPage() {
       return;
     }
     setCheckoutError('');
-    createOrder.mutate({ shippingAddress, paymentMethod });
+    createOrder.mutate({
+      shippingAddress,
+      paymentMethod,
+      couponCode: appliedCoupon?.code || undefined,
+    });
   };
+
+  const discountAmount = appliedCoupon ? (subtotal * (appliedCoupon.discountPercent / 100)) : 0;
+  const grandTotal = Math.max(0, subtotal - discountAmount) + deliveryCharge;
 
   return (
     <div className="bg-gray-50 min-h-screen py-10">
@@ -216,7 +225,7 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {/* Submit Button (Mobile view usually puts this at bottom, but keeping it here for logical flow) */}
+              {/* Submit Button (Mobile view) */}
               <div className="lg:hidden">
                 <button
                   type="submit"
@@ -228,7 +237,7 @@ export default function CheckoutPage() {
                   ) : (
                     paymentMethod === 'COD'
                       ? 'Confirm Order (COD)'
-                      : `Pay ₹${(subtotal + deliveryCharge).toFixed(2)} Securely`
+                      : `Pay ₹${grandTotal.toFixed(2)} Securely`
                   )}
                 </button>
               </div>
@@ -248,6 +257,10 @@ export default function CheckoutPage() {
               isMember={isMember}
               deliveryCharge={deliveryCharge}
               planPrice={plan?.price ?? 1}
+              couponCode={couponCode}
+              setCouponCode={setCouponCode}
+              appliedCoupon={appliedCoupon}
+              setAppliedCoupon={setAppliedCoupon}
             />
           </div>
         </div>

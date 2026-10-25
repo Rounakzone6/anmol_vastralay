@@ -1,5 +1,6 @@
 import {
   protectedProcedure,
+  publicProcedure,
   router,
   staffProcedure,
 } from '@backend/config/trpc.config';
@@ -8,9 +9,16 @@ import {
   GenerateInvoiceSchema,
   OrderIdSchema,
   UpdateOrderStatusSchema,
+  ValidateCouponSchema,
 } from '@backend/models/order.model';
 
 export const orderRouter = router({
+  validateCoupon: publicProcedure
+    .input(ValidateCouponSchema)
+    .query(async ({ ctx, input }) => {
+      return ctx.services.order.validateCoupon(input.code);
+    }),
+
   createOrder: protectedProcedure
     .input(CreateOrderSchema)
     .mutation(async ({ ctx, input }) => {

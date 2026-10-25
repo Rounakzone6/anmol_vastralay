@@ -340,13 +340,23 @@ export const posRouter = router({
           });
         }
 
-        // 3. Concurrently decrement variant inventory
+        // 3. Atomically decrement variant inventory with conditional stock check (Strict CP)
         for (const item of input.items) {
           if (item.variantId) {
-            await tx.productVariant.update({
-              where: { id: item.variantId },
+            const updated = await tx.productVariant.updateMany({
+              where: {
+                id: item.variantId,
+                stockQty: { gte: item.quantity },
+              },
               data: { stockQty: { decrement: item.quantity } },
             });
+
+            if (updated.count === 0) {
+              throw new TRPCError({
+                code: 'CONFLICT',
+                message: `Stock was claimed by another customer or transaction for "${item.name || 'Item'}". Order aborted.`,
+              });
+            }
           }
         }
 

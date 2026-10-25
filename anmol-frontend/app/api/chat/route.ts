@@ -1,45 +1,57 @@
-import { createGroq } from '@ai-sdk/groq';
-import { streamText } from 'ai';
-
-const groq = createGroq({
-  apiKey: process.env.GROQ_API_KEY || '',
-});
-
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
   try {
     const { messages } = await req.json();
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
 
-    const baseModel = groq('qwen/qwen3.8-27b');
-    const model = new Proxy(baseModel, {
-      get(target: any, prop: string | symbol) {
-        if (prop === 'specificationVersion') return 'v3';
-        return target[prop];
+    // Call unified backend ChatbotService
+    const backendRes = await fetch(`${backendUrl}/chat/message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: req.headers.get('authorization') || '',
+      },
+      body: JSON.stringify({ messages }),
+    });
+
+    if (backendRes.ok) {
+      const data = await backendRes.json();
+      const reply = data.reply || 'Namaste! How may I assist you today?';
+      
+      // Stream response in Vercel AI SDK compatible format
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode(`0:${JSON.stringify(reply)}\n`));
+          controller.close();
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'X-Vercel-AI-Data-Stream': 'v1',
+        },
+      });
+    }
+
+    // Fallback if backend /chat/message returns non-200
+    const fallbackReply = 'Namaste! Welcome to Anmol Vastralay. You can browse our luxury sarees and ethnic wear or track your active orders.';
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(`0:${JSON.stringify(fallbackReply)}\n`));
+        controller.close();
       },
     });
 
-    const result = streamText({
-      model: model as any,
-      messages,
-      system: `You are a helpful, polite, and professional AI customer support assistant for an Indian clothing store named "Anmol Vastralay".
-You MUST ALWAYS reply in Hinglish (a mix of Hindi and English written in English script).
-Example: "Haanji, aapka order process ho gaya hai. Aapko jaldi hi shipping details mil jayengi."
-
-Your goal is to assist customers with queries about order tracking, return policies, product availability, and general store information.
-
-Store Information:
-- Store Name: Anmol Vastralay
-- Products: Sarees, Kurtis, Suits, Lehengas, and Menswear.
-- Return Policy: We offer a 7-day hassle-free return policy for unused items with original tags.
-- Shipping: Free shipping on orders over ₹1000. Standard delivery takes 3-5 business days.
-- Location: Anmol Vastralay, Main Market, City Center.
-- Support Hours: 24/7 via this chatbot. Human agents are available 10 AM to 7 PM.
-
-Keep your answers concise and friendly.`,
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'X-Vercel-AI-Data-Stream': 'v1',
+      },
     });
-
-    return (result as any).toDataStreamResponse ? (result as any).toDataStreamResponse() : result.toTextStreamResponse();
   } catch (error: any) {
     console.error('Chat API Error:', error);
     return new Response(
@@ -48,3 +60,4 @@ Keep your answers concise and friendly.`,
     );
   }
 }
+

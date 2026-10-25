@@ -1,7 +1,36 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+.next/
+dist/
+out/
+build/
+coverage/
+
 # Local environment files
 .env
-.env.*
-.env.example
+.env*.local
+.env.development
+.env.test
+.env.production
 
-# WhatsApp Auth Session
+# WhatsApp Auth Session & Credentials
 **/baileys_auth_info/
+**/*_auth_info/
+*.session
+
+# Logs and Debug
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

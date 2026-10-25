@@ -1,0 +1,131 @@
+name: CI / Quality Assurance Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  backend-test-and-build:
+    name: Backend Test, Concurrency Validation & Build
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: anmol_user
+          POSTGRES_PASSWORD: anmol_password
+          POSTGRES_DB: anmol_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: anmol-backend/package-lock.json
+
+      - name: Install Backend Dependencies
+        working-directory: anmol-backend
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: anmol-backend
+        env:
+          DATABASE_URL: postgresql://anmol_user:anmol_password@localhost:5432/anmol_db?schema=public
+        run: npx prisma generate
+
+      - name: TypeScript Type Check
+        working-directory: anmol-backend
+        run: npm run type-check
+
+      - name: Run Test Suite & Concurrency Validation
+        working-directory: anmol-backend
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://anmol_user:anmol_password@localhost:5432/anmol_db?schema=public
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+        run: npm test -- --runInBand
+
+      - name: Run Bloom Filter Empirical Benchmark
+        working-directory: anmol-backend
+        run: npx tsx scripts/benchmark-bloom-filter.ts
+
+      - name: Build Backend
+        working-directory: anmol-backend
+        run: npm run build
+
+  frontend-check:
+    name: Frontend Lint & Type Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Generate Backend Prisma (Required by Frontend Types)
+        working-directory: anmol-backend
+        run: |
+          npm ci
+          npx prisma generate
+
+      - name: Install Frontend Dependencies
+        working-directory: anmol-frontend
+        run: npm ci
+
+      - name: Frontend Type Check
+        working-directory: anmol-frontend
+        run: npm run type-check
+
+  admin-check:
+    name: Admin POS & Dashboard Type Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Generate Backend Prisma (Required by Admin Types)
+        working-directory: anmol-backend
+        run: |
+          npm ci
+          npx prisma generate
+
+      - name: Install Admin Dependencies
+        working-directory: anmol-admin
+        run: npm ci
+
+      - name: Admin Type Check
+        working-directory: anmol-admin
+        run: npm run type-check

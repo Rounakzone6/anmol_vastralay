@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "prisma generate --schema=../anmol-backend/prisma/schema.prisma && cross-env NODE_OPTIONS=--openssl-legacy-provider next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@ai-sdk/groq": "^4.0.59",

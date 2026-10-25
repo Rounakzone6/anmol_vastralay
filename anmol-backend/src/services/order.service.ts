@@ -62,6 +62,27 @@ export class OrderService {
       totalAmount += price * item.quantity;
     }
 
+    // 2.0 Apply Coupon Discount if provided
+    let discountAmount = 0;
+    let appliedCoupon: string | null = null;
+    if (input.couponCode) {
+      const normCoupon = input.couponCode.trim().toUpperCase();
+      if (normCoupon === 'COMEBACK15') {
+        discountAmount = Math.round(((totalAmount * 15) / 100) * 100) / 100;
+        appliedCoupon = 'COMEBACK15';
+      } else if (normCoupon === 'COMEBACK5') {
+        discountAmount = Math.round(((totalAmount * 5) / 100) * 100) / 100;
+        appliedCoupon = 'COMEBACK5';
+      } else {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Invalid or expired coupon code: ${input.couponCode}`,
+        });
+      }
+    }
+
+    totalAmount = Math.max(0, totalAmount - discountAmount);
+
     // 2.1 Check customer membership status:
     // Members get Free Delivery (₹0).
     // Non-members pay delivery fee configured in MembershipPlan (default ₹20).
@@ -106,7 +127,9 @@ export class OrderService {
           statusHistory: {
             create: {
               status: input.paymentMethod === 'COD' ? 'PROCESSING' : 'PENDING',
-              note: 'Order placed successfully',
+              note: appliedCoupon
+                ? `Order placed with coupon ${appliedCoupon} (-₹${discountAmount})`
+                : 'Order placed successfully',
             },
           },
         },
@@ -360,5 +383,31 @@ export class OrderService {
     }
     
     return order;
+  }
+
+  validateCoupon(code: string) {
+    const norm = (code || '').trim().toUpperCase();
+    if (norm === 'COMEBACK15') {
+      return {
+        valid: true,
+        code: 'COMEBACK15',
+        discountPercent: 15,
+        description: '15% Welcome Back Special Discount',
+      };
+    }
+    if (norm === 'COMEBACK5') {
+      return {
+        valid: true,
+        code: 'COMEBACK5',
+        discountPercent: 5,
+        description: '5% Cart Recovery Discount',
+      };
+    }
+    return {
+      valid: false,
+      code: norm,
+      discountPercent: 0,
+      description: 'Invalid or expired coupon code',
+    };
   }
 }

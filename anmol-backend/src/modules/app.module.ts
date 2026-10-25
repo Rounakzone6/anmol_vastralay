@@ -30,6 +30,7 @@ import { WhatsappService } from '@backend/services/whatsapp.service';
 import { WhatsappWebService } from '@backend/services/whatsapp-web.service';
 import { WebhookController } from '@backend/controllers/webhook.controller';
 import { WhatsappController } from '@backend/controllers/whatsapp.controller';
+import { ChatController } from '@backend/controllers/chat.controller';
 import { ChatbotService } from '@backend/services/chatbot.service';
 import { InvoiceService } from '@backend/services/invoice.service';
 import { EmailModule } from '@backend/modules/email.module';
@@ -79,7 +80,7 @@ import { SearchBloomService } from '@backend/services/search-bloom.service';
       adapter: BullMQAdapter,
     }),
   ],
-  controllers: [WebhookController, WhatsappController],
+  controllers: [WebhookController, WhatsappController, ChatController],
   providers: [
     {
       provide: APP_GUARD,
