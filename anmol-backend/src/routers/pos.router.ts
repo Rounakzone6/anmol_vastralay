@@ -307,39 +307,39 @@ export const posRouter = router({
       const cleanPhone =
         input.customerPhone?.replace(/[^0-9]/g, '').trim() || '';
 
-      // Step F: Execute Atomic Transaction (Customer Upsert + Order + Payments + Stock Decrement)
-      const createdOrder = await ctx.prisma.$transaction(async (tx) => {
-        // 1. Concurrency-Safe Customer Upsert inside Transaction
-        let userId: string;
-        if (cleanPhone) {
-          const customer = await tx.user.upsert({
-            where: { phone: cleanPhone },
-            update: input.customerName
-              ? { name: input.customerName.trim() }
-              : {},
-            create: {
-              phone: cleanPhone,
-              name: input.customerName?.trim() || 'Valued Customer',
-              role: 'CUSTOMER',
-            },
-            select: { id: true },
-          });
-          userId = customer.id;
-        } else {
-          const walkin = await tx.user.upsert({
-            where: { email: 'walkin@anmolvastralay.local' },
-            update: {},
-            create: {
-              email: 'walkin@anmolvastralay.local',
-              name: 'Walk-in Customer',
-              role: 'CUSTOMER',
-            },
-            select: { id: true },
-          });
-          userId = walkin.id;
-        }
+      // Step F: Concurrency-Safe Customer Upsert (Executed OUTSIDE transaction to eliminate row-lock deadlocks)
+      let userId: string;
+      if (cleanPhone) {
+        const customer = await ctx.prisma.user.upsert({
+          where: { phone: cleanPhone },
+          update: input.customerName
+            ? { name: input.customerName.trim() }
+            : {},
+          create: {
+            phone: cleanPhone,
+            name: input.customerName?.trim() || 'Valued Customer',
+            role: 'CUSTOMER',
+          },
+          select: { id: true },
+        });
+        userId = customer.id;
+      } else {
+        const walkin = await ctx.prisma.user.upsert({
+          where: { email: 'walkin@anmolvastralay.local' },
+          update: {},
+          create: {
+            email: 'walkin@anmolvastralay.local',
+            name: 'Walk-in Customer',
+            role: 'CUSTOMER',
+          },
+          select: { id: true },
+        });
+        userId = walkin.id;
+      }
 
-        // 2. Create POS Order
+      // Step G: Execute Atomic Transaction (Order + Payments + Stock Decrement)
+      const createdOrder = await ctx.prisma.$transaction(async (tx) => {
+        // 1. Create POS Order
         const order = await tx.order.create({
           data: {
             userId,

@@ -70,7 +70,7 @@ export class WebhookController {
       const event = payload.event;
       const eventId =
         (req.headers['x-razorpay-event-id'] as string) ||
-        `${event}:${payload.payload?.payment?.entity?.id || ''}`;
+        `${event}:${payload.payload?.payment?.entity?.id || payload.payload?.order?.entity?.id || ''}`;
 
       // Deduplicate webhook events to prevent duplicate fulfillment or double-inventory deduction
       if (eventId) {
@@ -125,10 +125,11 @@ export class WebhookController {
         return res.status(200).send('OK');
       }
 
-      // Handle payment capture: fulfill order, atomically deduct stock, and send invoice
-      if (event === 'payment.captured') {
+      // Handle payment capture / order.paid: fulfill order, atomically deduct stock, and send invoice
+      if (event === 'payment.captured' || event === 'order.paid') {
         const paymentEntity = payload.payload?.payment?.entity;
-        const razorpayOrderId = paymentEntity?.order_id;
+        const orderEntity = payload.payload?.order?.entity;
+        const razorpayOrderId = paymentEntity?.order_id || orderEntity?.id;
         const razorpayPaymentId = paymentEntity?.id;
 
         if (razorpayOrderId) {

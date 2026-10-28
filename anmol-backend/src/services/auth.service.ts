@@ -2,6 +2,8 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  Logger,
+  OnModuleInit,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserRole, OtpType } from '@prisma/client';
@@ -31,7 +33,8 @@ type JwtPayload = {
 };
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
+  private readonly logger = new Logger(AuthService.name);
   private googleClient: OAuth2Client;
 
   constructor(
@@ -42,6 +45,61 @@ export class AuthService {
   ) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     this.googleClient = new OAuth2Client(clientId);
+  }
+
+  async onModuleInit() {
+    await this.ensureAdminAccount();
+  }
+
+  /**
+   * Ensures an administrator account exists in the database with a bcrypt-hashed password.
+   * Eliminates hardcoded authentication bypasses while guaranteeing initial deployment access.
+   */
+  private async ensureAdminAccount(): Promise<void> {
+    const adminEmail = process.env.ADMIN_EMAIL?.trim();
+    const adminPassword = process.env.ADMIN_PASSWORD?.trim();
+
+    if (!adminEmail || !adminPassword) return;
+
+    try {
+      const existing = await this.prisma.user.findFirst({
+        where: { email: adminEmail },
+      });
+
+      if (!existing) {
+        const hashedPassword = await bcrypt.hash(adminPassword, 10);
+        await this.prisma.user.create({
+          data: {
+            email: adminEmail,
+            name: 'Administrator',
+            password: hashedPassword,
+            role: UserRole.ADMIN,
+            emailVerified: true,
+          },
+        });
+        this.logger.log(`Database-backed Admin account initialized for ${adminEmail}`);
+      } else {
+        const updates: { role?: UserRole; emailVerified?: boolean; password?: string } = {};
+        if (existing.role !== UserRole.ADMIN) {
+          updates.role = UserRole.ADMIN;
+        }
+        if (!existing.emailVerified) {
+          updates.emailVerified = true;
+        }
+        // If the admin user exists but has no password set, set their hashed password
+        if (!existing.password) {
+          updates.password = await bcrypt.hash(adminPassword, 10);
+        }
+        if (Object.keys(updates).length > 0) {
+          await this.prisma.user.update({
+            where: { id: existing.id },
+            data: updates,
+          });
+        }
+      }
+    } catch (err: any) {
+      this.logger.warn(`Admin auto-provisioning deferred: ${err?.message || err}`);
+    }
   }
 
   async hashPassword(password: string): Promise<string> {
@@ -62,57 +120,6 @@ export class AuthService {
     email: string;
     type: string;
   }> {
-    const adminEmail = process.env.ADMIN_EMAIL;
-    const adminPassword = process.env.ADMIN_PASSWORD;
-
-    if (adminEmail && identifier === adminEmail) {
-      if (password !== adminPassword) {
-        throw new UnauthorizedException('Invalid credentials');
-      }
-
-      const lockoutKey = `otp:lockout:${adminEmail}`;
-      if (await redis.get(lockoutKey)) {
-        throw new UnauthorizedException(
-          'Too many failed OTP attempts. Account temporarily locked for 15 minutes.',
-        );
-      }
-
-      const rateLimitKey = `ratelimit:otp:${adminEmail}`;
-      if (await redis.get(rateLimitKey)) {
-        throw new UnauthorizedException(
-          'Please wait 60 seconds before requesting another OTP',
-        );
-      }
-
-      const code = this.generateOtp();
-      const purpose = 'LOGIN';
-
-      // Store purpose-bound OTP in Redis (expires in 10 minutes)
-      await redis.set(`otp:${purpose}:${adminEmail}`, code, 'EX', 600);
-      await redis.set(`otp:${adminEmail}`, code, 'EX', 600); // Backwards compatibility
-      await redis.del(`otp:attempts:${purpose}:${adminEmail}`);
-
-      // Set rate limit (60 seconds)
-      await redis.set(rateLimitKey, '1', 'EX', 60);
-
-      const sent = await this.otpService.sendEmailOtp(adminEmail, code);
-      if (!sent) {
-        // Rollback redis keys on failure
-        await redis.del(`otp:${purpose}:${adminEmail}`);
-        await redis.del(`otp:${adminEmail}`);
-        await redis.del(rateLimitKey);
-        throw new BadRequestException(
-          'Failed to send OTP email. Please try again.',
-        );
-      }
-
-      return {
-        success: true,
-        message: 'OTP sent to email',
-        email: adminEmail,
-        type: 'LOGIN',
-      };
-    }
 
     const record = await this.prisma.user.findFirst({
       where: {
@@ -326,41 +333,6 @@ export class AuthService {
       redis.del(attemptsKey),
     ]);
 
-    const adminEmail = process.env.ADMIN_EMAIL;
-    if (adminEmail && email === adminEmail) {
-      await this.prisma.user.upsert({
-        where: { id: 'admin' },
-        update: {
-          email: adminEmail,
-          role: UserRole.ADMIN,
-          emailVerified: true,
-        },
-        create: {
-          id: 'admin',
-          email: adminEmail,
-          name: 'Admin',
-          role: UserRole.ADMIN,
-          emailVerified: true,
-        },
-      });
-
-      const user: AuthUser = {
-        id: 'admin',
-        email: adminEmail,
-        phone: null,
-        name: 'Admin',
-        profileImage: null,
-        gender: null,
-        emailVerified: true,
-        phoneVerified: false,
-        role: UserRole.ADMIN,
-      };
-      const token = await this.jwt.signAsync({
-        sub: user.id,
-        role: user.role,
-      } satisfies JwtPayload);
-      return { token, user };
-    }
 
     const userRecord = await this.prisma.user.findFirst({
       where: { email },
@@ -469,18 +441,15 @@ export class AuthService {
     try {
       const payload = await this.jwt.verifyAsync<JwtPayload>(token);
 
-      if (payload.sub === 'admin' && payload.role === UserRole.ADMIN) {
-        return {
-          id: 'admin',
-          email: process.env.ADMIN_EMAIL || '',
-          phone: null,
-          name: 'Admin',
-          profileImage: null,
-          gender: null,
-          emailVerified: true,
-          phoneVerified: false,
-          role: UserRole.ADMIN,
-        };
+      // Graceful fallback for legacy active sessions with sub === 'admin'
+      if (payload.sub === 'admin') {
+        const adminEmail = process.env.ADMIN_EMAIL;
+        const dbAdmin = await this.prisma.user.findFirst({
+          where: adminEmail ? { email: adminEmail } : { role: UserRole.ADMIN },
+        });
+        if (dbAdmin) {
+          return this.sanitize(dbAdmin);
+        }
       }
 
       const record = await this.prisma.user.findUnique({

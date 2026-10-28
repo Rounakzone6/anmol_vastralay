@@ -46,6 +46,28 @@ async function main() {
     });
   }
   console.log(`Seeded ${deliveryPersons.length} delivery persons`);
+
+  const adminEmail = process.env.ADMIN_EMAIL?.trim();
+  const adminPassword = process.env.ADMIN_PASSWORD?.trim();
+  if (adminEmail && adminPassword) {
+    const bcrypt = await import('bcryptjs');
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
+    await prisma.user.upsert({
+      where: { email: adminEmail },
+      update: {
+        role: 'ADMIN',
+        emailVerified: true,
+      },
+      create: {
+        email: adminEmail,
+        name: 'Store Administrator',
+        password: hashedPassword,
+        role: 'ADMIN',
+        emailVerified: true,
+      },
+    });
+    console.log(`Seeded administrator user: ${adminEmail}`);
+  }
 }
 
 main()
